@@ -1,17 +1,18 @@
-# Core library — INTERFACE for v0.1 (no implementation files yet).
-# Subsystems (config/, scan/, graph/, rules/, report/) attach here as they land.
-add_library(archcheck_core INTERFACE)
+# Core library — STATIC, накапливает реализацию подсистем.
+add_library(archcheck_core STATIC
+   scan/include_scanner.cpp
+)
 add_library(archcheck::core ALIAS archcheck_core)
 
-target_include_directories(archcheck_core INTERFACE
+target_include_directories(archcheck_core PUBLIC
    ${CMAKE_SOURCE_DIR}/include
 )
 
-target_link_libraries(archcheck_core INTERFACE ryml::ryml)
+target_link_libraries(archcheck_core PUBLIC ryml::ryml)
 
-target_compile_features(archcheck_core INTERFACE cxx_std_20)
+target_compile_features(archcheck_core PUBLIC cxx_std_20)
 
-target_compile_definitions(archcheck_core INTERFACE
+target_compile_definitions(archcheck_core PUBLIC
    ARCHCHECK_VERSION_STRING="${PROJECT_VERSION}"
    ARCHCHECK_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
    ARCHCHECK_VERSION_MINOR=${PROJECT_VERSION_MINOR}
