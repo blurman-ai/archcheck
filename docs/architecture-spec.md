@@ -135,27 +135,28 @@ C++ community консервативнее джавовского. "Clean archit
 
 ## Дефолтный анализ (без конфига)
 
-Когда инструмент запущен без `--config`, применяется набор универсальных правил, опирающихся на признанные источники. Каждое правило сопровождается атрибуцией, чтобы пользователь не мог сказать "это твоё личное мнение".
+Когда archcheck запущен без `--config`, применяется набор универсальных правил с явной атрибуцией. Каждое правило цитирует признанный источник — это снимает аргумент «это твоё мнение». При этом любое правило можно выключить: через CLI-флаг, через конфиг, или через комментарий в коде. Атрибуция — это не догмат, а защита от обвинения в вкусовщине.
 
-Структура — три уровня по силе авторитета.
+Структура дефолтов — по источнику авторитета и по фазе roadmap (v0.1 / v0.2 / опционально).
 
 ### Уровень 1. C++ Core Guidelines секция SF (Stroustrup, Sutter)
 
-Это **официальные** правила работы с source-файлами от создателя языка и председателя комитета. Не подлежат обсуждению. Реализуются только статически проверяемые из них (часть руководства — про дизайн, не про статический анализ).
+Правила работы с source-файлами от создателя языка и председателя комитета — официальный источник. Реализуются только статически проверяемые из них (часть руководства — про дизайн, не про статический анализ).
 
-| Rule ID | Что | Тип проверки |
-|---|---|---|
-| **SF.2** | `.h` не содержит определений объектов / non-inline функций | AST |
-| **SF.4** | `#include` идут перед другими декларациями в файле | препроцессор |
-| **SF.5** | `.cpp` обязан включать свой `.h` (тот, что определяет его интерфейс) | имена + AST |
-| **SF.7** | Нет `using namespace` в глобальном scope заголовка | AST |
-| **SF.8** | Каждый `.h` имеет include guards или `#pragma once` | препроцессор |
-| **SF.9** | **Нет циклических зависимостей между source-файлами** | граф |
-| **SF.10** | Нет зависимостей на implicitly-included names | AST + includes |
-| **SF.11** | Заголовки self-contained (можно включить первым в TU без падения) | компиляция |
-| **SF.21** | Нет анонимных namespace в заголовках | AST |
+| Rule ID | Что | Тип проверки | Фаза |
+|---|---|---|---|
+| **SF.7** | Нет `using namespace` в глобальном scope заголовка | text-scan / AST | **v0.1** (approx), v0.2 (precise) |
+| **SF.8** | Каждый `.h` имеет include guards или `#pragma once` | препроцессор | **v0.1** |
+| **SF.9** | **Нет циклических зависимостей между source-файлами** | граф | **v0.1** |
+| **SF.21** | Нет анонимных namespace в заголовках | text-scan / AST | **v0.1** (approx), v0.2 (precise) |
+| **SF.2** | `.h` не содержит определений объектов / non-inline функций | AST | v0.2 |
+| **SF.5** | `.cpp` обязан включать свой `.h` | имена + AST | v0.2 |
+| **SF.10** | Нет зависимостей на implicitly-included names | AST + includes | v0.2 |
+| **SF.11** | Заголовки self-contained (можно включить первым в TU без падения) | компиляция | v0.2 |
 
-Девять правил из одного авторитетного источника. Маркетинговая фраза: *"implements 9 statically-checkable rules from the official C++ Core Guidelines SF section"*.
+**SF.4 (`#include` идут перед другими декларациями)** — намеренно не дефолт: проверяется тривиально, но продуктовой ценности почти нет — это ещё один style-check, а не архитектурный инвариант. Можно включить руками через `--enable=SF.4`. Оценку правил см. в [`docs/research/`](../research/).
+
+Маркетинговая фраза: *"implements 8 statically-checkable rules from the C++ Core Guidelines SF section across v0.1 and v0.2"*.
 
 ### Уровень 2. Lakos physical design (Large-Scale C++ Software Design)
 
@@ -192,7 +193,7 @@ CCD/ACD/NCCD сами по себе не пороговые правила (не
 
 Используются в PHP Depend, Lattix, NDepend, ArchUnit. Универсальный язык для разговоров об архитектуре с людьми, прошедшими через Java/C# школу.
 
-Опционально, по флагу `--martin-metrics`. Не дефолт по умолчанию, потому что для C++ требует чуть больше эвристик (что считать "абстрактным типом" — pure abstract class? любой класс с virtual? template?).
+**Опционально**, по флагу `--martin-metrics`. Не входят в дефолты по двум причинам: (1) для C++ требуют эвристик (что считать абстрактным типом — pure abstract class? любой с virtual? template?), (2) не двигают ранний adoption — пользователь покупает «запрет domain → infrastructure», а не NCCD. Появляются в v0.4 (см. Roadmap).
 
 ### Уровень 4. Несомненные практики без явного авторитета
 
@@ -214,12 +215,15 @@ CCD/ACD/NCCD сами по себе не пороговые правила (не
 
 ## Анализ по конфигу
 
+**Ядро конфига — `modules` + `forbidden_deps` / `allowed_deps` между ними.** Это то, ради чего пользователь ставит archcheck. Дефолтные правила (SF.*, Lakos-метрики) включены, но не headline — их можно отключить блоком `defaults`.
+
 ### Формат
 
 ```yaml
 # .archcheck.yml
 version: 1
 
+# 1. Модули — описываем структуру проекта.
 modules:
   domain:
     paths: ["src/domain/**"]
@@ -230,6 +234,7 @@ modules:
   ui:
     paths: ["src/ui/**"]
 
+# 2. Правила между модулями — главная ценность.
 rules:
   - name: "domain is independent"
     module: domain
@@ -239,46 +244,63 @@ rules:
     module: ui
     allowed_deps: [application]
 
+  # Pattern-правила — опционально.
   - name: "no raw SQL outside infrastructure"
     pattern: '\b(SELECT|INSERT|UPDATE|DELETE)\s'
     forbidden_in: [domain, application, ui]
 
-# Включить/выключить дефолтные правила
+# 3. Дефолтные правила — включить/выключить группы.
 defaults:
-  core_guidelines: true       # все SF.* правила
+  core_guidelines: true       # все SF.* правила, доступные на текущей фазе
   lakos_metrics: true         # CCD/ACD/NCCD в отчёт
-  martin_metrics: false       # отключено (нужно явное согласие на эвристики)
+  martin_metrics: false       # отключено (heuristic-tier, v0.4+)
   disable: [SF.10]            # не проверять конкретное правило
 
+# 4. Пороги Lakos-метрик.
 thresholds:
   max_include_depth: 10
   god_header_fan_in: 30
   nccd_warning: 2.0
 ```
 
+**Минимально-полезный конфиг** (типичный first-run для legacy-проекта):
+
+```yaml
+version: 1
+modules:
+  core: { paths: ["src/core/**"] }
+  ui:   { paths: ["src/ui/**"] }
+rules:
+  - module: core
+    forbidden_deps: [ui]
+```
+
+Запустить, заморозить нарушения baseline-ом, поставить в CI — всё.
+
 ### Команды
 
 ```bash
-# Анализ с дефолтами, без конфига
-archcheck --compile-commands build/compile_commands.json
+# Анализ с дефолтами, без конфига и без compile_commands.json.
+# Fast backend — препроцессорный скан, работает на любом проекте.
+archcheck
 
-# С кастомным конфигом
-archcheck --config .archcheck.yml --compile-commands build/compile_commands.json
+# С кастомным конфигом.
+archcheck --config .archcheck.yml
 
-# JSON-вывод для CI
-archcheck --format json --output report.json ...
+# Семантические правила (SF.2/5/10/11, правила из C/I) — нужен libclang.
+archcheck --config .archcheck.yml --with-clang --compile-commands build/compile_commands.json
 
-# SARIF для GitHub Code Scanning
-archcheck --format sarif --output sarif.json ...
+# JSON-вывод для CI.
+archcheck --format json --output report.json
 
-# Заморозить текущие нарушения как baseline
-archcheck --baseline .archcheck-baseline.json ...
+# SARIF для GitHub Code Scanning (v0.2+).
+archcheck --format sarif --output sarif.json
 
-# Сгенерировать стартовый конфиг по существующему коду
-archcheck --suggest-config > .archcheck.yml
+# Заморозить текущие нарушения как baseline (day-one feature).
+archcheck --baseline .archcheck-baseline.json
 
-# Только метрики, без правил
-archcheck --metrics ...
+# Только метрики, без жёстких правил.
+archcheck --metrics
 ```
 
 ### Exit codes
