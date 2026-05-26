@@ -15,11 +15,19 @@ include(Catch)
 
 add_executable(archcheck_tests
    smoke_test.cpp
+   unit/scan/include_scanner_test.cpp
+   integration/scan/scanner_fixtures_test.cpp
 )
 target_link_libraries(archcheck_tests
    PRIVATE
       archcheck::core
       Catch2::Catch2WithMain
+)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+   target_link_libraries(archcheck_tests PRIVATE stdc++fs)
+endif()
+target_compile_definitions(archcheck_tests PRIVATE
+   ARCHCHECK_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/fixtures"
 )
 
 catch_discover_tests(archcheck_tests)
