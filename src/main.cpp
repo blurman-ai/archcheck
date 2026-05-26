@@ -62,6 +62,38 @@ int run_scan(const std::filesystem::path& root)
    return 0;
 }
 
+int dispatch_scan(int argc, char* argv[])
+{
+   if (argc < 3)
+   {
+      std::cerr << "archcheck: --scan requires <path>\n";
+      return 2;
+   }
+   return run_scan(argv[2]);
+}
+
+int dispatch(int argc, char* argv[])
+{
+   const std::string_view arg{argv[1]};
+   if (arg == "--version" || arg == "-V")
+   {
+      print_version();
+      return 0;
+   }
+   if (arg == "--help" || arg == "-h")
+   {
+      print_help();
+      return 0;
+   }
+   if (arg == "--scan")
+   {
+      return dispatch_scan(argc, argv);
+   }
+   std::cerr << "archcheck: unknown argument '" << arg << "'\n";
+   print_help();
+   return 2;
+}
+
 } // namespace
 
 int main(int argc, char* argv[])
@@ -71,32 +103,5 @@ int main(int argc, char* argv[])
       print_help();
       return 0;
    }
-
-   const std::string_view arg{argv[1]};
-
-   if (arg == "--version" || arg == "-V")
-   {
-      print_version();
-      return 0;
-   }
-
-   if (arg == "--help" || arg == "-h")
-   {
-      print_help();
-      return 0;
-   }
-
-   if (arg == "--scan")
-   {
-      if (argc < 3)
-      {
-         std::cerr << "archcheck: --scan requires <path>\n";
-         return 2;
-      }
-      return run_scan(argv[2]);
-   }
-
-   std::cerr << "archcheck: unknown argument '" << arg << "'\n";
-   print_help();
-   return 2;
+   return dispatch(argc, argv);
 }
