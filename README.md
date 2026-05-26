@@ -12,7 +12,7 @@ C++ projects degrade over time:
 
 Code review doesn’t catch this.  
 Linters don’t check architecture.  
-AI-generated code makes it worse.
+**AI-generated code accelerates the drift** — agents suffer *constraint decay* (EURECOM, 2026): ~30 pp drop in assertion pass rate when functional tasks gain structural constraints. The prompt degrades with context; CI doesn’t.
 
 **archcheck enforces architectural rules in CI.**
 
@@ -20,11 +20,12 @@ AI-generated code makes it worse.
 
 ## What it does
 
-- Parses `compile_commands.json`
-- Builds dependency graph (includes, modules)
-- Applies declarative rules (YAML)
+- Scans sources via a fast preprocessor pass (or libclang with `--with-clang` for semantic checks)
+- Builds the dependency graph (includes → modules)
+- Applies declarative rules from a YAML config
 - Reports violations with exact `file:line:column`
-- Fails CI on violations
+- Fails CI on violations (non-zero exit)
+- Supports `--baseline` from day one: freeze legacy violations, fail only on new ones
 
 ---
 
@@ -74,11 +75,11 @@ error[domain-no-infra]: forbidden dependency domain -> infrastructure
 
 ## Key Features
 
-- CI-first — non-zero exit on violations
-- Deterministic — same input → same result
-- No magic — explicit config
-- Baseline support — freeze existing violations
-- Zero-config mode — useful defaults
+- **CI-first** — non-zero exit on violations
+- **Baseline-friendly** — freeze legacy, fail on new
+- **No setup required** — works without `compile_commands.json` (fast backend by default)
+- **Deterministic** — same input → same result
+- **Sourced** — every default rule cites a published authority (Core Guidelines, Lakos, Martin)
 
 ---
 
