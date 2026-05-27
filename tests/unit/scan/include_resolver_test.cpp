@@ -15,9 +15,9 @@ using archcheck::scan::NodeId;
 using archcheck::scan::ProjectFile;
 using archcheck::scan::ProjectIndex;
 using archcheck::scan::Resolution;
+using archcheck::scan::ResolvedInclude;
 using archcheck::scan::resolveInclude;
 using archcheck::scan::resolveIncludes;
-using archcheck::scan::ResolvedInclude;
 
 namespace
 {
