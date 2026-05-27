@@ -87,7 +87,7 @@ ResolvedInclude resolve_angle(const IncludeDirective &d, std::string_view source
 } // namespace
 
 ResolvedInclude resolveInclude(const IncludeDirective &directive, std::string_view sourceFile,
-                                const std::vector<ProjectFile> & /*files*/, const ProjectIndex &index)
+                               const std::vector<ProjectFile> & /*files*/, const ProjectIndex &index)
 {
   if (directive.kind == IncludeKind::Quote)
   {
@@ -97,8 +97,8 @@ ResolvedInclude resolveInclude(const IncludeDirective &directive, std::string_vi
 }
 
 std::vector<ResolvedInclude> resolveIncludes(const std::vector<IncludeDirective> &directives,
-                                              std::string_view sourceFile, const std::vector<ProjectFile> &files,
-                                              const ProjectIndex &index)
+                                             std::string_view sourceFile, const std::vector<ProjectFile> &files,
+                                             const ProjectIndex &index)
 {
   std::vector<ResolvedInclude> out;
   out.reserve(directives.size());

@@ -42,9 +42,8 @@ std::optional<NodeId> lookup(const std::unordered_map<std::string, NodeId> &by_p
 
 void sort_edges(std::vector<EdgeRef> &edges)
 {
-  std::sort(edges.begin(), edges.end(), [](EdgeRef a, EdgeRef b) {
-    return a.from.value < b.from.value || (a.from.value == b.from.value && a.to.value < b.to.value);
-  });
+  std::sort(edges.begin(), edges.end(), [](EdgeRef a, EdgeRef b)
+            { return a.from.value < b.from.value || (a.from.value == b.from.value && a.to.value < b.to.value); });
 }
 
 std::vector<std::unordered_set<std::string>> nontrivial_scc_path_sets(const DependencyGraph &g,
