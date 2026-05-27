@@ -23,6 +23,7 @@ add_executable(archcheck_tests
    unit/graph/diff_test.cpp
    unit/graph/baseline_test.cpp
    integration/scan/scanner_fixtures_test.cpp
+   integration/graph/end_to_end_test.cpp
 )
 target_link_libraries(archcheck_tests
    PRIVATE
