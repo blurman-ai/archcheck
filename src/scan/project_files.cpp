@@ -100,4 +100,6 @@ ProjectIndex buildProjectIndex(const std::vector<ProjectFile> &files)
   return idx;
 }
 
+bool hasProjectExtension(const std::filesystem::path &p) { return has_project_extension(p); }
+
 } // namespace archcheck::scan

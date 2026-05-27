@@ -3,13 +3,15 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <vector>
 
+#include "archcheck/diff/regression_report.h"
+#include "archcheck/git/git_state.h"
 #include "archcheck/graph/algorithms.h"
 #include "archcheck/graph/dependency_graph.h"
-#include "archcheck/scan/include_resolver.h"
+#include "archcheck/graph/graph_builder.h"
 #include "archcheck/scan/include_scanner.h"
 #include "archcheck/scan/project_files.h"
 #include "archcheck/version.h"
@@ -26,8 +28,9 @@ void print_help()
             << "Usage:\n"
             << "  archcheck --version\n"
             << "  archcheck --help\n"
-            << "  archcheck --scan <path>    (preview: discover + scan #includes)\n"
-            << "  archcheck --graph <path>   (preview: build dependency graph + SCC stats)\n"
+            << "  archcheck --scan  <path>             (preview: discover + scan #includes)\n"
+            << "  archcheck --graph <path>             (preview: build dependency graph + SCC stats)\n"
+            << "  archcheck --diff  <revspec> [path]   (regression vs git ref; revspec = 'a..b' or '<ref>')\n"
             << "\n"
             << "Configuration parsing, default rules, and reporters land in subsequent\n"
             << "v0.1 commits. See docs/architecture-spec.md.\n";
@@ -62,60 +65,6 @@ int run_scan(const std::filesystem::path &root)
   return 0;
 }
 
-struct GraphCounters
-{
-  std::size_t edges = 0;
-  std::size_t external = 0;
-  std::size_t unresolved = 0;
-  std::size_t ambiguous = 0;
-  std::size_t macro_includes = 0;
-};
-
-void apply_resolved(const std::vector<archcheck::scan::ResolvedInclude> &resolved, archcheck::graph::NodeId source,
-                    const std::vector<archcheck::graph::NodeId> &id_map, archcheck::graph::DependencyGraph &dg,
-                    GraphCounters &c)
-{
-  for (const auto &r : resolved)
-  {
-    switch (r.resolution)
-    {
-    case archcheck::scan::Resolution::Project:
-      dg.addEdge(source, id_map[r.target]);
-      ++c.edges;
-      break;
-    case archcheck::scan::Resolution::External:
-      ++c.external;
-      break;
-    case archcheck::scan::Resolution::Unresolved:
-      ++c.unresolved;
-      break;
-    case archcheck::scan::Resolution::Ambiguous:
-      ++c.ambiguous;
-      break;
-    }
-  }
-}
-
-struct GraphInputs
-{
-  const std::filesystem::path &root;
-  const std::vector<archcheck::scan::ProjectFile> &files;
-  const archcheck::scan::ProjectIndex &index;
-  const std::vector<archcheck::graph::NodeId> &id_map;
-};
-
-void build_graph(const GraphInputs &in, archcheck::graph::DependencyGraph &dg, GraphCounters &c)
-{
-  for (std::size_t i = 0; i < in.files.size(); ++i)
-  {
-    const auto src = read_file(in.root / in.files[i].path);
-    const auto scanned = archcheck::scan::scanIncludes(src);
-    c.macro_includes += scanned.diagnostics.size();
-    const auto resolved = archcheck::scan::resolveIncludes(scanned.directives, in.files[i].path, in.files, in.index);
-    apply_resolved(resolved, in.id_map[i], in.id_map, dg, c);
-  }
-}
-
 struct SccStats
 {
   std::size_t total = 0;
@@ -131,32 +80,19 @@ SccStats compute_scc_stats(const archcheck::graph::DependencyGraph &dg)
   for (const auto &c : sccs)
   {
     if (c.size() >= 2)
-    {
       ++s.cyclic;
-    }
     if (c.size() > s.largest)
-    {
       s.largest = c.size();
-    }
   }
   return s;
 }
 
 int run_graph(const std::filesystem::path &root)
 {
-  const auto files = archcheck::scan::discoverFiles(root);
-  const auto index = archcheck::scan::buildProjectIndex(files);
-  archcheck::graph::DependencyGraph dg;
-  std::vector<archcheck::graph::NodeId> id_map;
-  id_map.reserve(files.size());
-  for (const auto &f : files)
-  {
-    id_map.push_back(dg.addNode(f.path));
-  }
-  GraphCounters c;
-  build_graph(GraphInputs{root, files, index, id_map}, dg, c);
-  const auto scc = compute_scc_stats(dg);
-  std::cout << "nodes:          " << dg.nodeCount() << '\n'
+  const auto built = archcheck::graph::buildGraphForPath(root);
+  const auto &c = built.counters;
+  const auto scc = compute_scc_stats(built.graph);
+  std::cout << "nodes:          " << built.graph.nodeCount() << '\n'
             << "edges:          " << c.edges << '\n'
             << "external:       " << c.external << '\n'
             << "unresolved:     " << c.unresolved << '\n'
@@ -168,7 +104,83 @@ int run_graph(const std::filesystem::path &root)
   return scc.cyclic == 0 ? 0 : 1;
 }
 
-int dispatch_with_path(const std::string_view &arg, int argc, char *argv[])
+std::optional<archcheck::git::Worktree> materialize_or_report(const std::filesystem::path &repoRoot,
+                                                              const std::string &ref, const char *role)
+{
+  archcheck::git::GitError err;
+  auto tree = archcheck::git::materializeRef(repoRoot, ref, err);
+  if (!tree)
+  {
+    std::cerr << "archcheck: cannot materialize " << role << " ref '" << ref << "': " << err.message << '\n';
+  }
+  return tree;
+}
+
+// Returns true and prints a one-shot report if the fast-path applies
+// (zero C/C++ files changed between baseline and current → graph cannot have
+// changed). Caller in that case skips the worktree materialisation.
+bool tryFastPathNoCppChanges(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed)
+{
+  const auto changed = archcheck::git::changedCppFiles(repoRoot, parsed.baseline, parsed.current);
+  if (!changed || !changed->empty())
+    return false;
+  std::cout << "baseline_ref:   " << parsed.baseline << '\n'
+            << "current_ref:    " << parsed.current << '\n'
+            << "no C/C++ files changed; skipping graph build\n";
+  return true;
+}
+
+int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed)
+{
+  auto baselineTree = materialize_or_report(repoRoot, parsed.baseline, "baseline");
+  auto currentTree = materialize_or_report(repoRoot, parsed.current, "current");
+  if (!baselineTree || !currentTree)
+    return 2;
+
+  const auto baseline = archcheck::graph::buildGraphForPath(baselineTree->path());
+  const auto current = archcheck::graph::buildGraphForPath(currentTree->path());
+  const auto report = archcheck::diff::buildRegressionReport(baseline.graph, current.graph);
+
+  std::cout << "baseline_ref:   " << parsed.baseline << '\n'
+            << "current_ref:    " << parsed.current << '\n'
+            << "baseline_nodes: " << baseline.graph.nodeCount() << '\n'
+            << "current_nodes:  " << current.graph.nodeCount() << '\n';
+  archcheck::diff::writeTextReport(report, std::cout);
+  return report.hasRegression() ? 1 : 0;
+}
+
+int run_diff(std::string_view revspec, const std::filesystem::path &root)
+{
+  const auto parsed = archcheck::git::parseRevspec(revspec);
+  if (!parsed)
+  {
+    std::cerr << "archcheck: invalid revspec '" << revspec << "' (expected 'a..b' or '<ref>')\n";
+    return 2;
+  }
+  const auto repoRoot = archcheck::git::findRepoRoot(root);
+  if (!repoRoot)
+  {
+    std::cerr << "archcheck: '" << root.string() << "' is not inside a git repository\n";
+    return 2;
+  }
+  if (tryFastPathNoCppChanges(*repoRoot, *parsed))
+    return 0;
+  return runDiffFullPath(*repoRoot, *parsed);
+}
+
+int dispatch_diff(int argc, char *argv[])
+{
+  if (argc < 3)
+  {
+    std::cerr << "archcheck: --diff requires <revspec> [path]\n";
+    return 2;
+  }
+  const std::string_view revspec{argv[2]};
+  const std::filesystem::path root = argc >= 4 ? std::filesystem::path{argv[3]} : std::filesystem::current_path();
+  return run_diff(revspec, root);
+}
+
+int dispatch_with_path(std::string_view arg, int argc, char *argv[])
 {
   if (argc < 3)
   {
@@ -176,9 +188,7 @@ int dispatch_with_path(const std::string_view &arg, int argc, char *argv[])
     return 2;
   }
   if (arg == "--scan")
-  {
     return run_scan(argv[2]);
-  }
   return run_graph(argv[2]);
 }
 
@@ -196,9 +206,9 @@ int dispatch(int argc, char *argv[])
     return 0;
   }
   if (arg == "--scan" || arg == "--graph")
-  {
     return dispatch_with_path(arg, argc, argv);
-  }
+  if (arg == "--diff")
+    return dispatch_diff(argc, argv);
   std::cerr << "archcheck: unknown argument '" << arg << "'\n";
   print_help();
   return 2;
