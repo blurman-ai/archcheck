@@ -31,6 +31,11 @@ struct ProjectIndex
 // '/' as the path separator. The result is sorted for determinism.
 std::vector<ProjectFile> discoverFiles(const std::filesystem::path &root);
 
+// Same extension predicate as discoverFiles, exposed so callers (e.g. the
+// git-diff fast-path) can pre-filter externally-sourced path lists without
+// re-implementing the canonical set.
+bool hasProjectExtension(const std::filesystem::path &p);
+
 // Build exact-path + '/'-segment suffix indexes over `files`. The NodeId
 // of a file equals its index in the input vector.
 ProjectIndex buildProjectIndex(const std::vector<ProjectFile> &files);

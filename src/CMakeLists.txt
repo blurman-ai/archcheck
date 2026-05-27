@@ -3,10 +3,14 @@ add_library(archcheck_core STATIC
    scan/include_scanner.cpp
    scan/project_files.cpp
    scan/include_resolver.cpp
+   scan/disk_file_source.cpp
    graph/dependency_graph.cpp
    graph/algorithms.cpp
    graph/diff.cpp
    graph/baseline.cpp
+   graph/graph_builder.cpp
+   git/git_state.cpp
+   diff/regression_report.cpp
 )
 add_library(archcheck::core ALIAS archcheck_core)
 

@@ -1,0 +1,42 @@
+# Example GitHub Actions job for users of archcheck: comment on a PR when
+# it introduces new edges or new/grown cycles vs. the merge base.
+#
+# Copy into your project's `.github/workflows/` and adjust the install step
+# to use a release binary or a Docker image once those ship.
+#
+# Exit codes (from `archcheck --diff`):
+#   0 — no architectural regression
+#   1 — regression (new edges or grown cycles)
+#   2 — git / IO error
+name: archcheck (PR diff)
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  archcheck-pr-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # `--diff origin/main..HEAD` needs both refs
+
+      - name: Build archcheck
+        # Replace with: download the release binary for your platform.
+        run: |
+          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+
+      - name: archcheck --diff origin/${{ github.base_ref }}..HEAD
+        run: |
+          ./build/src/archcheck --diff "origin/${{ github.base_ref }}..HEAD" . \
+            | tee archcheck-diff.txt
+
+      - name: Upload diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archcheck-diff
+          path: archcheck-diff.txt
