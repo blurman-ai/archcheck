@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <string>
 
 #include "archcheck/graph/dependency_graph.h"
 #include "archcheck/rules/sf8_include_guard.h"
@@ -58,4 +59,29 @@ TEST_CASE("SF.8: empty file reports violation", "[rules][sf8]")
 
   Sf8IncludeGuard rule;
   REQUIRE(rule.check(g, makeReadFile("")).size() == 1);
+}
+
+TEST_CASE("SF.8: long copyright block + ifndef guard → no violation", "[rules][sf8]")
+{
+  DependencyGraph g;
+  g.addNode("a.h");
+
+  // 32 non-empty comment lines before the guard — models Apache 2.0 copyright
+  // + module description (abseil-style). Exceeds old kScanLines=30 limit.
+  std::string src;
+  for (int i = 0; i < 32; ++i)
+    src += "// copyright line\n";
+  src += "#ifndef LONG_GUARD_H_\n#define LONG_GUARD_H_\n#endif\n";
+
+  Sf8IncludeGuard rule;
+  REQUIRE(rule.check(g, makeReadFile(src)).empty());
+}
+
+TEST_CASE("SF.8: .inc fragment is not checked", "[rules][sf8]")
+{
+  DependencyGraph g;
+  g.addNode("platform.inc");
+
+  Sf8IncludeGuard rule;
+  REQUIRE(rule.check(g, makeReadFile("// platform fragment, no guard\n")).empty());
 }
