@@ -1,8 +1,8 @@
 # [TESTS][GRAPH] Покрыть `--diff` сценарием PR с merge-commit-ом
 
 **Дата создания:** 2026-05-27
-**Дата старта:** —
-**Статус:** new
+**Дата старта:** 2026-05-28
+**Статус:** wip
 **Модуль:** TESTS, GRAPH
 **Приоритет:** minor
 **Сложность:** S (1-2 часа)
@@ -39,24 +39,28 @@ fast-forward), и убедиться что `git worktree add --detach` корр
 
 ## План выполнения
 
-- [ ] Расширить `tests/integration/diff/git_diff_test.cpp` новым TEST_CASE-ом «merge-commit»
-- [ ] Сборка `A → B (adds a->c) → checkout A → C (adds a->d) → merge B`
-- [ ] Assert: `diffRefs(repo, "A-sha", "HEAD")` показывает оба ребра `a->c` и `a->d` в addedEdges
-- [ ] Дополнительно: `diffRefs(repo, "C-sha", "HEAD")` показывает только `a->c` (изменения из B, которые принёс merge)
-- [ ] Проверить что lizard и clang-format остаются чистыми
+- [x] Расширить `tests/integration/diff/git_diff_test.cpp` новым TEST_CASE-ом «merge-commit»
+- [x] Сборка `A → B (adds a->c) → checkout A → C (adds a->d) → merge B` (через `git tag A`/`git tag C`)
+- [x] Assert: `diffRefs("A", "HEAD")` показывает оба ребра `a->c` и `a->d` в addedEdges
+- [x] Assert: `diffRefs("C", "HEAD")` показывает только `a->c` (то, что merge принёс из feat-b)
+- [x] lizard и clang-format чистые
 
 ## Сделано
 
-- (пусто)
-
-## В работе
-
-- (пусто)
+- Хелпер `buildMergeRepo()` собирает A→B (a->c) и A→C (a->d), мёржит feat-b в feat-c
+  с ручным разрешением конфликта на a.h (union обоих includes). HEAD — настоящий
+  merge-commit, проверяется `git rev-parse HEAD^2`.
+- TEST_CASE `merge-commit HEAD → A..M sees union of edges from both parents`
+  `[diff][git][integration][merge]`: 26 assertions, зелёный.
+- SHA через `git rev-parse` не понадобился — `git tag A` / `git tag C` на нужных
+  коммитах решают вопрос без расширения `runIn`.
+- Подтверждено: `git worktree add --detach` (внутри `materializeRef`) корректно
+  материализует merge-snapshot, а не один из родителей.
 
 ## Следующие шаги
 
-1. Использовать существующий helper `commitAll` + ручные `git checkout -b` / `git merge --no-ff` через `runIn`
-2. Сохранить SHA через `git rev-parse HEAD` (нужно расширить `runIn` чтобы возвращал stdout, либо использовать `git tag` для именованных меток)
+1. `/commit` — `test(diff): cover merge-commit PR scenario in --diff (#022)`
+2. Закрыть задачу (перевести в `backlog/completed/`).
 
 ## Ключевые решения
 

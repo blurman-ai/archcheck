@@ -1,5 +1,6 @@
 #include <unistd.h>
 
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
 #include <filesystem>
@@ -298,8 +299,7 @@ TEST_CASE("git diff (memory): no-op PR → no regression", "[diff][git][integrat
   REQUIRE_FALSE(report.hasRegression());
 }
 
-TEST_CASE("git diff (memory): <ref>..WORKTREE picks up uncommitted edge",
-          "[diff][git][integration][memory]")
+TEST_CASE("git diff (memory): <ref>..WORKTREE picks up uncommitted edge", "[diff][git][integration][memory]")
 {
   TempDir repo;
   initRepo(repo.path);
@@ -313,6 +313,55 @@ TEST_CASE("git diff (memory): <ref>..WORKTREE picks up uncommitted edge",
   REQUIRE(report.addedEdges.size() == 1);
   REQUIRE(report.addedEdges[0].from == "a.h");
   REQUIRE(report.addedEdges[0].to == "c.h");
+}
+
+// Build A→B (a->c) and A→C (a->d), merge B into C with a manual conflict
+// resolution that keeps both edges. HEAD ends up as the merge commit M.
+// Tags `A` and `C` are left on the corresponding commits.
+void buildMergeRepo(const fs::path &p)
+{
+  initRepo(p);
+  writeFile(p / "a.h", "// a\n");
+  writeFile(p / "c.h", "// c\n");
+  writeFile(p / "d.h", "// d\n");
+  commitAll(p, "baseline");
+  REQUIRE(runIn(p, "git tag A") == 0);
+  REQUIRE(runIn(p, "git checkout -qb feat-b") == 0);
+  writeFile(p / "a.h", "#include \"c.h\"\n");
+  commitAll(p, "feat-b adds a->c");
+  REQUIRE(runIn(p, "git checkout -q A && git checkout -qb feat-c") == 0);
+  writeFile(p / "a.h", "#include \"d.h\"\n");
+  commitAll(p, "feat-c adds a->d");
+  REQUIRE(runIn(p, "git tag C") == 0);
+  // Conflict on a.h is expected — resolve to the union, then commit to seal.
+  runIn(p, "git merge --no-ff --no-edit feat-b");
+  writeFile(p / "a.h", "#include \"c.h\"\n#include \"d.h\"\n");
+  REQUIRE(runIn(p, "git add a.h && git commit -qm merge") == 0);
+  REQUIRE(runIn(p, "git rev-parse -q --verify HEAD^2") == 0);
+}
+
+TEST_CASE("git diff: merge-commit HEAD → A..M sees union of edges from both parents", "[diff][git][integration][merge]")
+{
+  TempDir repo;
+  buildMergeRepo(repo.path);
+
+  const auto fromA = diffRefs(repo.path, "A", "HEAD");
+  REQUIRE(fromA.addedEdges.size() == 2);
+  const auto hasEdge = [&](std::string_view to)
+  {
+    return std::any_of(fromA.addedEdges.begin(), fromA.addedEdges.end(),
+                       [&](const auto &e) { return e.from == "a.h" && e.to == to; });
+  };
+  REQUIRE(hasEdge("c.h"));
+  REQUIRE(hasEdge("d.h"));
+  REQUIRE(fromA.removedEdges.empty());
+
+  // C..M: only the edge feat-b brought in (a->c). a->d was already in C.
+  const auto fromC = diffRefs(repo.path, "C", "HEAD");
+  REQUIRE(fromC.addedEdges.size() == 1);
+  REQUIRE(fromC.addedEdges[0].from == "a.h");
+  REQUIRE(fromC.addedEdges[0].to == "c.h");
+  REQUIRE(fromC.removedEdges.empty());
 }
 
 TEST_CASE("git diff: changedCppFiles (a..WORKTREE) catches uncommitted + untracked C++ files",
