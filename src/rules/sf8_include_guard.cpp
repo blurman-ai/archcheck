@@ -12,7 +12,8 @@ namespace
 {
 
 // Scan first kScanLines non-empty lines for #pragma once or #ifndef guard.
-constexpr int kScanLines = 30;
+// 60 covers Apache 2.0 copyright blocks (~47 lines) common in OSS headers.
+constexpr int kScanLines = 60;
 
 bool hasPragmaOnce(std::string_view line)
 {
@@ -45,6 +46,10 @@ bool isObjcFile(const std::string &source)
   }
   return false;
 }
+
+// .inc files are platform-specific fragments included exactly once via #if.
+// An include guard would contradict their purpose; skip SF.8 for them.
+bool isIncFile(std::string_view path) { return std::filesystem::path(path).extension() == ".inc"; }
 
 bool hasIncludeGuard(const std::string &source)
 {
@@ -80,6 +85,8 @@ ViolationList Sf8IncludeGuard::check(const graph::DependencyGraph &graph,
     const graph::NodeId id{i};
     const auto path = graph.pathOf(id);
     if (!archcheck::scan::isHeaderFile(std::filesystem::path(path)))
+      continue;
+    if (isIncFile(path))
       continue;
     const auto source = readFile(path);
     if (isObjcFile(source))
