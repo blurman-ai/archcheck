@@ -54,6 +54,59 @@ Astra Linux 1.7 поставляет **lcov 1.13** (Debian Buster).
 - Ubuntu 22.04+ / Debian Bookworm (lcov 1.16+) — добавить `--exclude-unreachable-branches`
 - или `pip3 install gcovr` + переписать `check_coverage.sh` под gcovr
 
+## GCC 8 / C++20 stdlib gaps (Astra Linux 1.7)
+
+### Суть проблемы
+
+Astra Linux 1.7 поставляет **GCC 8.3**. Проект объявлен как C++20 (`-std=c++20`),
+и GCC 8 принимает этот флаг — но реализует далеко не весь стандарт. Часть C++20
+stdlib-фич появилась только в GCC 10 (libstdc++ 10).
+
+В CI (Ubuntu 24.04, GCC 13) и на любом современном Linux эти фичи работают нормально.
+Проблема возникает только при локальной сборке на Astra.
+
+### Известные недостающие фичи
+
+| Фича | Доступна с | Обходной путь |
+|------|-----------|---------------|
+| `std::string_view::starts_with(x)` | GCC 10 | `s.find(x) == 0` |
+| `std::string_view::ends_with(x)` | GCC 10 | `s.rfind(x) == s.size() - x.size()` |
+| `std::string::starts_with(x)` | GCC 10 | то же |
+| `std::string::ends_with(x)` | GCC 10 | то же |
+
+Полный список C++20 library features по компиляторам:
+https://en.cppreference.com/w/cpp/compiler_support/20
+
+### Маркер для быстрого поиска при обновлении Astra
+
+**Правило:** каждый обходной путь сопровождается комментарием-тегом `// GCC8-COMPAT:`.
+
+```cpp
+// GCC8-COMPAT: starts_with() requires GCC 10; replace when Astra upgrades
+if (path.find(prefix) == 0) // cppcheck-suppress stlIfStrFind
+```
+
+При переходе на новую Astra (или когда Astra обновит toolchain до GCC 10+):
+
+```bash
+grep -rn "GCC8-COMPAT" src/ include/ tests/
+```
+
+Найдёт все места, которые нужно привести в порядок.
+
+### Текущие экземпляры
+
+| Файл | Строка | Обходной путь | Целевой код |
+|------|--------|---------------|-------------|
+| `src/scan/include_resolver.cpp` | строка с `path.find(prefix) == 0` | `find()==0` + cppcheck-suppress | `path.starts_with(prefix)` |
+
+### Отдельный случай: `(void)::read()` на GCC 13
+
+Это **не** GCC 8 проблема — обратная: в CI (GCC 13, Ubuntu 24.04)
+`(void)`-cast не подавляет `-Werror=unused-result` для `read()`.
+Решение — `[[maybe_unused]] auto n = ::read(...)`.
+Метка `GCC8-COMPAT:` не используется, это CI-специфика.
+
 ## LCOV_EXCL_* маркеры уже в коде
 
 В `src/git/git_state.cpp` и `src/git/git_object_file_source.cpp` расставлены
