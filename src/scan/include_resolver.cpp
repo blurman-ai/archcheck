@@ -17,6 +17,7 @@ bool is_mirror_dir_path(std::string_view path)
 {
   for (std::string_view prefix : kMirrorPrefixes)
   {
+    // GCC8-COMPAT: starts_with() requires GCC 10; replace when Astra upgrades
     if (path.find(prefix) == 0) // cppcheck-suppress stlIfStrFind
       return true;
     std::string needle;
