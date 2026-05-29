@@ -75,3 +75,9 @@ Testing/
 *.gcov
 *.gcda
 *.gcno
+
+# Claude Code harness runtime state
+.claude/scheduled_tasks.lock
+
+# Local playground for ad-hoc experiments (DRIFT dogfood clones, etc.)
+sandbox/
