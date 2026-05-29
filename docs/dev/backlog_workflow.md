@@ -241,7 +241,7 @@ Conventional Commits, ссылка на ID, AI-трейлеры (`AI-Assisted`, 
 
 ### [`/status-review`](../../.claude/commands/status-review.md)
 
-Идёт по git+файлам и сверяет с `STATUS.md`, `CHANGELOG.md`, `milestones.md`, `backlog/completed/`. Ловит расхождения документов с реальностью.
+Идёт по git+файлам и сверяет с `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Ловит расхождения документов с реальностью.
 
 В режиме B — расширить проверкой «локальное состояние ↔ внешний трекер» (если есть MCP/API).
 

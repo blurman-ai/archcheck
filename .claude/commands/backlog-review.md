@@ -2,6 +2,21 @@ Review backlog: найти протухшие, оценить сложность
 
 No arguments. Запускать как `/backlog-review`.
 
+## Контракт документов (ownership)
+
+| Документ | Что хранит | Время | Update trigger |
+|---|---|---|---|
+| `backlog/new/` | очередь активных задач, ещё не начатых | present | `/create-task`, переезд из `wip/` (откат) или `future/` (поднялась фаза) |
+| `backlog/wip/` | задачи в работе (есть `Дата старта:`) | present | `/issue`, `/checkpoint` |
+| `backlog/completed/` | завершённые задачи + документация системы (DoD-секции) | past, append-only | `/fix-issue` |
+| `backlog/future/` | задачи post-MVP / явно отложены в v0.3+ | mutable | scope-решение, понижение фазы |
+| `backlog/pending/` | парковка, **не очередь** | — | вручную, не из скилов |
+| `backlog/backlog_review.md` | snapshot очереди + классификация | present | этот скил (`/backlog-review`) |
+
+**Файлы под управлением этого скила:** `backlog/*` (кроме `pending/` — не трогать без явной команды).
+**Файлы под `/status-review`:** `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Не пересекаемся.
+**Этот скил НЕ правит** CHANGELOG / ROADMAP / milestones / spec / README / CLAUDE.md.
+
 ## Шаги
 
 1. **Собрать все задачи**:
@@ -64,7 +79,19 @@ No arguments. Запускать как `/backlog-review`.
    - Сколько требует анализа.
    - Сколько заблокировано.
 
-Tips:
-- Параллельные агенты — для чтения групп файлов.
-- Группировать по модулю, не по дате.
-- Кросс-сверка с `backlog/completed/` — не пропустить уже сделанное.
+## Что НЕ делает
+
+- Не правит `CHANGELOG.md` / `docs/ROADMAP.md` / `docs/milestones.md` — это работа `/status-review`.
+- Не правит `docs/architecture-spec.md` / `README.md` / `CLAUDE.md` / `AGENTS.md` — это дизайн / framing.
+- Не трогает `backlog/pending/`.
+- Не двигает задачи между `new/` / `wip/` / `completed/` сам — только предлагает. Перемещения — `/issue`, `/checkpoint`, `/fix-issue`.
+- Не коммитит. Только пишет в `backlog/backlog_review.md` и показывает сводку.
+- Не запускает билд / тесты / lizard.
+
+## Тон
+
+Сухо, табличками. Группировать по модулю, не по дате. Кросс-сверка с `completed/` — не пропустить уже сделанное. Если задача протухла — называть прямо, не закругляться.
+
+## Tips
+
+- Параллельные агенты (`general-purpose`, `model=sonnet`) — для чтения групп файлов.
