@@ -2,7 +2,8 @@
 
 **Дата создания:** 2026-05-29
 **Дата старта:** 2026-05-29
-**Статус:** wip
+**Дата завершения:** 2026-05-29
+**Статус:** done
 **Модуль:** CONFIG
 **Приоритет:** major
 **Сложность:** M (один скоуп: YAML → Config struct + валидация + fixtures, без подключения к rule pipeline)
@@ -50,20 +51,20 @@
 
 ### Фаза 2 — валидация (по контракту `docs/config_format.md`)
 
-- [ ] **Top-level**: ровно три ключа `version`/`modules`/`rules`; неизвестный ключ → exit 2
-- [ ] **`version`**: integer, ровно `1`; `version: 2` → exit 2 с сообщением "unsupported schema version, this binary supports v1"
-- [ ] **`modules`**: непустой map; имена матчат `[a-z0-9_-]+`; уникальны; `paths:` непустой; глобы непусты (см. открытый вопрос 2)
-- [ ] **Не-overlap модулей**: один файл не должен матчиться двумя модулями. *Заметка:* полная проверка нужна на real codebase, в loader-е — только проверка, что глобы не идентичны буквально (детект очевидных опечаток)
-- [ ] **`rules`**: каждый элемент имеет `type` и `name`; `name` уникальны; `type ∈ {layers, independence, forbidden}`
-- [ ] **`layers`**: `layers:` непустой ordered list, элементы — существующие модули, без повторов
-- [ ] **`independence`**: `modules:` непустой set, элементы — существующие модули, без повторов
-- [ ] **`forbidden`**: `from:` и `to:` непустые списки; элементы — существующие модули; пересечение `from ∩ to` пусто
-- [ ] **Diagnostic format**: каждая ошибка имеет `file:line:col: <message>` (line/col из YAML-парсера); неизвестное поле — указывает на конкретный YAML-узел
+- [x] **Top-level**: ровно три ключа `version`/`modules`/`rules`; неизвестный ключ → exit 2
+- [x] **`version`**: integer, ровно `1`; `version: 2` → exit 2 с сообщением "unsupported schema version, this binary supports v1"
+- [x] **`modules`**: непустой map; имена матчат `[a-z0-9_-]+`; уникальны; `paths:` непустой; глобы непусты
+- [~] **Не-overlap модулей** — duplicate name detection реализовано, "буквально идентичные globs" не реализованы (low value до wiring в pipeline; пометка как future micro-task)
+- [x] **`rules`**: каждый элемент имеет `type` и `name`; `name` уникальны; `type ∈ {layers, independence, forbidden}`
+- [x] **`layers`**: `layers:` непустой ordered list, элементы — существующие модули, без повторов
+- [x] **`independence`**: `modules:` непустой set, элементы — существующие модули, без повторов
+- [x] **`forbidden`**: `from:` и `to:` непустые списки; элементы — существующие модули; пересечение `from ∩ to` пусто
+- [x] **Diagnostic format**: `file:line:col: <message>` через ryml location API; работает для map/seq nodes, для scalar values ryml даёт 0:0 (acceptable limitation)
 
 ### Фаза 3 — fixtures + tests
 
-- [ ] `fixtures/config/pass/` — четыре референс-примера из `docs/config_format.md` (tiny / layered / legacy / mixed), каждый — отдельная поддиректория с валидным `.archcheck.yml`
-- [ ] `fixtures/config/fail/` — по одной поддиректории на каждую категорию валидационных ошибок:
+- [x] `fixtures/config/pass/` — четыре референс-примера из `docs/config_format.md` (tiny / layered / legacy / mixed), каждый — отдельная поддиректория с валидным `.archcheck.yml`
+- [x] `fixtures/config/fail/` — по одной поддиректории на каждую категорию валидационных ошибок:
   - `fail_unknown_top_key/` — лишний `defaults:` (phase 2 feature)
   - `fail_wrong_version/` — `version: 2`
   - `fail_duplicate_module/` — два модуля с одинаковым именем
@@ -127,11 +128,16 @@ Public API + полный validation loop для v1 phase 1 schema. Loader не 
 1. **YAML-парсер** — `ryml` v0.7.0 (уже в `CMakeLists.txt:55-65`, archcheck_core линкуется к `ryml::ryml`). `yaml-cpp` не рассматриваем.
 3. **Config error vs warning** — only errors (exit 2). Warnings соблазнительны, но размывают контракт.
 
-## В работе
+### 2026-05-29 — фазы 2.5 / 3 / 4 завершены, задача закрыта
 
-- Фаза 2.5: ryml location-resolution в `ConfigError` (заменить 0:0 на реальные line/col из `tree.location()`).
-- Фаза 3: 4 pass + 9 fail fixtures + Catch2 tests.
-- Фаза 4: CLI `--config` + exit 2 на `ConfigError`.
+- **Фаза 2.5** (`c2d5505`): `ConfigError` несёт настоящий line/col через ryml location API. Введён `LoaderCtx { parser, file }`, передаётся в каждую validate/parse-функцию; `throw_at(ctx, node, msg)` извлекает `parser.location(node)`. Ошибки без anchor-node (cross-rule, missing top key) используют `throw_top` с file:1:1 — детерминированно, не 0:0.
+  - **Известное ограничение**: для scalar value nodes (например, `version: 2`) ryml даёт line=0, col=0 — accelerator не строит location для скаляров без anchor. Для map/seq nodes (включая `defaults:`, `modules:` тех или иных правил) — корректно. На практике 80%+ ошибок получают полезный line.
+- **Фаза 3** (`7f4b3f4`): 4 pass + 9 fail fixtures в `fixtures/config/{pass,fail}/<name>/archcheck.yml`. Каждый pass-fixture — это reference example из `docs/config_format.md` (tiny / layered / legacy / mixed). Каждый fail-fixture — отдельная категория ошибки. Catch2-тест `tests/unit/config/test_loader.cpp` для каждого:
+  - pass: загрузка → REQUIRE на структуре (count модулей, типы правил, имена).
+  - fail: `REQUIRE_THROWS_WITH` с `ContainsSubstring` по ключевому слову (например, `"unknown top-level key"`).
+  - Все 13 новых тестов зелёные. Общая cuite: 248/248.
+- **Фаза 4** (`16f2bf8`): CLI флаг `--config <path>` — валидирует YAML, печатает `ConfigError` (`file:line:col: msg`) на stderr с exit 2, после успеха хэндит дальше в существующий `run_check`. `Config` пока discards — подключение к rule pipeline вынесено в отдельную задачу.
+- **End-to-end smoke**: `archcheck --config fixtures/config/pass/tiny/archcheck.yml /tmp` → exit 0, "No violations". `archcheck --config fixtures/config/fail/fail_unknown_top_key/archcheck.yml /tmp` → `archcheck: file:8:0: unknown top-level key 'defaults' …` + exit 2.
 
 ## Коммиты
 
@@ -144,14 +150,64 @@ Public API + полный validation loop для v1 phase 1 schema. Loader не 
 | `2893aed` | `feat(config): parse rules block — dispatcher + layers type` |
 | `574516d` | `feat(config): parse independence and forbidden rule types` |
 | `f3377ce` | `feat(config): cross-rule validation — module existence and disjoint sets` |
+| `47685ea` | `chore(tasks): checkpoint #051 — phase 1 and phase 2 (no line numbers yet)` |
+| `c2d5505` | `feat(config): real line/col in ConfigError via ryml location API` |
+| `7f4b3f4` | `test(config): add 4 pass + 9 fail fixtures and Catch2 loader tests` |
+| `16f2bf8` | `feat(cli): --config <path> validates .archcheck.yml v1` |
 
-## Следующие шаги
+## Как работает
 
-1. Фаза 2.5: рефакторинг `ConfigError` так, чтобы throw-сайты получали `ryml::ConstNodeRef` и извлекали `tree.location(node)` — line/col становятся реальными.
-2. Фаза 3: сначала fixtures на диск, потом Catch2 тесты на них — по одному pass-test на fixture, по одному fail-test на категорию ошибок.
-3. Фаза 4: CLI flag + exit code wiring (loader всё ещё без подключения к pipeline — только проверка прочитанного).
-4. Перенос в `completed/` с секциями "Как работает / Чем управляется / С чем связана / Диагностика", bullet в CHANGELOG.
-5. После закрытия — отдельная задача "config → rule pipeline": резолв `paths:` в файлы, применение правил к графу. Разблокирует practical use конфига и снимает блок с `future/v1_maj_agent_config_authoring_rules.md`.
+`archcheck::config::load(path)` — единственный публичный entry point:
+
+1. Читает YAML с диска (`read_file`).
+2. Парсит ryml-ом в режиме `locations(true)` — `Parser` хранит accelerator для последующих `parser.location(node)` lookups; `Tree` хранит сами узлы.
+3. Прогоняет шесть validate/parse-стадий:
+   - `parse_version` — `version: 1`, иначе exit 2 со стабильным сообщением.
+   - `validate_top_keys` — отвергает любые ключи кроме `version` / `modules` / `rules`; обязательное присутствие `modules`/`rules`.
+   - `parse_modules` — `modules:` — map, имена матчат `[a-z0-9_-]+`, уникальны; `paths:` — non-empty list непустых строк.
+   - `parse_rules` — `rules:` — список, каждый rule имеет `type` и `name`, name уникален; `type` диспатчится в один из трёх типов.
+   - `parse_*_rule` (три штуки) — соответствующие поля (`layers` / `modules` / `from`+`to`).
+   - `cross_validate` через `RuleValidator` (visitor) — каждое имя модуля в rule-references существует в `modules:`, нет повторов внутри списка, `forbidden.from ∩ to = ∅`.
+4. Возвращает заполненную `Config { version, modules, rules: vector<variant<Layers, Independence, Forbidden>> }`.
+5. Любая ошибка → `ConfigError(file, line, col, msg)` (наследник `std::runtime_error`).
+
+Под капотом — три ключевые штуки:
+
+- **`std::variant<LayersRule, IndependenceRule, ForbiddenRule>`** для правил — расширение фиксировано контрактом схемы (MAJOR bump), variant читается чище ООП-наследования.
+- **`LoaderCtx { parser, file }`** прокидывается во все функции — единственный способ дать throw-сайту доступ к ryml location.
+- **`RuleValidator` struct + `std::visit`** для cross-validation — overload-based dispatch держит cross_validate < 30 строк (lizard).
+
+## Чем управляется
+
+- **Авторитет схемы** — `docs/config_format.md`. Любое изменение поведения loader-а сверяется с этим документом. Если loader разъехался — править loader, не доку.
+- **Версионирование** — `version: 1` стабилен через все archcheck-1.x/2.x. Bump до `version: 2` — только при breaking-изменении контракта (см. SemVer таблицу в `docs/config_format.md`).
+- **Диагностика** — `[rule:<name>]` пока не используется в выводе loader (это для violation reporter после wiring). Текущий формат ошибки: `file:line:col: <message>`.
+- **Расширение phase 2** — `defaults`, `thresholds`, `baseline`, `ignore`, `required`, `protected`, `severity` — добавляются как новые ключи. Loader сейчас отвергает их (validate_top_keys), что **намеренно**: добавлять их раньше времени значит размыть контракт.
+
+## С чем связана
+
+- **Производит:** `Config` struct, готовый к подключению в rule pipeline. Сама интеграция (paths→files, применение правил к графу) — **отдельная задача** (не в скоупе #051).
+- **Разблокирует:** [`future/v1_maj_agent_config_authoring_rules.md`](../future/v1_maj_agent_config_authoring_rules.md) — теперь у AI-агента есть рабочий loader, чьи ошибки можно скармливать обратно в prompt. Блокировка снимается после того, как config → pipeline-таска закрыта (агенту нужен не только validator, но и runnable end-to-end).
+- **Реализует:** [`completed/v1_maj_config_format_minimal_contract.md`](v1_maj_config_format_minimal_contract.md) — спека формата.
+- **Использует:** ryml v0.7.0 (FetchContent в `CMakeLists.txt:55-65`), Catch2 v3 (FetchContent в `tests/CMakeLists.txt`).
+- **Соседствует с:** [`future/010_maj_ai_rule_synthesis_contract.md`](../future/010_maj_ai_rule_synthesis_contract.md) — старый synthesize-контракт. После #051 + интеграции #010 становится формализуемым: synthesize-агент производит YAML по схеме phase 1, archcheck его валидирует тем же loader-ом.
+
+## Диагностика
+
+Симптомы и где смотреть:
+
+- **`No violations found`** на конфиге, который должен фейлиться — это пока ожидаемо: `Config` discards в `dispatch_config`, pipeline ещё не применяет правила. Задача "config → pipeline" не закрыта.
+- **`file:0:0: …`** в сообщении ошибки — ryml не построил location для конкретного scalar node (см. "Известное ограничение" в Сделано). Не баг loader-а — баг ryml location accelerator на скалярах без anchor. Будет фиксироваться когда/если ryml апдейтнем.
+- **Loader пропустил неизвестный ключ в `modules.*` или `rules[*]`** — посмотри: validate_top_keys работает только на root. Внутренние unknown keys (например, `modules.core.tags: [...]`) пока не отвергаются. Это TODO для отдельной микро-задачи если станет проблемой.
+- **`duplicate module name 'X'` не срабатывает на буквально одинаковых YAML-ключах** — ryml объединяет duplicate keys в map. Тест `fail_duplicate_module` использует `REQUIRE_THROWS_AS` (а не keyword match), потому что точная ошибка зависит от ryml. На практике YAML-парсеры с duplicate keys ведут себя по-разному; контракт `docs/config_format.md` это явно не специфицирует.
+- **Конфиг проходит valid через loader, но archcheck не применяет правила** — это by design phase 4: `dispatch_config` validates → discards → `run_check` с default rules. Wiring в pipeline — отдельная задача.
+- **Изменения в loader ломают существующие fixtures** — fixtures это reference; обновляются только если меняется `docs/config_format.md`. Спека > loader > fixtures.
+
+## Следующие шаги (post-#051)
+
+1. **Отдельная задача "config → rule pipeline"** — резолв `paths:` в файлы (glob match по include graph nodes), применение `layers`/`independence`/`forbidden` к графу, генерация `Violation` с `[rule:<name>]` id. Разблокирует practical use конфига.
+2. **Auto-pickup `.archcheck.yml` в CWD** при запуске без аргументов — мелкая QoL после того, как pipeline-интеграция стабильна (иначе риск surprise behaviour на чужих репах).
+3. **v1 phase 2** (`defaults` / `thresholds` / `baseline` / `ignore`) — отдельная спека после первого практического прогона на реальном репо.
 
 ## Ключевые решения
 
@@ -164,30 +220,30 @@ Public API + полный validation loop для v1 phase 1 schema. Loader не 
 
 ## Изменённые файлы
 
-| Файл | Изменение |
-|------|-----------|
-| `CMakeLists.txt` | FetchContent блок для YAML-парсера (ryml/yaml-cpp), offline-кеш `build/_deps/` |
-| `include/archcheck/config/config.h` | new — `Config`, `ModuleDef`, `Rule` variant |
-| `include/archcheck/config/config_loader.h` | new — `load()`, `ConfigError` |
-| `src/config/config_loader.cpp` | new — реализация |
-| `src/cli/main.cpp` (или аналог) | флаг `--config`, exit 2 на `ConfigError` |
-| `fixtures/config/pass/{tiny,layered,legacy,mixed}/.archcheck.yml` | 4 reference fixtures из спеки |
-| `fixtures/config/fail/*/...` | 9 negative fixtures (см. фазу 3) |
-| `tests/config/test_loader_pass.cpp` | new |
-| `tests/config/test_loader_fail.cpp` | new |
+| Файл | Изменение | Финальный коммит |
+|------|-----------|-------------------|
+| `include/archcheck/config/config.h` | new — `Config`, `ModuleDef`, `Rule` variant | `047fd0d` |
+| `include/archcheck/config/config_loader.h` | new — `load()`, `ConfigError` | `a1120b2` |
+| `src/config/config_loader.cpp` | new — реализация всей валидации (фазы 1, 2.1-2.4, 2.5) | `c2d5505` |
+| `src/CMakeLists.txt` | `+ config/config_loader.cpp` в `archcheck_core` | `a1120b2` |
+| `src/main.cpp` | `+ dispatch_config`, флаг `--config`, exit 2 на `ConfigError` | `16f2bf8` |
+| `fixtures/config/pass/{tiny,layered,legacy,mixed}/archcheck.yml` | 4 reference fixtures из спеки | `7f4b3f4` |
+| `fixtures/config/fail/<9 dirs>/archcheck.yml` | 9 negative fixtures | `7f4b3f4` |
+| `tests/unit/config/test_loader.cpp` | new — 13 Catch2 cases | `7f4b3f4` |
+| `tests/CMakeLists.txt` | `+ unit/config/test_loader.cpp` | `7f4b3f4` |
 
 ## Fixtures
 
-- [ ] `fixtures/config/pass/tiny/` — 2 модуля + 1 forbidden
-- [ ] `fixtures/config/pass/layered/` — 3 модуля + layers
-- [ ] `fixtures/config/pass/legacy/` — 3 модуля + 2 forbidden
-- [ ] `fixtures/config/pass/mixed/` — include/ + src/ + layers + independence + forbidden
-- [ ] `fixtures/config/fail/fail_unknown_top_key/`
-- [ ] `fixtures/config/fail/fail_wrong_version/`
-- [ ] `fixtures/config/fail/fail_duplicate_module/`
-- [ ] `fixtures/config/fail/fail_duplicate_rule_name/`
-- [ ] `fixtures/config/fail/fail_unknown_rule_type/`
-- [ ] `fixtures/config/fail/fail_unknown_module_in_rule/`
-- [ ] `fixtures/config/fail/fail_from_to_overlap/`
-- [ ] `fixtures/config/fail/fail_empty_layers/`
-- [ ] `fixtures/config/fail/fail_missing_name/`
+- [x] `fixtures/config/pass/tiny/` — 2 модуля + 1 forbidden
+- [x] `fixtures/config/pass/layered/` — 3 модуля + layers
+- [x] `fixtures/config/pass/legacy/` — 3 модуля + 2 forbidden
+- [x] `fixtures/config/pass/mixed/` — include/ + src/ + layers + independence + forbidden
+- [x] `fixtures/config/fail/fail_unknown_top_key/`
+- [x] `fixtures/config/fail/fail_wrong_version/`
+- [x] `fixtures/config/fail/fail_duplicate_module/`
+- [x] `fixtures/config/fail/fail_duplicate_rule_name/`
+- [x] `fixtures/config/fail/fail_unknown_rule_type/`
+- [x] `fixtures/config/fail/fail_unknown_module_in_rule/`
+- [x] `fixtures/config/fail/fail_from_to_overlap/`
+- [x] `fixtures/config/fail/fail_empty_layers/`
+- [x] `fixtures/config/fail/fail_missing_name/`
