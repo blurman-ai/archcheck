@@ -650,6 +650,74 @@ namespace lite_tuple {
 
 ---
 
+## 2026-05-29 — DRIFT-корпус расширен до 33 PR на 10 репо
+
+**Версия archcheck:** working tree после #047.
+**Helper-скрипт:** `scripts/drift_run.sh` (clean checkout, см. #048).
+
+Полный рабочий лог: [docs/research/ai_drift_runlog.md](research/ai_drift_runlog.md).
+Развёрнутый анализ архетипов: [docs/research/ai_drift_cases.md](research/ai_drift_cases.md).
+
+### Прогон 15 — массовый sweep AI-PR'ов в C++ репо
+
+Цель: проверить, что находки DRIFT.1 из прогона 14 — не случайные, а
+систематические. Найти больше hits на разнотипных проектах. Собрать корпус
+≥ 10 PR'ов с подтверждёнными hit'ами для целевой демонстрации в README.
+
+**Расширенный корпус (10 репо, 33 PR'а):**
+
+| Repo | PR'ов | DRIFT.1 hit | Архетип |
+|------|-------|-------------|---------|
+| LibreSprite/LibreSprite | 1 | 1 | UI→pref shortcut |
+| proximafusion/vmecpp | 2 | 0 | clean (scientific code) |
+| bambulab/BambuStudio | 1 | 2 | UI→Widgets shortcut |
+| sxs-collaboration/spectre | 5 | 0 | clean (numerical relativity) |
+| gwdevhub/GWToolboxpp | 3 | 0 | clean |
+| jakildev/IrredenEngine | 4 | 2 | system→component |
+| openmoq/moqx | 3 | 0 | clean |
+| aethersdr/AetherSDR | 3 | 0 | clean |
+| OreStudio/OreStudio | 4 | 0 | clean (но +9762 LOC у одного!) |
+| EtherAura/Kartend | 3 | 5 | data→ui-config shortcut |
+| community-shaders/skyrim | 4 | 2 | generic→features shortcut |
+
+**Итог: 12 DRIFT.1 hit'ов на 7 PR'ах из 33 (21%).** Все hits подтверждены
+grep'ом против диффа коммита (реальные новые `#include`). DRIFT.2 (новые
+циклы) не сработал ни разу.
+
+### Найденные баги в archcheck
+
+- **#047 (closed)** — UTF-8 BOM не зачищается. Фикс применён, регрессионные тесты
+  добавлены. Подтверждено на BambuStudio.
+- **#048 (new, critical)** — методологическая ловушка: `git checkout SHA -- src`
+  без `git clean -fdx` оставляет файлы из других ревизий в working tree, что
+  даёт массовые false-positive в DRIFT (например, Kartend #26: dirty=26 FP,
+  clean=0; OreStudio дал 7 FP в dirty mode, 0 в clean). Helper `scripts/drift_run.sh`
+  написан, долгосрочное решение — режим `--diff` с git worktree изоляцией.
+
+### Что нового по сравнению с прогоном 14
+
+- **+8 новых репо**, **+29 новых PR'ов** к baseline корпусу.
+- **+4 архетипа DRIFT.1** подтверждены: UI→widgets (был), UI-config→core (был),
+  generic→features (новый, Skyrim), system→component (новый, IrredenEngine),
+  data→ui-config (новый, Kartend).
+- **Большие clean PR'ы** доказывают, что DRIFT.1 не false-positive шумогенератор:
+  - spectre #7238: +1352 LOC новой Filters::Filter иерархии — 0 drift
+  - OreStudio #588: +9762 LOC composite/scripted instruments — 0 drift
+  - moqx #327: +1183 LOC нового модуля CrossExecFilter — 0 drift
+  - IrredenEngine #798: +427 LOC editor layer system — 0 drift
+
+Корпус **превысил порог 5+ hit'ов**, заявленный в #033 §"Целевой вид
+демонстрации". Можно начинать работу над README с реальными данными
+(см. backlog/future/033 §"Следующие шаги" п. 7).
+
+Артефакты (постоянные):
+- Клоны: `/home/localadm/oss/{LibreSprite,vmecpp,BambuStudio,spectre,GWToolboxpp,IrredenEngine,moqx,AetherSDR,OreStudio,Kartend,skyrim-community-shaders,pico-sdk,sys-device}`
+- Graph baselines: `/tmp/clean_*_base.json`
+- Drift-отчёты: `/tmp/clean_*_drift.txt`
+- Helper: `scripts/drift_run.sh`
+
+---
+
 ## Шаблон записи
 
 ```
