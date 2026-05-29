@@ -427,6 +427,8 @@ namespace lite_tuple {
 **SF.9: 0 в отчёте, но sccs_cyclic=1 в --graph.**
 Несоответствие требует расследования. Единственный SCC размером 2 — предположительно в `third_party/upb` (C-код), где цикл между `.c` и `.h` файлами. SF.9 может не репортить его по причине фильтрации или особенностей обхода. **Требует отдельной проверки.**
 
+**Resolved 2026-05-29 (задача #049):** причина была в сканере — внутри классического `#ifndef X / #define X / ... / #endif` guard'а все top-level `#include` помечались `conditional=true`, и логика #032 (`allEdgesConditional`) глушила цикл. Перепрогон grpc после фикса даёт **SF.9 = 4**, среди них реальный архитектурный цикл `src/core/tsi/alts/handshaker/alts_handshaker_client.h ↔ alts_tsi_handshaker.h`. Регрессия на остальном корпусе: fmt/Catch2/nlohmann_json/abseil = 0, folly = 9, spdlog = 0 — все без изменений.
+
 **SF.7: 0** — Google Code Style строго запрещает `using namespace`. Подтверждено на всём grpc-коде.
 
 ---
@@ -620,6 +622,31 @@ namespace lite_tuple {
   `/tmp/vmecpp_pr340_before.graph.json`, `/tmp/bambustudio_before.graph.json`
 - Полные drift-отчёты: `/tmp/libresprite_drift.txt`, `/tmp/vmecpp_drift.txt`,
   `/tmp/bambustudio_drift.txt`
+
+---
+
+## 2026-05-29 — DRIFT re-run после BOM-фикса (#047)
+
+**Версия archcheck:** working tree с патчем из #047 (strip UTF-8 BOM в `scanIncludes`).
+
+Клоны репо переехали в постоянное хранилище `/home/localadm/oss/` (не sandbox).
+
+### Прогон 14 — повтор всех четырёх DRIFT-кейсов на свежих клонах
+- **LibreSprite #581** (`60eed0f` → `pr-581`): **1 DRIFT.1** — без изменений, та же находка `toolbar.cpp -> pref/preferences.h`.
+- **vmecpp #360** (`df63271` → `5eabd51`): 0 DRIFT — clean.
+- **vmecpp #340** (`b44fb7f` → `a7797dc`): 0 DRIFT — clean.
+- **BambuStudio #10794** (`2263815` → `pr-10794`): **3 → 2 DRIFT.1.**
+  False-positive `MsgDialog.cpp -> MsgDialog.hpp` (был артефакт UTF-8 BOM
+  в before-ревизии) **исчез**. Реальные находки сохранились:
+  `FilamentMapDialog.hpp -> Widgets/CheckBox.hpp`, `FilamentMapPanel.hpp -> Widgets/SwitchButton.hpp`.
+
+**Итог:** BOM-фикс из #047 подтверждён на боевом проекте. Сигнал чистый,
+шум устранён. Задача #047 → completed.
+
+Артефакты (постоянные):
+- Клоны: `/home/localadm/oss/{LibreSprite,vmecpp,BambuStudio}`
+- Graph baselines: `/tmp/{libresprite,vmecpp,vmecpp_pr340,bambustudio}_before_v2.graph.json`
+- Полные drift-отчёты: `/tmp/{libresprite,vmecpp,vmecpp_pr340,bambustudio}_drift_v2.txt`
 
 ---
 
