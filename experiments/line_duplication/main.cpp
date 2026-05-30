@@ -57,6 +57,9 @@ struct Options
     "3rdparty",
     "3rd_party",
     "thirdparty",
+    "vendors",
+    "submodules",
+    "subprojects",
     "single_include",
     "amalgamate*",
     "_deps",
@@ -272,11 +275,31 @@ struct BlockKeyHash
   return out;
 }
 
-[[nodiscard]] bool isCommentOnly(std::string_view raw)
+// Comment stripping mirrors archcheck SF.7 (src/rules/sf7_using_namespace.cpp):
+// same proven approximate approach (ignores string literals; single /* ... */
+// per line returns text before "/*"). Fixes license-header /* ... */ blocks
+// whose inner lines start with plain text leaking in as "significant" code.
+[[nodiscard]] std::string_view stripLineComment(std::string_view line)
 {
-  const std::string trimmed = trim(raw);
-  return startsWith(trimmed, "//") || startsWith(trimmed, "/*") || startsWith(trimmed, "*") ||
-         startsWith(trimmed, "*/");
+  const auto pos = line.find("//");
+  return (pos == std::string_view::npos) ? line : line.substr(0, pos);
+}
+
+[[nodiscard]] std::string_view updateBlockCommentState(std::string_view raw, bool &inBlockComment)
+{
+  if (inBlockComment)
+  {
+    const auto close = raw.find("*/");
+    if (close == std::string_view::npos)
+      return {};
+    inBlockComment = false;
+    return raw.substr(close + 2);
+  }
+  const auto open = raw.find("/*");
+  if (open == std::string_view::npos)
+    return raw;
+  inBlockComment = (raw.find("*/", open + 2) == std::string_view::npos);
+  return raw.substr(0, open);
 }
 
 [[nodiscard]] bool isPunctuationOnly(std::string_view value)
@@ -457,11 +480,15 @@ public:
         continue;
       }
 
-      if (relativePath == pattern)
+      // Directory/name patterns match case-insensitively: vendored trees appear
+      // as third_party / thirdParty / ThirdParty / 3rdParty across repos.
+      const std::string patternLower = toLowerAscii(pattern);
+      if (toLowerAscii(relativePath) == patternLower)
         return true;
 
-      if (std::find(parts.begin(), parts.end(), pattern) != parts.end())
-        return true;
+      for (const std::string &part : parts)
+        if (toLowerAscii(part) == patternLower)
+          return true;
     }
 
     return false;
@@ -598,6 +625,7 @@ private:
   std::vector<SigLine> lines;
   std::string raw;
   std::uint32_t lineNo = 0;
+  bool inBlockComment = false;
 
   std::size_t start = 0;
   while (start <= content.size())
@@ -609,8 +637,10 @@ private:
       raw.pop_back();
 
     ++lineNo;
-    if (!trim(raw).empty() && !isCommentOnly(raw))
-      lines.push_back({normalizeLine(raw), lineNo});
+    const std::string_view visible = updateBlockCommentState(raw, inBlockComment);
+    const std::string_view code = stripLineComment(visible);
+    if (!trim(code).empty())
+      lines.push_back({normalizeLine(code), lineNo});
 
     if (end == std::string_view::npos)
       break;

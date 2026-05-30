@@ -1,5 +1,8 @@
 # Local sweep report: line_duplication spike
 
+> Исторический raw-sweep отчёт.
+> Актуальный app-only прогон см. в `PROJECT_EXAMPLES_REPORT.md`.
+
 Дата: `2026-05-29`
 Инструмент: standalone spike из [README.md](README.md), бинарь
 `/tmp/line_dup_build/line_duplication`
