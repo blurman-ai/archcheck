@@ -81,3 +81,6 @@ Testing/
 
 # Local playground for ad-hoc experiments (DRIFT dogfood clones, etc.)
 sandbox/
+
+# Stray local copy of Claude's private memory (canonical copy lives in ~/.claude)
+memory/

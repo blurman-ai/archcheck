@@ -1,0 +1,14 @@
+# Experiment artifacts: keep source, scripts and reports — ignore reproducible output.
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# line_duplication: rendered examples are regenerable via render_project_examples.py
+line_duplication/examples/
+
+# ai_repo_run: raw per-repo dup dumps and timing (reproducible via run_dup.sh)
+ai_repo_run/*.txt
+ai_repo_run/*.time
+ai_repo_run/runs/
+ai_repo_run/pilot_raw/
