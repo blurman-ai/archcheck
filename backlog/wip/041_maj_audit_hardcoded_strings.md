@@ -70,6 +70,8 @@ Hardcoded Config defaults  →  merge  ←  .archcheck.yml (если есть)
   | тексты violation | — | все правила | INLINE_OK |
 
 - **Дизайн зафиксирован** в `docs/config_format.md` §«Discovery & default resolution» и в памяти проекта (`project_config_discovery_defaults`): embedded-defaults + file-override; walkup от CWD до FS-root (первый файл выигрывает); `--config` отключает walkup; merge поверх дефолтов.
+- **Шаг 1 (2026-05-30):** `Config::thresholds` (`struct Thresholds { chainLength=10; godHeaderFanIn=50; }`) заведён в `include/archcheck/config/config.h` как single source of truth.
+- **Шаг 2 (2026-05-30):** `Config` протянут в пайплайн. `makeDefaultRuleSet(const Config&)` передаёт `config.thresholds` в конструкторы `LakosGodHeaders`/`LakosChainLength`; `run_check` принимает `Config`; `dispatch_config` больше не выбрасывает загруженный конфиг (`(void)load` → передаётся в `run_check`). 248/248 тестов зелёные. `kDefaultThreshold` правил оставлен как дефолт конструктора (его пинят тесты + прямое создание) — литералы `10/50` теперь дублируются в двух местах, дедуп — мелкий follow-up.
 
 ## В работе
 
@@ -79,11 +81,12 @@ Hardcoded Config defaults  →  merge  ←  .archcheck.yml (если есть)
 
 > ⚠️ **Scope:** override порогов через YAML = блок `thresholds:`, а это **v1 phase 2** по `docs/config_format.md`. Phase-1 loader (#051) знает только `version`/`modules`/`rules`. Эта задача добавляет `thresholds:` (additive/MINOR, `version: 1` сохраняется) + рефактор дефолтов + walkup.
 
-1. Завести поля в `Config` struct под DEFAULT-константы (`thresholds.chain_length`, `thresholds.god_header_fan_in`, extensions) с in-code дефолтами.
-2. Передавать `Config` в правила (через `IRule`/конструкторы) вместо чтения `kDefaultThreshold`.
-3. Реализовать walkup-поиск `.archcheck.yml` от CWD до FS-root; `--config` отключает.
-4. Парсинг блока `thresholds:` в loader + merge поверх дефолтов; обновить `docs/config_format.md` (перенести `thresholds:` из «not in phase 1» в реализованное).
+1. ✅ Завести поля в `Config` struct под DEFAULT-константы (`thresholds`) с in-code дефолтами.
+2. ✅ Передать `Config` в правила (`makeDefaultRuleSet(const Config&)`); плумбинг через `run_check`; `dispatch_config` больше не выбрасывает конфиг.
+3. Парсинг блока `thresholds:` в loader + merge поверх дефолтов; обновить `docs/config_format.md` (перенести `thresholds:` из «not in phase 1» в реализованное). **← без этого end-to-end override ещё не работает.**
+4. Реализовать walkup-поиск `.archcheck.yml` от CWD до FS-root; `--config` отключает.
 5. Fixtures: `pass/` + `fail_*/` на override порога; документировать дефолты в README + `--help`.
+6. (follow-up) Дедуп литералов `10/50`: убрать `kDefaultThreshold` из правил или сослать на `Config` без инверсии зависимости; обновить тесты, пинящие `kDefaultThreshold`.
 
 ## Ключевые решения
 
