@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <variant>
 #include <vector>
@@ -34,11 +35,20 @@ struct ForbiddenRule
 
 using Rule = std::variant<LayersRule, IndependenceRule, ForbiddenRule>;
 
+// Tunable rule defaults, single source of truth. Overridable via the phase-2
+// `thresholds:` block in .archcheck.yml (see docs/config_format.md).
+struct Thresholds
+{
+  std::size_t chainLength = 10;    // Lakos.ChainLength: include chain depth
+  std::size_t godHeaderFanIn = 50; // Lakos.GodHeader: header fan-in
+};
+
 struct Config
 {
   int version = 0;
   std::vector<ModuleDef> modules;
   std::vector<Rule> rules;
+  Thresholds thresholds;
 };
 
 } // namespace archcheck::config

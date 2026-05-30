@@ -152,12 +152,13 @@ int applyDriftFile(const std::filesystem::path &driftFile, std::vector<std::uniq
   return 0;
 }
 
-int run_check(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts baseline = {})
+int run_check(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts baseline = {},
+              const archcheck::config::Config &config = {})
 {
   const auto built = archcheck::graph::buildGraphForPath(root);
   archcheck::scan::DiskFileSource src(root);
   auto readFile = [&](std::string_view path) -> std::string { return src.read(std::string(path)); };
-  auto rules = archcheck::rules::makeDefaultRuleSet();
+  auto rules = archcheck::rules::makeDefaultRuleSet(config);
   if (baseline.driftFile)
     if (const int rc = applyDriftFile(*baseline.driftFile, rules); rc != 0)
       return rc;
@@ -455,9 +456,10 @@ int dispatch_config(int argc, char *argv[])
     std::cerr << "archcheck: --config requires <path>\n";
     return 2;
   }
+  archcheck::config::Config config;
   try
   {
-    (void)archcheck::config::load(argv[2]);
+    config = archcheck::config::load(argv[2]);
   }
   catch (const archcheck::config::ConfigError &e)
   {
@@ -465,7 +467,7 @@ int dispatch_config(int argc, char *argv[])
     return 2;
   }
   const std::filesystem::path root = (argc > 3) ? std::filesystem::path{argv[3]} : std::filesystem::current_path();
-  return run_check(root, OutputFormat::Text);
+  return run_check(root, OutputFormat::Text, {}, config);
 }
 
 int dispatch_format(int argc, char *argv[])
