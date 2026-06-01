@@ -1,10 +1,10 @@
 #include "archcheck/scan/project_files.h"
 
 #include <algorithm>
-#include <array>
 #include <string>
-#include <string_view>
 #include <system_error>
+
+#include "archcheck/scan/file_classification.h"
 
 namespace archcheck::scan
 {
@@ -12,39 +12,16 @@ namespace archcheck::scan
 namespace
 {
 
-constexpr std::array<std::string_view, 12> kExtensions = {
-    ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".ipp", ".tpp", ".inl", ".inc",
-};
-
-constexpr std::array<std::string_view, 8> kHeaderExtensions = {
-    ".h", ".hh", ".hpp", ".hxx", ".ipp", ".tpp", ".inl", ".inc",
-};
-
-constexpr std::array<std::string_view, 6> kExcludedExact = {
-    ".git", "build", ".cache", ".idea", ".vscode", "out",
-};
-
-constexpr std::string_view kCmakeBuildPrefix = "cmake-build-";
-
 bool has_project_extension(const std::filesystem::path &p)
 {
   const std::string ext = p.extension().string();
-  return std::find(kExtensions.begin(), kExtensions.end(), ext) != kExtensions.end();
+  return std::find(kProjectExtensions.begin(), kProjectExtensions.end(), ext) != kProjectExtensions.end();
 }
 
 bool is_header_file(const std::filesystem::path &p)
 {
   const std::string ext = p.extension().string();
   return std::find(kHeaderExtensions.begin(), kHeaderExtensions.end(), ext) != kHeaderExtensions.end();
-}
-
-bool is_excluded_dir_name(std::string_view name)
-{
-  if (std::find(kExcludedExact.begin(), kExcludedExact.end(), name) != kExcludedExact.end())
-  {
-    return true;
-  }
-  return name.size() >= kCmakeBuildPrefix.size() && name.compare(0, kCmakeBuildPrefix.size(), kCmakeBuildPrefix) == 0;
 }
 
 std::string to_posix(const std::filesystem::path &relative)
@@ -65,7 +42,7 @@ std::vector<ProjectFile> discoverFiles(const std::filesystem::path &root)
   while (!ec && it != end)
   {
     const auto &entry = *it;
-    if (entry.is_directory(ec) && is_excluded_dir_name(entry.path().filename().string()))
+    if (entry.is_directory(ec) && isExcludedDirName(entry.path().filename().string()))
     {
       it.disable_recursion_pending();
       it.increment(ec);
