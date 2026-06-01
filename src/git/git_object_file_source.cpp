@@ -13,23 +13,13 @@
 #include <utility>
 #include <vector>
 
+#include "archcheck/scan/file_classification.h"
+
 namespace archcheck::git
 {
 
 namespace
 {
-
-constexpr std::array<std::string_view, 6> kExcludedSegments = {
-    ".git", "build", ".cache", ".idea", ".vscode", "out",
-};
-constexpr std::string_view kCmakeBuildPrefix = "cmake-build-";
-
-bool isExcludedSegment(std::string_view s)
-{
-  if (std::find(kExcludedSegments.begin(), kExcludedSegments.end(), s) != kExcludedSegments.end())
-    return true;
-  return s.size() >= kCmakeBuildPrefix.size() && s.compare(0, kCmakeBuildPrefix.size(), kCmakeBuildPrefix) == 0;
-}
 
 bool pathHasExcludedSegment(const std::string &posixPath)
 {
@@ -38,7 +28,7 @@ bool pathHasExcludedSegment(const std::string &posixPath)
   {
     const auto slash = posixPath.find('/', start);
     const auto end = (slash == std::string::npos) ? posixPath.size() : slash;
-    if (isExcludedSegment(std::string_view{posixPath}.substr(start, end - start)))
+    if (scan::isExcludedDirName(std::string_view{posixPath}.substr(start, end - start)))
       return true;
     if (slash == std::string::npos)
       break;
