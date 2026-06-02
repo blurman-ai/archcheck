@@ -22,6 +22,7 @@
 #include "archcheck/report/violation_baseline.h"
 #include "archcheck/rules/rule_set.h"
 #include "archcheck/scan/disk_file_source.h"
+#include "archcheck/scan/duplication/duplication_scanner.h"
 #include "archcheck/scan/include_scanner.h"
 #include "archcheck/scan/project_files.h"
 #include "archcheck/version.h"
@@ -47,6 +48,7 @@ void print_help()
             << "  archcheck --help\n"
             << "  archcheck --scan  <path>                     (preview: discover + scan #includes)\n"
             << "  archcheck --graph <path>                     (preview: build dependency graph + SCC stats)\n"
+            << "  archcheck --duplication <path>               (preview: detect code duplication)\n"
             << "  archcheck --diff  [--diff-mode=disk|memory] <revspec> [path]\n"
             << "                                               (regression vs git ref; revspec = 'a..b' or '<ref>')\n"
             << "\n"
@@ -270,6 +272,38 @@ int run_graph(const std::filesystem::path &root)
             << "sccs_cyclic:    " << scc.cyclic << '\n'
             << "largest_scc:    " << scc.largest << '\n';
   return scc.cyclic == 0 ? 0 : 1;
+}
+
+int run_duplication(const std::filesystem::path &root)
+{
+  const auto files = archcheck::scan::discoverFiles(root);
+  std::vector<std::pair<std::string, std::string>> sources;
+
+  archcheck::scan::DiskFileSource diskSrc(root);
+  for (const auto &f : files)
+  {
+    const auto content = diskSrc.read(f.path);
+    if (!content.empty())
+    {
+      sources.push_back({f.path, content});
+    }
+  }
+
+  const auto result = archcheck::scan::duplication::scanForDuplication(sources);
+  std::cout << "scanned " << result.fileCount << " files, " << result.fragments.size()
+            << " fragments, " << result.candidateCount << " candidate pairs\n"
+            << "reported (>= " << result.pairs.size() << " pairs above threshold)\n";
+
+  for (const auto &p : result.pairs)
+  {
+    const auto &fa = result.fragments[p.a];
+    const auto &fb = result.fragments[p.b];
+    std::cout << "  " << fa.file << ":" << fa.startLine << "-" << fa.endLine << "  <->  "
+              << fb.file << ":" << fb.startLine << "-" << fb.endLine << "  (weighted="
+              << p.weighted << ")\n";
+  }
+
+  return 0;
 }
 
 std::optional<archcheck::git::Worktree> materialize_or_report(const std::filesystem::path &repoRoot,
@@ -516,6 +550,8 @@ int dispatch_with_path(std::string_view arg, int argc, char *argv[])
   }
   if (arg == "--scan")
     return run_scan(argv[2]);
+  if (arg == "--duplication")
+    return run_duplication(argv[2]);
   return run_graph(argv[2]);
 }
 
@@ -545,7 +581,7 @@ int dispatch(int argc, char *argv[])
     return dispatch_drift_baseline(argc, argv);
   if (arg == "--save-graph-baseline")
     return dispatch_save_graph_baseline(argc, argv);
-  if (arg == "--scan" || arg == "--graph")
+  if (arg == "--scan" || arg == "--graph" || arg == "--duplication")
     return dispatch_with_path(arg, argc, argv);
   if (arg == "--diff")
     return dispatch_diff(argc, argv);
