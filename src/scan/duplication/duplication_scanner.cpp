@@ -79,6 +79,58 @@ void phase5SymmetricPairCanon(std::vector<Pair> &candidates)
   }
   candidates = std::move(deduped);
 }
+
+// P0.3: coordinate revalidation (simplified) — filter phantom ranges
+// Drops pairs where fragment line ranges are invalid (startLine < 1)
+void phase6CoordinateRevalidation(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  std::vector<Pair> filtered;
+
+  for (const auto &p : candidates)
+  {
+    const Fragment &fa = allFragments[p.a];
+    const Fragment &fb = allFragments[p.b];
+
+    // Sanity check: both fragments must have valid line ranges
+    if (fa.startLine > 0 && fa.endLine >= fa.startLine && fb.startLine > 0 && fb.endLine >= fb.startLine)
+    {
+      filtered.push_back(p);
+    }
+  }
+  candidates = std::move(filtered);
+}
+
+// P0.1: diff-hunk + blame attribution (simplified) — filter same-function/overlapping spans
+// In diff-mode, this would check git hunks; here we use a heuristic:
+// drop same-file pairs that overlap or are immediately adjacent (likely internal idiom, not clone)
+void phase7SameFunctionFilter(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  std::vector<Pair> filtered;
+
+  for (const auto &p : candidates)
+  {
+    const Fragment &fa = allFragments[p.a];
+    const Fragment &fb = allFragments[p.b];
+
+    // Different files: always keep (can't determine function boundary without AST)
+    if (fa.file != fb.file)
+    {
+      filtered.push_back(p);
+      continue;
+    }
+
+    // Same file: check for overlap or adjacent ranges
+    // If ranges don't overlap and aren't immediately adjacent, keep the pair
+    bool overlapping = (fa.startLine <= fb.endLine && fb.startLine <= fa.endLine);
+    bool adjacent = (fa.endLine + 1 == fb.startLine || fb.endLine + 1 == fa.startLine);
+
+    if (!overlapping && !adjacent)
+    {
+      filtered.push_back(p);
+    }
+  }
+  candidates = std::move(filtered);
+}
 } // namespace
 
 ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::string>> &files, const ScannerOptions &opts)
@@ -101,6 +153,8 @@ ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::stri
   std::vector<Pair> candidates = phase3ScoreCandidates(allFragments, result.index, opts);
   phase4Sort(candidates, opts);
   phase5SymmetricPairCanon(candidates);
+  phase6CoordinateRevalidation(candidates, allFragments);
+  phase7SameFunctionFilter(candidates, allFragments);
 
   result.pairs = candidates;
   return result;
