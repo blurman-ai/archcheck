@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # #066 round2 resume через headless claude (вызывается resume_all.sh после reboot, если
-# verify_results2 неполон). Workflow внутри сам пропускает готовые репы.
+# round2_verdicts неполон). Workflow внутри сам пропускает готовые репы.
 export HOME=~
 export PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 HERE=~/projects/cpparch/experiments/ai_repo_run
