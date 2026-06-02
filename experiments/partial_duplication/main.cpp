@@ -63,6 +63,9 @@ struct Options
   std::string diffSpec;      // --diff <sha> | <A>..<B>  (empty => snapshot mode)
   fs::path repo;             // --repo <path> for diff mode
   std::string subpath;       // --subpath <rel>: restrict diff+baseline to this subtree
+  // --- LD.14 clone growth (#071): persist density, gate on its delta across runs ---
+  std::string cloneBaseline;    // --clone-baseline <path>: read prior density, report delta, rewrite
+  double cloneGrowthMax = 0.0;  // --clone-growth-max <pct>: exit 1 if density grew by more than this
 };
 
 // ---------------------------------------------------------------------------
@@ -1014,6 +1017,23 @@ std::pair<std::size_t, std::size_t> cloneLocAndBlocks(const std::vector<Pair>& r
   return {loc, seen.size()};
 }
 
+// LD.14 — clone-density baseline persistence for CI growth-gating. The file holds
+// one line: "<density> <cloneLoc> <totalLoc> <blocks>". readBaselineDensity reads
+// the leading density; returns false when the file is absent (first run = establish).
+bool readBaselineDensity(const std::string& path, double& prior)
+{
+  std::ifstream in(path);
+  return static_cast<bool>(in >> prior);
+}
+
+void writeBaselineDensity(const std::string& path, double density, std::size_t cloneLoc,
+                          std::size_t totalLoc, std::size_t blocks)
+{
+  std::ofstream out(path);
+  out.precision(12);  // round-trip cleanly so an unchanged tree reads back delta ~0 (no flaky gate)
+  out << density << " " << cloneLoc << " " << totalLoc << " " << blocks << "\n";
+}
+
 void printUsage()
 {
   std::cout << "usage: partial_duplication <root> [--min-tokens N] [--max-tokens N]\n"
@@ -1021,10 +1041,13 @@ void printUsage()
                "                           [--min-shared N] [--metric weighted|plain]\n"
                "                           [--partial-precise] [--exclude substr]...\n"
                "                           [--no-keep-calls] [--no-skip-vendored] [--min-diversity F] [--top N]\n"
+               "                           [--clone-baseline <path>] [--clone-growth-max <pct>]\n"
                "       partial_duplication --diff <sha>|<A>..<B> --repo <path>\n"
                "                           [--subpath <rel>] [common flags above]\n"
                "\n"
                "  snapshot mode: report near-duplicate fragment pairs in a tree.\n"
+               "  LD.14 growth: --clone-baseline persists clone density; on the next run it\n"
+               "  reports the delta and exits 1 if density grew past --clone-growth-max (CI gate).\n"
                "  diff mode (#054): for the commit(s) in --diff, report fragments\n"
                "  ADDED/MODIFIED in the commit that are Type-3 near-dups of code that\n"
                "  already existed at the parent. A hit = a missing-reuse edge born here.\n";
@@ -1523,6 +1546,14 @@ int main(int argc, char** argv)
     {
       opt.subpath = next();
     }
+    else if (arg == "--clone-baseline")
+    {
+      opt.cloneBaseline = next();
+    }
+    else if (arg == "--clone-growth-max")
+    {
+      opt.cloneGrowthMax = std::stod(next());
+    }
     else if (arg == "-h" || arg == "--help")
     {
       printUsage();
@@ -1744,6 +1775,30 @@ int main(int argc, char** argv)
   std::cout << "clone density: " << cloneLoc << " / " << totalLoc << " LOC (" << density
             << "%), " << blocks << " fragments in " << reported.size() << " pairs\n\n";
 
+  int rc = 0;
+  if (!opt.cloneBaseline.empty())
+  {
+    double prior = 0.0;
+    if (readBaselineDensity(opt.cloneBaseline, prior))
+    {
+      const double delta = density - prior;
+      std::cout << "clone growth: " << prior << "% -> " << density << "% (delta "
+                << (delta >= 0.0 ? "+" : "") << delta << "%)\n";
+      if (delta > opt.cloneGrowthMax + 1e-9)  // epsilon absorbs float round-trip noise
+      {
+        std::cout << "GATE: clone density grew by " << delta << "% > max " << opt.cloneGrowthMax
+                  << "% — fail\n";
+        rc = 1;
+      }
+    }
+    else
+    {
+      std::cout << "clone baseline: established at " << density << "% (no prior — no gate)\n";
+    }
+    writeBaselineDensity(opt.cloneBaseline, density, cloneLoc, totalLoc, blocks);
+    std::cout << "\n";
+  }
+
   const std::size_t shown = std::min(reported.size(), opt.top);
   for (std::size_t i = 0; i < shown; ++i)
   {
@@ -1805,5 +1860,5 @@ int main(int argc, char** argv)
     }
   }
 
-  return 0;
+  return rc;  // LD.14: non-zero when clone-growth gate tripped
 }
