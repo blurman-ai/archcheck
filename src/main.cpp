@@ -299,7 +299,7 @@ int run_duplication(const std::filesystem::path &root)
     const auto &fa = result.fragments[p.a];
     const auto &fb = result.fragments[p.b];
     std::cout << "  " << fa.file << ":" << fa.startLine << "-" << fa.endLine << "  <->  " << fb.file << ":"
-              << fb.startLine << "-" << fb.endLine << "  (weighted=" << p.weighted << ")\n";
+              << fb.startLine << "-" << fb.endLine << "  (" << p.type << ", weighted=" << p.weighted << ")\n";
   }
 
   return 0;

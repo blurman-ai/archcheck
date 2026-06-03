@@ -1,6 +1,7 @@
 #include "archcheck/scan/duplication/duplication_scanner.h"
 
 #include <algorithm>
+#include <cctype>
 #include <unordered_set>
 
 #include "archcheck/scan/duplication/clone_classifier.h"
@@ -152,6 +153,55 @@ void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, double minWeighte
   candidates = std::move(filtered);
 }
 
+// --- P0.9 generated-file FP guard ------------------------------------------
+// Machine-generated files (protobuf *.pb.cc, Qt moc_/ui_/qrc_, flex/bison
+// output) are never hand-edited, so duplication in them is not actionable
+// copy-paste — there is no human to refactor. Recognized by path alone.
+//
+// NOTE: the platform-twin (P0.7) and perf-variant (P0.8) guards that once lived
+// here were REMOVED. They keyed on file PATH and suppressed whole file-pairs,
+// but platform/variant files mix genuinely-divergent bodies (correctly NOT
+// flagged) with byte-identical helpers like POSIX OS::sleep/OS::truncateFile
+// shared across os_macos.cpp/os_linux.cpp — and those identical helpers are
+// real, consolidatable duplication (TP). A path guard cannot tell them apart,
+// so it was killing true positives. Identical code is reported regardless of path.
+std::string toLowerCopy(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  return s;
+}
+
+// P0.9: generated files — protobuf / Qt-moc / flex-bison output, never hand-edited.
+bool isGeneratedPath(const std::string &lowerPath)
+{
+  static const std::vector<std::string> kMarkers = {".pb.h",       ".pb.cc",      ".pb.cpp", "_generated.",
+                                                     ".generated.", "/generated/", "/moc_",   "/ui_",
+                                                     "/qrc_",       ".tab.c",      "lex.yy",  ".g.cpp"};
+  for (const auto &m : kMarkers)
+  {
+    if (lowerPath.find(m) != std::string::npos)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+// P0.9 driver: drop pairs where either file is machine-generated.
+void phasePathBasedFpSuppress(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  std::vector<Pair> filtered;
+  for (const auto &p : candidates)
+  {
+    if (isGeneratedPath(toLowerCopy(allFragments[p.a].file)) || isGeneratedPath(toLowerCopy(allFragments[p.b].file)))
+    {
+      continue; // generated output — not actionable copy-paste
+    }
+    filtered.push_back(p);
+  }
+  candidates = std::move(filtered);
+}
+
 // P1.1: data-table / literal-run classifier — down-weight pairs that look like data tables
 // Rows of case/init patterns with mostly literals (case X: return Y; or vec.push_back({a,b,c}))
 // are structural boilerplate, not real logic duplication.
@@ -255,29 +305,70 @@ void phase13FileLoclalIDFDownweight(std::vector<Pair> &candidates, const std::ve
   }
 }
 
-// P0.2: git rename/move suppress (simplified) — detect whole-file clones as move/refactor, not drift
-// If both fragments have line-overlap ≥ 0.95 and different files, likely a file move/copy, not drift.
-void phase8GitRenameSuppress(std::vector<Pair> &candidates)
+// Canonical "fileA\nfileB" key (order-independent) for a cross-file pair.
+std::string filerPairKey(const std::string &x, const std::string &y)
 {
-  std::vector<Pair> filtered;
+  return x < y ? x + "\n" + y : y + "\n" + x;
+}
 
+// Set of file-pairs that are whole-file clones: ≥80% of the smaller file's
+// fragments (and it has ≥2) are matched across the pair → move/copy/vendored twin.
+std::unordered_set<std::string> wholeFileClonePairs(const std::vector<Pair> &candidates,
+                                                    const std::vector<Fragment> &allFragments)
+{
+  std::unordered_map<std::string, int> fragsPerFile;
+  for (const auto &f : allFragments)
+  {
+    ++fragsPerFile[f.file];
+  }
+
+  std::unordered_map<std::string, int> matched;
   for (const auto &p : candidates)
   {
-    // Whole-file clone (line overlap near 1.0) in different files
-    // likely move/copy/refactor, not independent duplication
-    if (p.line >= 0.95)
+    const std::string &fa = allFragments[p.a].file;
+    const std::string &fb = allFragments[p.b].file;
+    if (fa != fb)
     {
-      // Keep high-overlap pairs (likely move, but worth investigating)
-      // Real filter would use git diff -M -C to confirm
-      filtered.push_back(p);
-    }
-    else
-    {
-      // Lower overlap: keep (partial clone, not whole-file move)
-      filtered.push_back(p);
+      ++matched[filerPairKey(fa, fb)];
     }
   }
+
+  std::unordered_set<std::string> result;
+  for (const auto &[k, n] : matched)
+  {
+    const std::string::size_type sep = k.find('\n');
+    const int minFrags = std::min(fragsPerFile[k.substr(0, sep)], fragsPerFile[k.substr(sep + 1)]);
+    if (minFrags >= 2 && n * 5 >= minFrags * 4)
+    {
+      result.insert(k);
+    }
+  }
+  return result;
+}
+
+// P0.2: whole-file clone suppression — count file-level clones (move/copy/vendored
+// twins) separately and drop their constituent pairs from the actionable set.
+std::size_t phase8WholeFileSuppress(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  const std::unordered_set<std::string> wholeFile = wholeFileClonePairs(candidates, allFragments);
+  if (wholeFile.empty())
+  {
+    return 0;
+  }
+
+  std::vector<Pair> filtered;
+  for (const auto &p : candidates)
+  {
+    const std::string &fa = allFragments[p.a].file;
+    const std::string &fb = allFragments[p.b].file;
+    if (fa != fb && wholeFile.count(filerPairKey(fa, fb)) > 0)
+    {
+      continue;
+    }
+    filtered.push_back(p);
+  }
   candidates = std::move(filtered);
+  return wholeFile.size();
 }
 
 // P0.4: function-boundary anchor — don't let windows straddle function boundaries
@@ -324,6 +415,16 @@ void phase9FunctionBoundaryAnchor(std::vector<Pair> &candidates, const std::vect
   }
   candidates = std::move(filtered);
 }
+
+// Tag each surviving pair with its clone type (Type-1 EXACT … Type-3 STRUCTURAL).
+// Informational only — does not gate; the type rides along to the reporter.
+void phaseClassifyCloneType(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  for (auto &p : candidates)
+  {
+    p.type = cloneType(allFragments[p.a], allFragments[p.b]);
+  }
+}
 } // namespace
 
 ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::string>> &files, const ScannerOptions &opts)
@@ -353,8 +454,17 @@ ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::stri
   {
     phase8JointTokenOrderFloor(candidates, opts.jointWeightedThreshold, opts.jointLineThreshold);
   }
-  phase8GitRenameSuppress(candidates);
+  if (opts.enableWholeFileGuard)
+  {
+    result.wholeFileClones = phase8WholeFileSuppress(candidates, allFragments);
+  }
   phase9FunctionBoundaryAnchor(candidates, allFragments);
+
+  // P0.7-P0.9: path-based suppression of intentional/generated duplication
+  if (opts.enablePathGuards)
+  {
+    phasePathBasedFpSuppress(candidates, allFragments);
+  }
 
   // P1 classifiers (optional, can reduce recall if miscalibrated)
   if (opts.enableP1Guards)
@@ -365,6 +475,7 @@ ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::stri
     phase13FileLoclalIDFDownweight(candidates, allFragments);
   }
 
+  phaseClassifyCloneType(candidates, allFragments);
   result.pairs = candidates;
   return result;
 }
