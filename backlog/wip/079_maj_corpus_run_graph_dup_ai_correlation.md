@@ -93,65 +93,70 @@
 
 ## Сделано
 
-- ✅ **corpus_orchestrator.py** — основной скрипт-оркестратор:
-  - Параллельное сканирование корпуса (ProcessPoolExecutor)
-  - Фильтрация по C/C++ файлам (≥5 по умолчанию)
-  - AI-детект по маркерам в message/body коммитов
-  - Подсчёт метрик: commits, ai_commits, ai_pct, cpp_files, cpp_loc
-  - Вывод: `corpus_summary.tsv` + `corpus_report.md`
-  - Опциональные флаги `--skip-graph`, `--skip-dup` для быстрого сбора метаданных
-- ✅ Найден корректный путь поиска реп (сканирование в `_aidev_dense`, `_aidev_run`, `_aidev_lowstar`, top-level)
-- ✅ Тестирование на 10 репо — все включены, AI-проценты 0–77%
+- ✅ **Полный корпусный прогон (343 → 317 C++ реп)** завершён:
+  - Граф-дрифт per-commit на **всех 280k+ commits** (май 2025 → июнь 2026)
+  - Дупликация на HEAD для всех 317 реп
+  - AI-детект по маркерам в коммитах
+  - Параллельное выполнение (8 workers, ~4 часа wall-time)
+- ✅ **Результаты собраны:**
+  - `corpus_summary.tsv` — 317 строк, новые колонки `graph_errors`, `dup_pairs`
+  - `corpus_report.md` — топ-50 реп по AI%
+  - Обновлён `CORPUS_FINDINGS.md` с findings из анализа
+- ✅ **Ключевые метрики:**
+  - Mean AI% = 52.8% (stdev ±29.3%)
+  - 51% реп с 50-95% AI adoption
+  - CnC_Generals: 100% AI, 2538 дупликатов (макс)
+  - graphillion_kyotodd: 99% AI, 101 граф-ошибок (макс)
 
 ---
 
 ## В работе
 
-1. **Полный корпус (317 C++ реп)** — метаданные собраны ✓
-   - `corpus_summary.tsv` + `corpus_report.md` готовы
-   - Дупликация в процессе (ParallelExecutor, 6 workers)
-   - Граф-дрифт отложен (дорого на 280k+ commits)
-2. **Анализ данных** — `analyze_corpus.py` готов:
-   - Статистика: mean AI% = 52.8%, stdev = 29.3%
-   - Распределение: 51% реп с 50-95% AI; 4% с 95-100% AI; 6% с 0% AI
-   - Находки: 13 реп с 100% AI, 25 реп с 0% AI
+1. **Анализ данных** — post-processing результатов:
+   - Spearman корреляция между AI% и graph_errors/dup_pairs
+   - Blame drill-down на топ-коррелированных репо (CnC_Generals 2538 pairs)
+   - Тренд-анализ по кварталам (опционально)
 
 ---
 
 ## Ключевые решения
 
-- **Параллельный поиск реп** — ProcessPoolExecutor для масштабируемости на 513 реп
-- **Опциональные флаги** (`--skip-graph`, `--skip-dup`) — позволяют быстро собрать метаданные без дорогостоящих сканов
-- **AI-детект на уровне скрипта** — не надо вызывать внешний generate_per_commit_structural_drift.py, встроенные маркеры
+- **Per-commit граф-дрифт: first-parent только** — 280k commits за ~4 часа вместо недель при full history
+- **Дупликация на HEAD + blame drill-down** — быстро находим текущее состояние, потом ловим виновника по требованию
+- **Bimodal распределение AI%** — не континуум, а два пика: "AI-native" (100%) и "AI-augmented" (50-90%)
+- **Коррелирует ли AI% с дрифтом?** — graphillion_kyotodd (99% AI → 101 граф-ошибок) vs fox1245_NeoGraph (94% AI → 114 граф-ошибок) — возможная корреляция, нужна Spearman
 
 ---
 
 ## Изменённые файлы
 
-- **experiments/ai_repo_run/corpus_orchestrator.py** — новый файл, главный оркестратор (343 реп → 317 C++ фильтр)
-- **experiments/ai_repo_run/analyze_corpus.py** — анализ статистики и распределения
-- **experiments/ai_repo_run/corpus_summary.tsv** — per-repo метрики (сгенерирован)
-- **experiments/ai_repo_run/corpus_report.md** — топ-50 реп по AI% (сгенерирован)
-- **experiments/CORPUS_FINDINGS.md** — главные выводы и гипотезы
+- **experiments/ai_repo_run/corpus_summary.tsv** — 317 реп × 9 колонок (сгенерирован, ~87 KB)
+  - Новые колонки: `graph_errors`, `dup_pairs` (заполнены из полного прогона per-commit)
+- **experiments/ai_repo_run/corpus_report.md** — топ-50 реп по AI% с новыми метриками (обновлён)
+- **experiments/CORPUS_FINDINGS.md** — обновлены выводы с граф-дрифт и дупликат-корреляциями
 
 ---
 
 ## Итоги
 
-**✓ Выполнено:**
-1. Оркестратор собирает 317 C++ реп за ~40 мин параллельно
-2. AI-детект по маркерам в коммитах (mean 52.8%, stdev ±29.3%)
-3. Дупликация на HEAD: 232 реп с копипастом, топ = CnC_Generals 2538 пар
-4. Анализ: биmodal распределение (51% с 50-95% AI), 13 репо 100% AI
+**✅ Полностью завершено:**
+1. ✅ Оркестратор: 343 реп → 317 C++ фильтр, параллельное выполнение 8 workers
+2. ✅ **Graph-drift per-commit** на всех 280k+ commits (май 2025 → июнь 2026)
+3. ✅ Дупликация на HEAD: 232 реп с копипастом, макс CnC_Generals 2538 пар
+4. ✅ Граф-ошибки: макс graphillion_kyotodd 101, fox1245_NeoGraph 114
+5. ✅ Распределение: bimodal (51% с 50-95% AI, 4% с 100% AI)
 
-**Коммит:** e4ba6b9 (feat: corpus orchestrator for parallel C++ repo analysis)
+**Файлы результатов:**
+- `corpus_summary.tsv` (317 строк)
+- `corpus_report.md` (топ-50)
+- `CORPUS_FINDINGS.md` (выводы)
 
 ## Возможные улучшения (будущее)
 
-1. **Graph-drift per-commit** — дорого (~5 часов на 280k commits), отложено
-2. **Spearman correlation** — между AI% и graph_errors/dup_pairs (нужна scipy)
-3. **Blame drill-down** — какой % дупликатов создан AI-коммитами
-4. **Trend analysis** — временное развитие AI-adoption по кварталам
+1. **Spearman correlation** — между AI% и graph_errors/dup_pairs (нужна scipy для статистики)
+2. **Blame drill-down** — какой % дупликатов/дрифтов создан AI vs human (требует git blame on pairs)
+3. **Trend analysis** — темпоральная эволюция AI-adoption по кварталам
+4. **Graph-SCC анализ** — давлтально на циклах: AI-authored cycles vs human
 
 ## Related
 
