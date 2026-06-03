@@ -20,6 +20,7 @@ struct Pair
   double line = 0.0;          // line-based overlap
   double lcs = 0.0;           // token-LCS Dice ratio
   std::size_t sharedRare = 0; // count of shared rare tokens
+  std::string type;           // clone type: EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (see clone_classifier)
 };
 
 struct ScannerOptions
@@ -33,6 +34,8 @@ struct ScannerOptions
   double jointWeightedThreshold = 0.75;   // P0.6: minimum weighted similarity when joint floor enabled
   double jointLineThreshold = 0.50;       // P0.6: minimum line overlap when joint floor enabled
   bool enableP1Guards = true;             // P1: enable classifier filters (data-table, boilerplate, header-impl, IDF)
+  bool enablePathGuards = true;           // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
+  bool enableWholeFileGuard = true;       // P0.2: count whole-file clones separately, drop their pairs
 };
 
 struct ScanResult
@@ -43,6 +46,7 @@ struct ScanResult
   std::size_t fileCount = 0;
   std::size_t candidateCount = 0;      // Raw candidates before scoring
   std::size_t scoredCandidateCount = 0; // After similarity gate
+  std::size_t wholeFileClones = 0;     // P0.2: file-pairs suppressed as whole-file clones (counted, not reported)
   std::size_t totalLoc = 0;
 };
 
