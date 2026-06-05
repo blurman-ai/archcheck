@@ -39,7 +39,8 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
   - **Expected precision improvement**: baseline 42% → P0: ~55–62% → P1: ~65–75%. Idiom-floor ~40 FP unremovable without semantics (LLM confirmation planned v0.2).
 - **Vendored-code exclusion** — both the include graph and the duplication scan now skip vendored single-file libraries and vendored directories outside `third_party/`, removing phantom signal from bundled dependencies. (#068, #069, #071)
 - **Test-code exclusion** — test files are excluded from architecture and duplication signals by default, so the zero-config first run reflects production code. (#070)
-- **Clone-type labels** — reported duplication pairs are tagged Type-1 / Type-2 / Type-3 (exact / renamed / gapped). Preview signal.
+- **Clone-type labels** — reported duplication pairs are tagged Type-1 / Type-2 / Type-3 (exact / renamed / gapped).
+- **`--duplication` advisory report** — `archcheck --duplication <path>` scans for duplicate code and reports pairs (file:line ranges, clone type, weight). Shipped as a supported **advisory** capability: report-only, always exits `0`, and never gates CI — gate-grade precision is future work, so it is deliberately not a blocking check.
 
 ### Changed
 

@@ -853,34 +853,49 @@ P1.3-нарратива/CHANGELOG переносятся в **Slice 5** (duplica
 Полный gate: clang-format/cppcheck/lizard чисто, build, 344/344 тестов, smoke,
 coverage 91.4/95.8/57.2 — PASS.
 
-### Slice 5b — preview→product flip ⛔ ЗАБЛОКИРОВАНО (нужно решение человека)
+### Slice 5b — duplication → product ✅ (2026-06-05, выбран вариант 2)
 
-**Конфликт:** решение пользователя (AskUserQuestion) — «поднять duplication до продукта».
-Но `docs/product_vision.md` (осознанный документ) прямо утверждает:
+**Решение пользователя:** вариант 2 — сознательно флипнуть duplication в product,
+переписав product_vision/ROADMAP, приняв смену narrative до algorithm-trust работы.
 
-- «duplication пока остаётся **noisy research-слоем**» (L37);
-- «precision duplication `--diff` **недостаточен** для trusted CI-gate» (L38);
-- «Duplication в v0.1 допустима только как preview / research-backed experiment» (L109-113);
-- «**Только потом решать**, что делать с duplication как product feature» (L185).
+**Честная рамка флипа:** duplication поднята до **shipped advisory reporting
+capability** (`--duplication` — report-only, всегда exit 0, не блокирует CI), а
+НЕ до trusted blocking-gate. Это разрешает конфликт с product_vision: резонный
+аргумент «precision недостаточен для trusted gate» сохранён (gate-grade — будущая
+работа), но duplication перестаёт быть «preview/эксперимент» и становится
+поддерживаемой фичей. product_vision (L112) и ROADMAP (L101) уже допускали
+«advisory mode» — флип лёг в эту рамку без ложного обещания.
 
-Промоушен preview→shipped (help/docs/changelog/product_vision/ROADMAP) на **неизменённом**
-noisy-детекторе воссоздаёт ровно ту проблему ложной зрелости, против которой задача #082.
-А поднять precision детектора — это algorithm work, явно вне scope umbrella
-(«Не улучшать сам алгоритм duplication»).
+Выровнено во всех слоях (один ответ везде):
 
-Per правило автономности (git_workflow): рискованную развилку против собственного
-product_vision не гадаем. **Ждём решения пользователя:**
+- **help** (`src/main.cpp`): `--duplication` `(preview: ...)` → `(report duplicate
+  code; advisory, does not gate CI)`.
+- **product_vision.md**: duplication «noisy research-слой / только preview» →
+  «shipped advisory capability, но не blocking gate»; «только потом решать про
+  product feature» → «уже shipped как advisory; следующий шаг — precision до gate-grade».
+- **ROADMAP.md**: «duplication остаётся preview/research» → «shipped advisory, не gate»;
+  список Preview/Research: `duplication detection` → `duplication-as-blocking-gate`
+  (сам `--duplication` уже shipped advisory).
+- **CHANGELOG.md**: добавлена запись про `--duplication` advisory report (report-only,
+  exit 0, не gate); снят «Preview signal» с clone-type labels.
 
-1. оставить duplication как **honest preview** (рекомендация исходной задачи, опция 1) — тогда
-   Slice 5b сводится к выравниванию «preview» во всех слоях, БЕЗ продуктового флипа; или
-2. сознательно флипнуть в product, переписав product_vision/ROADMAP (принять, что
-   narrative меняется до algorithm-trust работы); или
-3. сначала отдельная задача на precision/hermetic-tests, продукт — только после.
+**Hermetic tests / fp_corpus_eval — проверено, работы не требуется:**
 
-Остаток Slice 5 (fp_corpus_eval research-artifact, hermetic tests, help-label) висит на этом решении.
+- `tests/CMakeLists.txt:26-28` уже исключает non-hermetic харнессы
+  (`duplication_vmecpp_test`, `duplication_all_projects_test`, читающие hardcoded
+  corpus paths) из CI-сборки с явным комментарием. Остальные duplication-тесты
+  синтетические/hermetic.
+- `fp_corpus_eval` — internal QA-tooling (loader работает; placeholder `evaluate`
+  тестируется в degenerate-кейсе), не user-facing, не на runtime-пути `--duplication`.
+  Не масркируется под product-фичу. Оставлен как internal.
 
-**Следующий шаг:** ждать решения по 5b. Параллельно можно Slice 6 (final pass) по уже
-выровненным слоям 1-5a, но он частично зависит от 5b.
+**README** намеренно НЕ трогали: он drift-focused, duplication — не headline
+(ROADMAP явно: «не duplication-first checker»). advisory-фича вне главного питча — ок.
+
+Полный gate: clang-format/cppcheck/lizard чисто, build, 344/344, smoke,
+coverage 91.4/95.8/57.2 — PASS.
+
+**Следующий шаг:** Slice 6 — final alignment pass по всем слоям 1-5b.
 
 ## Изменённые файлы
 
@@ -897,3 +912,4 @@ product_vision не гадаем. **Ждём решения пользовате
 | `backlog/wip/053_*.md`, `backlog/wip/054_*.md` | Slice 4: де-линк удалённого `experiments/line_duplication` + historical note |
 | `src/scan/duplication/duplication_scanner.cpp` | Slice 5a: удалён no-op `phase12HeaderImplGate` (behavior-preserving) |
 | `docs/duplication_fp_analysis.md`, `docs/duplication_architecture.md`, `CHANGELOG.md` | Slice 5a: P1.3 помечен как no-op-заглушка (был «-4 FP ✅») |
+| `src/main.cpp`, `docs/product_vision.md`, `docs/ROADMAP.md`, `CHANGELOG.md` | Slice 5b: duplication preview → shipped advisory reporting capability (не gate) |

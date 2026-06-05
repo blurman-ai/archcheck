@@ -34,10 +34,13 @@ _2026-06-02_
 По факту:
 
 - граф/drift-слой уже выглядит как продуктовый core;
-- duplication пока остаётся noisy research-слоем;
-- precision duplication `--diff` недостаточен для trusted CI-gate.
+- duplication шипается как **advisory reporting capability** (`--duplication`,
+  report-only, exit 0) — это поддерживаемая фича, а не preview/эксперимент;
+- но её precision недостаточен для trusted CI-gate, поэтому она остаётся
+  advisory и **не блокирует CI**.
 
-Значит duplication нельзя держать как главный blocker продукта.
+Значит duplication — поддерживаемая advisory-фича, но не главный blocker
+продукта и не trusted gate.
 
 ### 2. Смешаны продукт и исследование про ИИ
 
@@ -106,11 +109,13 @@ _2026-06-02_
 - synthesis loop;
 - “большая семантическая платформа”.
 
-Duplication в `v0.1` допустима только как:
+Duplication в `v0.1` шипается как **advisory reporting capability**
+(`--duplication` — report-only, exit 0, поддерживаемая фича).
 
-- preview;
-- advisory mode;
-- research-backed experiment.
+Чем она НЕ является в `v0.1`:
+
+- blocking CI gate (нужен gate-grade precision — отдельная будущая работа);
+- центром `v0.1` narrative (центр — trusted drift core).
 
 ## Каким должен быть v0.2
 
@@ -182,5 +187,7 @@ Duplication в `v0.1` допустима только как:
 1. Дочистить product contracts и alignment.
 2. Укрепить trusted graph/drift core.
 3. Довести config-rules до реального runtime.
-4. Только потом решать, что делать с duplication как product feature.
+4. Duplication уже шипнут как advisory-фича (`--duplication`); следующий шаг по
+   нему — поднять precision до gate-grade, и только тогда рассматривать как
+   blocking gate.
 5. AI-attribution и synthesis держать как отдельное исследование.
