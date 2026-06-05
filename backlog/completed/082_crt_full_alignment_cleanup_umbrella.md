@@ -2,13 +2,15 @@
 
 **Дата создания:** 2026-06-05
 **Дата старта:** 2026-06-05
-**Статус:** wip
+**Дата завершения:** 2026-06-05
+**Статус:** completed
 **Модуль:** CORE / CLI / DOCS / BACKLOG / RESEARCH-HYGIENE
 **Приоритет:** critical
 **Сложность:** XL
 **Блокирует:** —
 **Заблокирован:** —
 **Related:** #045 (docs_sync_roadmap_mvp_spec), #051 (config_loader_v1), #073 (tech_debt_alignment_cleanup), #075 (mvp_v1_trusted_diff_workflow)
+**Follow-ups (вынесенные хвосты):** #083 (duplication precision → gate-grade), #084 (fp_corpus_eval relocate из shipped-lib), #085 (backlog status normalize — duplication/experiments history)
 **Источник истины:** [docs/architecture-spec.md](../../docs/architecture-spec.md), [docs/ROADMAP.md](../../docs/ROADMAP.md), [docs/product_vision.md](../../docs/product_vision.md), [docs/config_format.md](../../docs/config_format.md)
 
 ## Цель
@@ -914,9 +916,14 @@ coverage 91.4/95.8/57.2 — PASS.
 вне user-facing surface).
 
 **Итог umbrella #082:** продукт сведён к честному самосогласованному состоянию.
-Сознательно оставлено вне scope (с обоснованием в слоях): precision duplication до
-gate-grade (отдельная algorithm-задача), массовая переоценка статусов старых backlog-задач,
-relocation `fp_corpus_eval` из shipped-lib. Задача готова к переносу в `completed/`.
+Сознательно оставлено вне scope (с обоснованием в слоях) и **вынесено в отдельные
+задачи**, чтобы хвосты отслеживались, а не висели в закрытой umbrella:
+
+- **#083** — precision duplication до gate-grade (algorithm work);
+- **#084** — relocation `fp_corpus_eval` из shipped-lib (build hygiene);
+- **#085** — backlog status normalize (live/historical/cancelled, duplication/experiments).
+
+Задача закрыта (`completed/`).
 
 ## Изменённые файлы
 
