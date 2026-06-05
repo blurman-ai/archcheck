@@ -78,8 +78,8 @@ Support only simple rules:
 ### 6. CLI
 
 ```bash
-archcheck check --config arch.yaml
-archcheck init
+archcheck --config arch.yaml   # validate config + run default rules (flag-based; no `check` subcommand)
+archcheck init                 # planned (v0.2) — not shipped yet
 ```
 
 ---
@@ -171,7 +171,7 @@ MVP is done if:
 User can:
 
 ```bash
-archcheck check --config arch.yaml
+archcheck --config arch.yaml
 ```
 
 and get actionable violations on real code.
