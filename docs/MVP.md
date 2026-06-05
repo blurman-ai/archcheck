@@ -89,7 +89,7 @@ archcheck init
 #### Text
 
 - Human readable
-- file:line:column
+- file:line (column not tracked in v0.1 — the `Violation` model carries file + line only)
 
 #### JSON
 

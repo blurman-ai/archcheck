@@ -4,6 +4,18 @@ Authoritative reference for `.archcheck.yml` schema starting at v1.
 
 This document supersedes the YAML example in `docs/architecture-spec.md` §«Анализ по конфигу». Spec keeps a pointer here.
 
+## Enforcement status (current release)
+
+This document defines the **schema** `archcheck` validates. It does not yet describe runtime behaviour for every key.
+
+In the current release `--config`:
+
+- **validates** the whole file (`version`, `modules`, `rules`, `thresholds`) and fails with exit code `2` on a malformed config;
+- **applies** `thresholds` to the default intrinsic rules (god-header fan-in, chain length, etc.);
+- **parses but does not yet enforce** the module-level `rules` (`layers` / `independence` / `forbidden`) — they are schema-checked, but a violating include will not (yet) fail the build.
+
+So a valid `.archcheck.yml` with a `forbidden` rule today guarantees the rule is *well-formed*, not that it is *enforced*. Module-rule enforcement is a separate, later phase. Until then, `--config` is effectively "validate + threshold overrides".
+
 ## Scope
 
 Phase 1 of v1 ships **three required top-level keys** and **three rule types**, plus an optional `thresholds` block (landed early from phase 2). Everything else (`baseline`, `ignore`, `required`, `auto_modules`, `protected`, per-rule `severity`) is phase 2 or later — out of scope for this document.
