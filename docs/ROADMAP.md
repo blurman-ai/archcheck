@@ -48,7 +48,7 @@ research-ветки.
 Особенно важно:
 
 - graph/drift уже выглядит как продуктовый wedge;
-- duplication пока остаётся preview/research;
+- duplication шипнут как advisory reporting capability (`--duplication`), но не как blocking gate;
 - AI-vs-human drift — полезное исследование, но не продуктовый promise.
 
 ---
@@ -95,11 +95,8 @@ research-ветки.
 - широкая AST semantic platform;
 - visualization / plugin API / broad C support.
 
-Duplication в `v0.1` допустима только как:
-
-- preview;
-- advisory report;
-- research-backed experiment.
+Duplication в `v0.1` шипнута как **advisory report** (`--duplication`,
+report-only, exit 0) — поддерживаемая фича, но не blocking gate и не центр v0.1.
 
 ---
 
@@ -153,7 +150,7 @@ Duplication в `v0.1` допустима только как:
 Эти направления важны, но **не входят в trusted CI gate**, пока не доказали
 стабильность и product-fit.
 
-- duplication detection;
+- duplication-as-blocking-gate (сам `--duplication` уже shipped как advisory report; gate-grade precision — ещё нет);
 - AI-vs-human drift comparison;
 - AI-assisted rule synthesis;
 - semantic dependency extraction beyond current product core;

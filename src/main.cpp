@@ -50,7 +50,7 @@ void print_help()
             << "  archcheck --help\n"
             << "  archcheck --scan  <path>                     (preview: discover + scan #includes)\n"
             << "  archcheck --graph <path>                     (preview: build dependency graph + SCC stats)\n"
-            << "  archcheck --duplication <path>               (preview: detect code duplication)\n"
+            << "  archcheck --duplication <path>               (report duplicate code; advisory, does not gate CI)\n"
             << "  archcheck --diff  [--diff-mode=disk|memory] <revspec> [path]\n"
             << "                                               (regression vs git ref; revspec = 'a..b' or '<ref>')\n"
             << "\n"
