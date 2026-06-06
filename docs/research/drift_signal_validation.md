@@ -95,6 +95,41 @@ false-alarm. Новый цикл объективно плох (Lakos physical d
 видит**. Это Lakos «не-levelizable design» (модули нельзя собрать раздельно). Кандидат
 на отдельное узкое правило DRIFT.3 (задача #087), строго не перекрывающее DRIFT.2.
 
+## DRIFT.3 — ручной разбор хитов (eyeball, 2026-06-06)
+
+Прогон реализованного DRIFT.3 по выборке из 56 corpus-коммитов с bidirectional
+area-парой, с ручной проверкой каждого хита:
+
+**Шум фильтруется корректно (silent):** `subdir↔src` (vibe-requirements split),
+`<root>`-каша (Decodium «Initial commit»), born-at-empty initial structure
+(NeoCalculator). Area-функция (strip `src/include/..`, ignore root/noise) убирает
+артефакты, на которых тонула сырая cross-area проба.
+
+**Ловит реальные smell'ы (TP):**
+- `hal ↔ ui/apps/math/display/input` (NeoCalculator) — дырявый abstraction layer:
+  HAL должен быть leaf, а он взаимно зависит от UI. Сильнейший сигнал.
+- `common ↔ duckdb`, `common ↔ sqlite` (gizmosql) — «база» зависит обратно от бэкенда.
+- `game ↔ render` (Standard-of-Iron), `terrain ↔ world` (bakabakaband),
+  `engine ↔ game` (teaching engine), `core ↔ semantic` (mantra-lang) — entanglement
+  на **feature-коммитах** (настоящий инкрементальный дрейф).
+- `model/persistence ↔ ui` (MaximumTrainer) — layering-нарушения (persistence не
+  должен зависеть от ui).
+
+**Найденные глазами проблемы → одна пофикшена:**
+1. **FP `build_overrides`** (UnleashedRecomp) — exact-noise-set не ловил `build_overrides`.
+   **Исправлено** prefix-фильтром (`build_*`/`mock*`/`*override*`) → стало silent.
+2. **Шумит на больших restructure-коммитах** (MaximumTrainer — 8 пар разом, UE5 «Refactor
+   scene» — 3). Когда коммит реорганизует модули, много мутуальностей всплывает разом.
+   Семантически отделить «намеренный рефактор» от «дрейф» нельзя → **подтверждает: DRIFT.3
+   должен быть advisory, не blocking gate.**
+3. **Грубая гранулярность area** (Lightpad `App/ui↔App/core` — silent): «первый сегмент»
+   схлопывает всё под одним top-dir (`App`). Это under-reporting (miss), не FP; уточнение
+   до 2 уровней — отдельная итерация (риск нового шума).
+
+Итог eyeball: DRIFT.3 ловит реальную связность с приемлемой precision после area-фильтра;
+основной FP (build dirs) закрыт; остаток (restructure-шум, грубая гранулярность) —
+осознанные trade-off'ы, оправдывающие advisory-режим.
+
 ## Грань польза / бесполезность
 
 ```
