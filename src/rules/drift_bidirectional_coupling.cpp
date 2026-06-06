@@ -49,6 +49,19 @@ std::string lower(std::string s)
   return s;
 }
 
+// A path segment that is build/test scaffolding rather than a real module.
+// Exact noise dirs plus prefix patterns (build_overrides, mock_includes, ...)
+// observed in corpus area-detection noise.
+bool isNoiseSeg(const std::string &seg)
+{
+  const std::string l = lower(seg);
+  if (kNoiseDirs.count(l))
+    return true;
+  if (l.rfind("build_", 0) == 0 || l.rfind("build-", 0) == 0 || l.rfind("mock", 0) == 0)
+    return true;
+  return l.find("override") != std::string::npos;
+}
+
 // Module name for a path: first path component after stripping wrapper dirs.
 // Empty result = ignore this file (root-level file, or under a noise dir).
 std::string areaOf(std::string_view path)
@@ -65,7 +78,7 @@ std::string areaOf(std::string_view path)
     }
   }
   for (const auto &s : seg)
-    if (kNoiseDirs.count(lower(s)))
+    if (isNoiseSeg(s))
       return {};
   std::size_t i = 0;
   while (i + 1 < seg.size() && kWrapperDirs.count(lower(seg[i])))
