@@ -45,7 +45,8 @@ void print_help()
             << "  archcheck --save-baseline <file> [path]      (save current violations as baseline)\n"
             << "  archcheck --baseline <file> [path]           (report only new violations vs baseline)\n"
             << "  archcheck --save-graph-baseline <file> [path] (save include graph snapshot for drift checks)\n"
-            << "  archcheck --drift-baseline <file> [path]    (check + DRIFT.1/DRIFT.2 vs saved graph)\n"
+            << "  archcheck --drift-baseline <file> [path]    (drift gate: DRIFT.1/DRIFT.2 fail the run; "
+               "DRIFT.3 + pre-existing findings advisory)\n"
             << "  archcheck --version\n"
             << "  archcheck --help\n"
             << "  archcheck --scan  <path>                     (preview: discover + scan #includes)\n"
@@ -55,7 +56,8 @@ void print_help()
             << "                                               (regression vs git ref; revspec = 'a..b' or '<ref>')\n"
             << "\n"
             << "Default rules (no config required): SF.7, SF.8, SF.9, Lakos.GodHeader, Lakos.ChainLength\n"
-            << "Drift rules (require --drift-baseline):        DRIFT.1 (shortcut edges), DRIFT.2 (cycle growth)\n";
+            << "Drift rules (require --drift-baseline):        DRIFT.1 (shortcut edges), DRIFT.2 (cycle growth) "
+               "[gating]; DRIFT.3 (module coupling) [advisory]\n";
 }
 
 enum class OutputFormat
@@ -133,6 +135,20 @@ int applyBaselineAndReport(archcheck::rules::ViolationList all, OutputFormat fmt
 
   if (suppressed > 0 && fmt == OutputFormat::Text)
     std::cout << "suppressed: " << suppressed << " known violation(s) (run without --baseline to see all)\n";
+
+  // Drift mode is a regression gate: only DRIFT.1 (new shortcut edge) and DRIFT.2
+  // (new/grown cycle) gate the exit. Pre-existing intrinsic findings (SF.*/Lakos.*)
+  // and the advisory DRIFT.3 module-coupling signal are reported but never fail a
+  // drift run -- a legacy repo with no regression in this diff exits 0.
+  if (baseline.driftFile)
+  {
+    const auto gating = std::count_if(all.begin(), all.end(),
+                                      [](const auto &v) { return v.ruleId == "DRIFT.1" || v.ruleId == "DRIFT.2"; });
+    if (fmt == OutputFormat::Text)
+      std::cout << "drift gate: " << gating
+                << " gating regression(s) (DRIFT.1/DRIFT.2); pre-existing and DRIFT.3 findings are advisory\n";
+    return gating > 0 ? 1 : 0;
+  }
 
   return all.empty() ? 0 : 1;
 }
