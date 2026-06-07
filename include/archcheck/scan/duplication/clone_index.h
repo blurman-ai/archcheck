@@ -17,6 +17,19 @@ struct IndexOptions
   double rareDfPct = 0.0;        // if >0, rare cutoff = max(rareDfCap, N*pct/100)
   std::size_t minSharedRare = 2; // minimum rare tokens to form a candidate pair
   double minDiversity = 0.0;     // min trigram diversity; filter skeletal fragments
+  // #092: scale-independent candidate generation. The rare-token index above keys
+  // on corpus document-frequency, so a genuine clone pair stops being a candidate
+  // once the project grows enough that its shared tokens are no longer "rare"
+  // (a copy-paste is a copy-paste at any project size). k-gram winnowing
+  // fingerprints are intrinsic to each fragment's token sequence: two fragments
+  // sharing a fingerprinted run become candidates regardless of corpus size.
+  // Additive — unions with the rare-token candidates.
+  bool fingerprints = true;       // enable k-gram winnowing candidate generation
+  std::size_t fpK = 5;            // k-gram length (tokens)
+  std::size_t fpWindow = 8;       // winnowing window; detects shared runs >= fpK+fpWindow-1
+  std::size_t fpMaxPostings = 20; // drop a fingerprint shared by > this many fragments
+                                  // (a distinctive clone run is rare in absolute terms at
+                                  // any corpus size; an over-frequent run is boilerplate idiom)
 };
 
 struct CloneIndex

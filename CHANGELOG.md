@@ -8,6 +8,8 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- **Scale-independent duplication candidate generation** — k-gram winnowing fingerprints (MOSS-style) added alongside the rare-token index. The rare-token index keyed on corpus document-frequency, so a genuine clone pair stopped being a candidate once the project grew enough that its shared tokens were no longer "rare" — detection depended on project size. Fingerprints are intrinsic to each fragment's token run, so a clone is a candidate at any corpus size; over-frequent fingerprints (boilerplate idioms) are dropped to bound cost. Recovers function-level clones the index was hiding (verified eyes-on, ~0 added false positives). (#092)
+
 - **SF.7 rule** — single-statement-per-line with block-comment stripping and brace-depth tracking. (#034, #035, #038)
 - **SF.8 rule** — header self-sufficiency, with Objective-C exclusion and scan-limit handling. (#034, #039)
 - **SF.9 rule** — no cyclic dependencies among headers.

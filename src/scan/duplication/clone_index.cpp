@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <functional>
+#include <unordered_set>
 
 #include "archcheck/scan/duplication/fragmenter.h"
 
@@ -107,6 +110,87 @@ void filterCandidatePairs(std::map<std::pair<std::size_t, std::size_t>, std::siz
     }
   }
 }
+
+// FNV-1a hash of every fpK-gram of a token sequence (empty if shorter than k).
+std::vector<std::uint64_t> kGramHashes(const std::vector<std::string> &seq, std::size_t k)
+{
+  std::vector<std::uint64_t> grams;
+  if (seq.size() < k)
+  {
+    return grams;
+  }
+  grams.reserve(seq.size() - k + 1);
+  for (std::size_t i = 0; i + k <= seq.size(); ++i)
+  {
+    std::uint64_t h = 1469598103934665603ULL;
+    for (std::size_t j = i; j < i + k; ++j)
+    {
+      h = (h ^ std::hash<std::string>{}(seq[j])) * 1099511628211ULL;
+    }
+    grams.push_back(h);
+  }
+  return grams;
+}
+
+// #092: robust winnowing fingerprints — keep the min hash of each fpWindow,
+// re-emitting only when the window minimum changes (density ~1/fpWindow,
+// intrinsic to content, so the candidacy of a clone pair is corpus-size-independent).
+std::unordered_set<std::uint64_t> fingerprintsOf(const std::vector<std::string> &seq, std::size_t k, std::size_t w)
+{
+  std::unordered_set<std::uint64_t> fps;
+  const std::vector<std::uint64_t> grams = kGramHashes(seq, k);
+  std::size_t minPos = grams.size(); // sentinel: no min emitted yet
+  for (std::size_t end = w == 0 ? 0 : w - 1; end < grams.size(); ++end)
+  {
+    const std::size_t start = end + 1 - w;
+    std::size_t best = start;
+    for (std::size_t p = start + 1; p <= end; ++p)
+    {
+      if (grams[p] <= grams[best])
+      {
+        best = p; // rightmost-min on ties
+      }
+    }
+    if (best != minPos)
+    {
+      fps.insert(grams[best]);
+      minPos = best;
+    }
+  }
+  return fps;
+}
+
+// Add candidate pairs whose fragments share a fingerprint. Bumps the shared count
+// to the candidacy floor so a fingerprint match alone qualifies (it is a stronger
+// signal than two shared rare tokens: a verbatim run of fpK+fpWindow-1 tokens).
+void addFingerprintCandidates(const std::vector<Fragment> &fragments, const IndexOptions &opts,
+                              std::map<std::pair<std::size_t, std::size_t>, std::size_t> &sharedRare)
+{
+  std::unordered_map<std::uint64_t, std::vector<std::size_t>> fpPostings;
+  for (std::size_t fi = 0; fi < fragments.size(); ++fi)
+  {
+    for (std::uint64_t fp : fingerprintsOf(fragments[fi].seq, opts.fpK, opts.fpWindow))
+    {
+      fpPostings[fp].push_back(fi);
+    }
+  }
+  for (const auto &[fp, list] : fpPostings)
+  {
+    if (opts.fpMaxPostings > 0 && list.size() > opts.fpMaxPostings)
+    {
+      continue; // over-frequent fingerprint = boilerplate idiom, not a clone signal
+    }
+    for (std::size_t x = 0; x < list.size(); ++x)
+    {
+      for (std::size_t y = x + 1; y < list.size(); ++y)
+      {
+        const auto key = std::make_pair(std::min(list[x], list[y]), std::max(list[x], list[y]));
+        auto &c = sharedRare[key];
+        c = std::max(c, opts.minSharedRare); // ensure it clears shouldKeepPair's count gate
+      }
+    }
+  }
+}
 } // namespace
 
 CloneIndex buildIndex(const std::vector<Fragment> &fragments, const IndexOptions &opts)
@@ -119,6 +203,10 @@ CloneIndex buildIndex(const std::vector<Fragment> &fragments, const IndexOptions
   std::size_t effRareDf = getEffectiveRareDf(N, opts);
   buildRareTokenIndex(fragments, effRareDf, idx.df, idx.postings);
   findCandidatePairs(idx.postings, idx.sharedRare);
+  if (opts.fingerprints)
+  {
+    addFingerprintCandidates(fragments, opts, idx.sharedRare);
+  }
   filterCandidatePairs(idx.sharedRare, fragments, opts);
 
   return idx;
