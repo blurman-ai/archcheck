@@ -1,0 +1,7 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_Catch2" granularity="blocks-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="38" npairs="0"/>
+<runinfo ncompares="15" cputime="10096"/>
+<classinfo nclasses="0"/>
+
+</clones>

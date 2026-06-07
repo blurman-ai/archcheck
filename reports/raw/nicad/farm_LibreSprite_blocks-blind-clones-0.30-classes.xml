@@ -1,0 +1,56 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_LibreSprite" granularity="blocks-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="406" npairs="30"/>
+<runinfo ncompares="3187" cputime="11795"/>
+<classinfo nclasses="8"/>
+
+<class classid="1" nclones="6" nlines="17" similarity="70">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/remove_palette.h.c" startline="12" endline="26" pcid="12"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/remove_cel.h.c" startline="12" endline="27" pcid="22"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/remove_frame_tag.h.c" startline="12" endline="27" pcid="35"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/move_cel.h.c" startline="19" endline="40" pcid="32"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/copy_cel.h.c" startline="19" endline="40" pcid="25"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/remove_layer.h.c" startline="12" endline="27" pcid="15"></source>
+</class>
+
+<class classid="2" nclones="2" nlines="25" similarity="72">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/trim_cel.h.c" startline="16" endline="37" pcid="18"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/cmd/move_layer.h.c" startline="13" endline="36" pcid="28"></source>
+</class>
+
+<class classid="3" nclones="2" nlines="15" similarity="100">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/util/autocrop.cpp.c" startline="23" endline="64" pcid="69"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/util/autocrop.cpp.c" startline="68" endline="109" pcid="70"></source>
+</class>
+
+<class classid="4" nclones="2" nlines="19" similarity="78">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/fixmath/fixmath.h.c" startline="46" endline="65" pcid="117"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/fixmath/fixmath.h.c" startline="67" endline="86" pcid="122"></source>
+</class>
+
+<class classid="5" nclones="4" nlines="14" similarity="76">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/she/osx/app.h.c" startline="13" endline="31" pcid="185"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/base/mutex.h.c" startline="11" endline="29" pcid="347"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/base/chrono.h.c" startline="9" endline="23" pcid="364"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/base/memory_dump.h.c" startline="11" endline="25" pcid="398"></source>
+</class>
+
+<class classid="6" nclones="2" nlines="44" similarity="93">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="21" endline="101" pcid="193"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="106" endline="190" pcid="208"></source>
+</class>
+
+<class classid="7" nclones="4" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="262" endline="278" pcid="230"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="301" endline="316" pcid="233"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="388" endline="406" pcid="243"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="429" endline="446" pcid="246"></source>
+</class>
+
+<class classid="8" nclones="3" nlines="54" similarity="76">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="464" endline="534" pcid="249"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="539" endline="612" pcid="251"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="617" endline="690" pcid="254"></source>
+</class>
+
+</clones>

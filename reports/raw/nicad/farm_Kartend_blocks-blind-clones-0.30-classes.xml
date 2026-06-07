@@ -1,0 +1,33 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_Kartend" granularity="blocks-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="84" npairs="99"/>
+<runinfo ncompares="565" cputime="17584"/>
+<classinfo nclasses="1"/>
+
+<class classid="1" nclones="23" nlines="17" similarity="72">
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/detailspaneconstants.h.c" startline="4" endline="53" pcid="2"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/selection.h.c" startline="4" endline="36" pcid="56"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/keyboard.h.c" startline="4" endline="30" pcid="52"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/grid.h.c" startline="4" endline="37" pcid="4"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/timing.h.c" startline="4" endline="48" pcid="12"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/mouse.h.c" startline="4" endline="40" pcid="8"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/item.h.c" startline="4" endline="36" pcid="6"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/metadata.h.c" startline="4" endline="45" pcid="24"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/dialog.h.c" startline="4" endline="45" pcid="47"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/cache.h.c" startline="4" endline="44" pcid="37"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/database.h.c" startline="4" endline="81" pcid="22"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/detailspane.h.c" startline="4" endline="53" pcid="60"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/artwork.h.c" startline="4" endline="51" pcid="54"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/dialog.h.c" startline="23" endline="44" pcid="49"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/listview.h.c" startline="4" endline="29" pcid="18"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/animation.h.c" startline="4" endline="32" pcid="41"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/attract.h.c" startline="4" endline="36" pcid="35"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/overlay.h.c" startline="4" endline="24" pcid="43"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/navigation.h.c" startline="4" endline="25" pcid="50"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/widget.h.c" startline="4" endline="52" pcid="28"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/placeholder.h.c" startline="4" endline="52" pcid="10"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/attract.h.c" startline="10" endline="35" pcid="36"></source>
+<source file="/home/localadm/nicad_work/farm_Kartend/src/ui/uiconstants/launch.h.c" startline="4" endline="27" pcid="14"></source>
+</class>
+
+</clones>

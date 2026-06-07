@@ -1,0 +1,6 @@
+scanned 618 files, 1688 fragments, 126 candidate pairs
+reported 4 pairs above threshold (0 whole-file clone group(s) suppressed)
+  engine/prefabs/irreden/audio/systems/system_contact_midi_trigger.hpp:23-52  <->  engine/prefabs/irreden/audio/systems/system_periodic_idle_midi_trigger.hpp:23-53  (STRUCTURAL, weighted=0.986528, line=0.62963)
+  engine/prefabs/irreden/render/systems/system_framebuffer_to_screen.hpp:37-47  <->  engine/prefabs/irreden/render/systems/system_screen_residual_rotate.hpp:39-51  (STRUCTURAL, weighted=0.900744, line=0.5)
+  engine/prefabs/irreden/common/modifier_compose.hpp:31-98  <->  engine/prefabs/irreden/common/modifier_compose.hpp:123-190  (STRUCTURAL, weighted=0.79405, line=0.869565)
+  engine/prefabs/irreden/render/widget_draw.hpp:64-71  <->  engine/prefabs/irreden/render/widget_draw.hpp:82-87  (STRUCTURAL, weighted=0.707581, line=0.555556)

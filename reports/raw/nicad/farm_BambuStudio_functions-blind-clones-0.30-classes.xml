@@ -1,0 +1,451 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_BambuStudio" granularity="functions-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="1523" npairs="608"/>
+<runinfo ncompares="147689" cputime="61451"/>
+<classinfo nclasses="76"/>
+
+<class classid="1" nclones="3" nlines="16" similarity="71">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/GLEW/glew/src/glew.c.c" startline="246" endline="265" pcid="5"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/GLEW/glew/src/glew.c.c" startline="283" endline="297" pcid="7"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/GLEW/glew/src/glew.c.c" startline="267" endline="281" pcid="6"></source>
+</class>
+
+<class classid="2" nclones="2" nlines="10" similarity="77">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmltok.c.c" startline="520" endline="531" pcid="36"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmltok.c.c" startline="555" endline="566" pcid="37"></source>
+</class>
+
+<class classid="3" nclones="2" nlines="10" similarity="87">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlparse.c.c" startline="2289" endline="2299" pcid="122"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlparse.c.c" startline="2301" endline="2311" pcid="123"></source>
+</class>
+
+<class classid="4" nclones="43" nlines="19" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="136" endline="165" pcid="199"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="944" endline="976" pcid="237"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="1039" endline="1066" pcid="241"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="167" endline="197" pcid="200"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="978" endline="1000" pcid="238"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="236" endline="260" pcid="203"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="855" endline="883" pcid="233"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="446" endline="468" pcid="211"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="538" endline="560" pcid="216"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="411" endline="428" pcid="209"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="199" endline="217" pcid="201"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="294" endline="311" pcid="206"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="835" endline="852" pcid="232"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="679" endline="697" pcid="224"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="784" endline="801" pcid="229"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="1019" endline="1037" pcid="240"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="766" endline="782" pcid="228"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="918" endline="942" pcid="236"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="716" endline="734" pcid="226"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="626" endline="644" pcid="221"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="736" endline="764" pcid="227"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="313" endline="327" pcid="207"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="278" endline="292" pcid="205"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="901" endline="916" pcid="235"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="699" endline="714" pcid="225"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="662" endline="677" pcid="223"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="885" endline="899" pcid="234"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="521" endline="536" pcid="215"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="430" endline="444" pcid="210"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="470" endline="484" pcid="212"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="486" endline="500" pcid="213"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="562" endline="576" pcid="217"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="819" endline="833" pcid="231"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="578" endline="592" pcid="218"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="803" endline="817" pcid="230"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="646" endline="660" pcid="222"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="262" endline="276" pcid="204"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="502" endline="519" pcid="214"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="219" endline="234" pcid="202"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="610" endline="624" pcid="220"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="594" endline="608" pcid="219"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="1002" endline="1017" pcid="239"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/deps/EXPAT/expat/xmlrole.c.c" startline="1172" endline="1186" pcid="243"></source>
+</class>
+
+<class classid="5" nclones="3" nlines="35" similarity="84">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/raytri.c.c" startline="76" endline="143" pcid="255"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/raytri.c.c" startline="147" endline="207" pcid="256"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/raytri.c.c" startline="212" endline="266" pcid="257"></source>
+</class>
+
+<class classid="6" nclones="2" nlines="10" similarity="87">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="722" endline="738" pcid="263"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="822" endline="833" pcid="265"></source>
+</class>
+
+<class classid="7" nclones="2" nlines="74" similarity="77">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="1842" endline="1957" pcid="287"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="1968" endline="2074" pcid="288"></source>
+</class>
+
+<class classid="8" nclones="2" nlines="19" similarity="82">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2137" endline="2160" pcid="291"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2162" endline="2185" pcid="292"></source>
+</class>
+
+<class classid="9" nclones="2" nlines="55" similarity="84">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2428" endline="2479" pcid="295"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2624" endline="2683" pcid="298"></source>
+</class>
+
+<class classid="10" nclones="2" nlines="53" similarity="81">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2700" endline="2753" pcid="299"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/libigl/igl/ply.h.c" startline="2770" endline="2843" pcid="300"></source>
+</class>
+
+<class classid="11" nclones="2" nlines="22" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/priorityq-heap.c.c" startline="96" endline="123" pcid="316"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/priorityq-heap.c.c" startline="126" endline="146" pcid="317"></source>
+</class>
+
+<class classid="12" nclones="2" nlines="16" similarity="83">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/geom.c.c" startline="47" endline="75" pcid="406"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/geom.c.c" startline="102" endline="130" pcid="408"></source>
+</class>
+
+<class classid="13" nclones="2" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/geom.c.c" startline="77" endline="95" pcid="407"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/geom.c.c" startline="132" endline="150" pcid="409"></source>
+</class>
+
+<class classid="14" nclones="2" nlines="22" similarity="85">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/mesh.c.c" startline="134" endline="160" pcid="425"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/mesh.c.c" startline="168" endline="199" pcid="426"></source>
+</class>
+
+<class classid="15" nclones="2" nlines="16" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/mesh.c.c" startline="224" endline="243" pcid="428"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/glu-libtess/src/mesh.c.c" startline="248" endline="267" pcid="429"></source>
+</class>
+
+<class classid="16" nclones="3" nlines="13" similarity="90">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/mac/hid.c.c" startline="503" endline="516" pcid="462"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="505" endline="518" pcid="493"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/linux/hid.c.c" startline="698" endline="710" pcid="520"></source>
+</class>
+
+<class classid="17" nclones="3" nlines="28" similarity="95">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/mac/hid.c.c" startline="518" endline="552" pcid="463"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/linux/hid.c.c" startline="712" endline="745" pcid="521"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="521" endline="555" pcid="494"></source>
+</class>
+
+<class classid="18" nclones="2" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/mac/hid.c.c" startline="820" endline="838" pcid="472"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/mac/hid.c.c" startline="840" endline="859" pcid="473"></source>
+</class>
+
+<class classid="19" nclones="4" nlines="10" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="830" endline="841" pcid="503"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="856" endline="867" pcid="505"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="843" endline="854" pcid="504"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/hidapi/win/hid.c.c" startline="869" endline="880" pcid="506"></source>
+</class>
+
+<class classid="20" nclones="2" nlines="38" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/mcut/source/shewchuk.c.c" startline="5123" endline="5156" pcid="538"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/mcut/source/shewchuk.c.c" startline="5172" endline="5216" pcid="539"></source>
+</class>
+
+<class classid="21" nclones="2" nlines="56" similarity="73">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/mcut/source/shewchuk.c.c" startline="5451" endline="5499" pcid="543"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/mcut/source/shewchuk.c.c" startline="5513" endline="5570" pcid="544"></source>
+</class>
+
+<class classid="22" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="291" endline="301" pcid="604"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="538" endline="548" pcid="613"></source>
+</class>
+
+<class classid="23" nclones="2" nlines="22" similarity="80">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="310" endline="338" pcid="606"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="550" endline="578" pcid="614"></source>
+</class>
+
+<class classid="24" nclones="2" nlines="29" similarity="87">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="5484" endline="5523" pcid="707"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="5526" endline="5565" pcid="708"></source>
+</class>
+
+<class classid="25" nclones="2" nlines="19" similarity="82">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="7958" endline="7977" pcid="767"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/miniz/miniz.c.c" startline="7980" endline="8001" pcid="768"></source>
+</class>
+
+<class classid="26" nclones="5" nlines="53" similarity="81">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/qvoronoi/qvoronoi_r.c.c" startline="243" endline="304" pcid="771"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/qhull/unix_r.c.c" startline="321" endline="373" pcid="859"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/qdelaunay/qdelaun_r.c.c" startline="255" endline="316" pcid="772"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/qconvex/qconvex_r.c.c" startline="270" endline="327" pcid="1423"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/qhalf/qhalf_r.c.c" startline="252" endline="317" pcid="1422"></source>
+</class>
+
+<class classid="27" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg/user_eg_r.c.c" startline="63" endline="74" pcid="773"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="71" endline="82" pcid="850"></source>
+</class>
+
+<class classid="28" nclones="4" nlines="14" similarity="83">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg/user_eg_r.c.c" startline="80" endline="93" pcid="774"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="88" endline="101" pcid="851"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="259" endline="273" pcid="856"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg/user_eg_r.c.c" startline="155" endline="169" pcid="777"></source>
+</class>
+
+<class classid="29" nclones="2" nlines="22" similarity="84">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg/user_eg_r.c.c" startline="125" endline="147" pcid="776"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="229" endline="251" pcid="855"></source>
+</class>
+
+<class classid="30" nclones="2" nlines="22" similarity="73">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="61" endline="82" pcid="790"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="61" endline="82" pcid="1344"></source>
+</class>
+
+<class classid="31" nclones="2" nlines="14" similarity="83">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="100" endline="113" pcid="791"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="100" endline="113" pcid="1345"></source>
+</class>
+
+<class classid="32" nclones="4" nlines="16" similarity="71">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="131" endline="146" pcid="792"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="207" endline="222" pcid="794"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="131" endline="146" pcid="1346"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="207" endline="222" pcid="1348"></source>
+</class>
+
+<class classid="33" nclones="2" nlines="26" similarity="82">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="163" endline="188" pcid="793"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="163" endline="188" pcid="1347"></source>
+</class>
+
+<class classid="34" nclones="2" nlines="21" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="234" endline="255" pcid="795"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="234" endline="255" pcid="1349"></source>
+</class>
+
+<class classid="35" nclones="2" nlines="18" similarity="86">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="276" endline="293" pcid="796"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="276" endline="293" pcid="1350"></source>
+</class>
+
+<class classid="36" nclones="2" nlines="12" similarity="81">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="310" endline="321" pcid="797"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="310" endline="321" pcid="1351"></source>
+</class>
+
+<class classid="37" nclones="2" nlines="21" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="344" endline="364" pcid="798"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="344" endline="364" pcid="1352"></source>
+</class>
+
+<class classid="38" nclones="2" nlines="22" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="384" endline="404" pcid="799"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="384" endline="404" pcid="1353"></source>
+</class>
+
+<class classid="39" nclones="4" nlines="20" similarity="72">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="424" endline="443" pcid="800"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="465" endline="484" pcid="801"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="424" endline="443" pcid="1354"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="465" endline="484" pcid="1355"></source>
+</class>
+
+<class classid="40" nclones="2" nlines="20" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="504" endline="523" pcid="802"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="504" endline="523" pcid="1356"></source>
+</class>
+
+<class classid="41" nclones="2" nlines="20" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="587" endline="606" pcid="805"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="587" endline="606" pcid="1359"></source>
+</class>
+
+<class classid="42" nclones="2" nlines="31" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="629" endline="658" pcid="806"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="629" endline="658" pcid="1360"></source>
+</class>
+
+<class classid="43" nclones="2" nlines="21" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="677" endline="697" pcid="807"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="677" endline="697" pcid="1361"></source>
+</class>
+
+<class classid="44" nclones="2" nlines="16" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="821" endline="836" pcid="813"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="821" endline="836" pcid="1367"></source>
+</class>
+
+<class classid="45" nclones="2" nlines="27" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="855" endline="880" pcid="814"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="855" endline="880" pcid="1368"></source>
+</class>
+
+<class classid="46" nclones="2" nlines="12" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="895" endline="906" pcid="815"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="895" endline="906" pcid="1369"></source>
+</class>
+
+<class classid="47" nclones="2" nlines="22" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="924" endline="946" pcid="816"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="924" endline="946" pcid="1370"></source>
+</class>
+
+<class classid="48" nclones="2" nlines="71" similarity="92">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="967" endline="1037" pcid="817"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="967" endline="1037" pcid="1371"></source>
+</class>
+
+<class classid="49" nclones="2" nlines="19" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/qset.c.c" startline="1111" endline="1129" pcid="820"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/qset_r.c.c" startline="1111" endline="1129" pcid="1374"></source>
+</class>
+
+<class classid="50" nclones="2" nlines="13" similarity="81">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/userprintf_rbox.c.c" startline="40" endline="52" pcid="833"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/userprintf_rbox_r.c.c" startline="40" endline="52" pcid="912"></source>
+</class>
+
+<class classid="51" nclones="2" nlines="50" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/random.c.c" startline="42" endline="92" pcid="834"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/random_r.c.c" startline="42" endline="92" pcid="1187"></source>
+</class>
+
+<class classid="52" nclones="2" nlines="18" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/random.c.c" startline="105" endline="122" pcid="835"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/random_r.c.c" startline="105" endline="122" pcid="1188"></source>
+</class>
+
+<class classid="53" nclones="2" nlines="14" similarity="76">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/random.c.c" startline="150" endline="165" pcid="836"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/random_r.c.c" startline="148" endline="163" pcid="1189"></source>
+</class>
+
+<class classid="54" nclones="2" nlines="15" similarity="91">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/random.c.c" startline="204" endline="218" pcid="839"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/random_r.c.c" startline="206" endline="220" pcid="1192"></source>
+</class>
+
+<class classid="55" nclones="2" nlines="659" similarity="82">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/rboxlib.c.c" startline="90" endline="786" pcid="842"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/rboxlib_r.c.c" startline="72" endline="758" pcid="1335"></source>
+</class>
+
+<class classid="56" nclones="2" nlines="19" similarity="75">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull/rboxlib.c.c" startline="842" endline="860" pcid="848"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/rboxlib_r.c.c" startline="814" endline="832" pcid="1341"></source>
+</class>
+
+<class classid="57" nclones="2" nlines="29" similarity="72">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="115" endline="149" pcid="852"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/user_eg2/user_eg2_r.c.c" startline="182" endline="218" pcid="854"></source>
+</class>
+
+<class classid="58" nclones="2" nlines="12" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/geom2_r.c.c" startline="1108" endline="1117" pcid="887"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/geom2_r.c.c" startline="1119" endline="1130" pcid="888"></source>
+</class>
+
+<class classid="59" nclones="2" nlines="12" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/geom2_r.c.c" startline="1151" endline="1160" pcid="889"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/geom2_r.c.c" startline="1169" endline="1180" pcid="890"></source>
+</class>
+
+<class classid="60" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="91" endline="100" pcid="915"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="109" endline="118" pcid="916"></source>
+</class>
+
+<class classid="61" nclones="2" nlines="18" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="249" endline="265" pcid="922"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="267" endline="283" pcid="923"></source>
+</class>
+
+<class classid="62" nclones="2" nlines="13" similarity="77">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="483" endline="493" pcid="929"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="648" endline="658" pcid="937"></source>
+</class>
+
+<class classid="63" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="815" endline="824" pcid="941"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="826" endline="835" pcid="942"></source>
+</class>
+
+<class classid="64" nclones="2" nlines="15" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="1440" endline="1453" pcid="960"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="1454" endline="1467" pcid="961"></source>
+</class>
+
+<class classid="65" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="2930" endline="2938" pcid="1010"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/io_r.c.c" startline="2939" endline="2947" pcid="1011"></source>
+</class>
+
+<class classid="66" nclones="10" nlines="24" similarity="71">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="28" endline="51" pcid="1069"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="140" endline="161" pcid="1073"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="114" endline="139" pcid="1072"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="162" endline="180" pcid="1074"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="262" endline="285" pcid="1078"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="210" endline="232" pcid="1076"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="181" endline="209" pcid="1075"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="52" endline="81" pcid="1070"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="233" endline="260" pcid="1077"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/stat_r.c.c" startline="82" endline="113" pcid="1071"></source>
+</class>
+
+<class classid="67" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly2_r.c.c" startline="1286" endline="1295" pcid="1124"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly2_r.c.c" startline="1301" endline="1310" pcid="1125"></source>
+</class>
+
+<class classid="68" nclones="2" nlines="13" similarity="88">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly2_r.c.c" startline="1438" endline="1449" pcid="1131"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly2_r.c.c" startline="1543" endline="1554" pcid="1135"></source>
+</class>
+
+<class classid="69" nclones="2" nlines="17" similarity="93">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly_r.c.c" startline="38" endline="54" pcid="1206"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly_r.c.c" startline="72" endline="87" pcid="1207"></source>
+</class>
+
+<class classid="70" nclones="2" nlines="18" similarity="70">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly_r.c.c" startline="1084" endline="1102" pcid="1229"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/poly_r.c.c" startline="1115" endline="1129" pcid="1230"></source>
+</class>
+
+<class classid="71" nclones="2" nlines="20" similarity="81">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/merge_r.c.c" startline="1387" endline="1415" pcid="1278"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/libqhull_r/merge_r.c.c" startline="2136" endline="2153" pcid="1297"></source>
+</class>
+
+<class classid="72" nclones="2" nlines="29" similarity="78">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset/testqset.c.c" startline="142" endline="170" pcid="1425"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset_r/testqset_r.c.c" startline="136" endline="167" pcid="1442"></source>
+</class>
+
+<class classid="73" nclones="2" nlines="47" similarity="83">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset/testqset.c.c" startline="230" endline="277" pcid="1427"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset_r/testqset_r.c.c" startline="229" endline="276" pcid="1444"></source>
+</class>
+
+<class classid="74" nclones="2" nlines="39" similarity="71">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset/testqset.c.c" startline="725" endline="762" pcid="1437"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset_r/testqset_r.c.c" startline="724" endline="761" pcid="1454"></source>
+</class>
+
+<class classid="75" nclones="2" nlines="124" similarity="76">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset/testqset.c.c" startline="768" endline="890" pcid="1438"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/qhull/src/testqset_r/testqset_r.c.c" startline="767" endline="889" pcid="1455"></source>
+</class>
+
+<class classid="76" nclones="2" nlines="17" similarity="100">
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/slic3r/Utils/minilzo_extension.cpp.c" startline="13" endline="31" pcid="1495"></source>
+<source file="/home/localadm/nicad_work/farm_BambuStudio/src/slic3r/Utils/minilzo_extension.cpp.c" startline="34" endline="52" pcid="1496"></source>
+</class>
+
+</clones>

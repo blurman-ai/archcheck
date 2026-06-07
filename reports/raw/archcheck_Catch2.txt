@@ -1,0 +1,2 @@
+scanned 1 files, 5 fragments, 10 candidate pairs
+reported 0 pairs above threshold (0 whole-file clone group(s) suppressed)

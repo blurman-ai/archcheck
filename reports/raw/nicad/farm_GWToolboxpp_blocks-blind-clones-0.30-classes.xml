@@ -1,0 +1,40 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_GWToolboxpp" granularity="blocks-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="133" npairs="19"/>
+<runinfo ncompares="446" cputime="11470"/>
+<classinfo nclasses="5"/>
+
+<class classid="1" nclones="2" nlines="38" similarity="70">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="33" endline="93" pcid="35"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="33" endline="89" pcid="66"></source>
+</class>
+
+<class classid="2" nclones="3" nlines="32" similarity="92">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="171" endline="222" pcid="46"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="330" endline="379" pcid="60"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="275" endline="326" pcid="55"></source>
+</class>
+
+<class classid="3" nclones="4" nlines="22" similarity="73">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="183" endline="209" pcid="80"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="249" endline="276" pcid="86"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="215" endline="244" pcid="83"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="280" endline="307" pcid="89"></source>
+</class>
+
+<class classid="4" nclones="2" nlines="142" similarity="76">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="7" endline="144" pcid="97"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/ItemIDs.h.c" startline="3" endline="203" pcid="112"></source>
+</class>
+
+<class classid="5" nclones="7" nlines="33" similarity="70">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="146" endline="172" pcid="98"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="235" endline="276" pcid="101"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="469" endline="490" pcid="111"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="388" endline="421" pcid="106"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="182" endline="233" pcid="100"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="423" endline="440" pcid="107"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/GWCA/include/GWCA/Constants/AgentIDs.h.c" startline="299" endline="367" pcid="104"></source>
+</class>
+
+</clones>

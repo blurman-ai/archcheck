@@ -1,0 +1,12 @@
+scanned 1211 files, 3067 fragments, 436 candidate pairs
+reported 10 pairs above threshold (0 whole-file clone group(s) suppressed)
+  src/app/commands/cmd_move_mask.cpp:204-227  <->  src/app/commands/cmd_scroll.cpp:140-163  (EXACT, weighted=1, line=1)
+  src/app/commands/cmd_move_mask.cpp:233-236  <->  src/app/commands/cmd_scroll.cpp:169-172  (EXACT, weighted=1, line=1)
+  src/app/cmd/copy_cel.cpp:47-123  <->  src/app/cmd/move_cel.cpp:49-128  (STRUCTURAL, weighted=0.80861, line=0.809524)
+  src/app/ui/skin/skin_theme.cpp:563-567  <->  src/app/ui/skin/skin_theme.cpp:803-807  (EXACT, weighted=0.8, line=1)
+  src/app/ui/skin/skin_theme.cpp:570-577  <->  src/app/ui/skin/skin_theme.cpp:810-817  (EXACT, weighted=0.8, line=1)
+  src/clip/clip_win.cpp:521-529  <->  src/clip/clip_win.cpp:617-625  (STRUCTURAL, weighted=0.8, line=0.8)
+  src/doc/algo.cpp:22-100  <->  src/doc/algo.cpp:107-189  (STRUCTURAL, weighted=0.752741, line=0.872727)
+  src/base/shared_ptr.h:121-131  <->  src/base/shared_ptr.h:137-147  (STRUCTURAL, weighted=0.747904, line=0.8)
+  src/app/ui/skin/skin_theme.cpp:580-591  <->  src/app/ui/skin/skin_theme.cpp:820-831  (EXACT, weighted=0.68, line=1)
+  src/app/ui/status_bar.cpp:199-213  <->  src/app/ui/status_bar.cpp:235-249  (STRUCTURAL, weighted=0.619877, line=0.529412)

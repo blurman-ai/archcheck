@@ -1,0 +1,30 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_IrredenEngine" granularity="functions-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="36" npairs="32"/>
+<runinfo ncompares="67" cputime="11782"/>
+<classinfo nclasses="2"/>
+
+<class classid="1" nclones="8" nlines="74" similarity="70">
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="974" endline="1027" pcid="10"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1363" endline="1427" pcid="21"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1627" endline="1687" pcid="25"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1428" endline="1487" pcid="22"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1215" endline="1313" pcid="18"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1105" endline="1204" pcid="16"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1488" endline="1602" pcid="23"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1701" endline="1888" pcid="27"></source>
+</class>
+
+<class classid="2" nclones="9" nlines="17" similarity="73">
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1028" endline="1044" pcid="11"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1335" endline="1362" pcid="20"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1314" endline="1334" pcid="19"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1069" endline="1081" pcid="14"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1082" endline="1104" pcid="15"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1603" endline="1626" pcid="24"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1688" endline="1700" pcid="26"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1053" endline="1068" pcid="13"></source>
+<source file="/home/localadm/nicad_work/farm_IrredenEngine/engine/render/src/opengl/glad.c.c" startline="1205" endline="1214" pcid="17"></source>
+</class>
+
+</clones>

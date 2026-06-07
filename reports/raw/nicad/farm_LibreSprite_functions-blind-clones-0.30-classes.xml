@@ -1,0 +1,28 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_LibreSprite" granularity="functions-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="103" npairs="6"/>
+<runinfo ncompares="195" cputime="11712"/>
+<classinfo nclasses="4"/>
+
+<class classid="1" nclones="2" nlines="16" similarity="93">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/util/autocrop.cpp.c" startline="21" endline="64" pcid="7"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/app/util/autocrop.cpp.c" startline="66" endline="109" pcid="8"></source>
+</class>
+
+<class classid="2" nclones="2" nlines="20" similarity="80">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/fixmath/fixmath.h.c" startline="46" endline="65" pcid="21"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/fixmath/fixmath.h.c" startline="67" endline="86" pcid="22"></source>
+</class>
+
+<class classid="3" nclones="2" nlines="45" similarity="93">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="20" endline="101" pcid="46"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="105" endline="190" pcid="47"></source>
+</class>
+
+<class classid="4" nclones="3" nlines="55" similarity="75">
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="461" endline="534" pcid="50"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="614" endline="690" pcid="52"></source>
+<source file="/home/localadm/nicad_work/farm_LibreSprite/src/doc/algo.cpp.c" startline="536" endline="612" pcid="51"></source>
+</class>
+
+</clones>

@@ -1,0 +1,1885 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_AetherSDR" granularity="blocks-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="10087" npairs="1166"/>
+<runinfo ncompares="2104269" cputime="398189"/>
+<classinfo nclasses="322"/>
+
+<class classid="1" nclones="2" nlines="16" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="64" endline="76" pcid="77"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/real2iq.c.c" startline="26" endline="42" pcid="575"></source>
+</class>
+
+<class classid="2" nclones="2" nlines="47" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="93" endline="139" pcid="81"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="73" endline="119" pcid="489"></source>
+</class>
+
+<class classid="3" nclones="2" nlines="52" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="143" endline="181" pcid="86"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="123" endline="161" pcid="494"></source>
+</class>
+
+<class classid="4" nclones="2" nlines="23" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="184" endline="201" pcid="95"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="164" endline="181" pcid="503"></source>
+</class>
+
+<class classid="5" nclones="2" nlines="29" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="208" endline="230" pcid="96"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="188" endline="210" pcid="504"></source>
+</class>
+
+<class classid="6" nclones="3" nlines="13" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="265" endline="271" pcid="104"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/radae_tx_nopy.c.c" startline="68" endline="80" pcid="439"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="252" endline="258" pcid="513"></source>
+</class>
+
+<class classid="7" nclones="4" nlines="10" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="367" endline="372" pcid="116"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="354" endline="361" pcid="524"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_demod_wav.c.c" startline="386" endline="391" pcid="117"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_modulate_wav.c.c" startline="343" endline="350" pcid="523"></source>
+</class>
+
+<class classid="8" nclones="2" nlines="13" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_tx.c.c" startline="165" endline="178" pcid="364"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_tx.c.c" startline="228" endline="241" pcid="374"></source>
+</class>
+
+<class classid="9" nclones="2" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/kiss_fft.c.c" startline="336" endline="346" pcid="402"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/deflate.c.c" startline="855" endline="886" pcid="8470"></source>
+</class>
+
+<class classid="10" nclones="2" nlines="13" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/gp_interleaver.c.c" startline="98" endline="110" pcid="431"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/gp_interleaver.c.c" startline="112" endline="125" pcid="434"></source>
+</class>
+
+<class classid="11" nclones="2" nlines="14" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_dsp.h.c" startline="213" endline="228" pcid="559"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/radae/src/rade_dsp.h.c" startline="231" endline="247" pcid="562"></source>
+</class>
+
+<class classid="12" nclones="2" nlines="13" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/parse_lpcnet_weights.c.c" startline="148" endline="158" pcid="619"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/parse_lpcnet_weights.c.c" startline="158" endline="166" pcid="622"></source>
+</class>
+
+<class classid="13" nclones="4" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_avx.h.c" startline="543" endline="554" pcid="662"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_avx.h.c" startline="606" endline="619" pcid="667"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_neon.h.c" startline="159" endline="170" pcid="814"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_avx.h.c" startline="590" endline="603" pcid="664"></source>
+</class>
+
+<class classid="14" nclones="2" nlines="23" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_avx.h.c" startline="779" endline="828" pcid="682"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_avx.h.c" startline="830" endline="877" pcid="685"></source>
+</class>
+
+<class classid="15" nclones="2" nlines="26" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="50" endline="81" pcid="688"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="84" endline="107" pcid="691"></source>
+</class>
+
+<class classid="16" nclones="2" nlines="14" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="110" endline="121" pcid="694"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_neon.h.c" startline="289" endline="300" pcid="828"></source>
+</class>
+
+<class classid="17" nclones="2" nlines="52" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="124" endline="180" pcid="697"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_neon.h.c" startline="304" endline="360" pcid="831"></source>
+</class>
+
+<class classid="18" nclones="2" nlines="32" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="249" endline="281" pcid="700"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec.h.c" startline="283" endline="311" pcid="703"></source>
+</class>
+
+<class classid="19" nclones="2" nlines="14" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_neon.h.c" startline="173" endline="188" pcid="816"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/vec_neon.h.c" startline="191" endline="206" pcid="819"></source>
+</class>
+
+<class classid="20" nclones="2" nlines="22" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/denoise.c.c" startline="90" endline="113" pcid="845"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/rnnoise/src/denoise.c.c" startline="115" endline="138" pcid="849"></source>
+</class>
+
+<class classid="21" nclones="2" nlines="11" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_datatypes.c.c" startline="159" endline="173" pcid="965"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_datatypes.c.c" startline="189" endline="203" pcid="968"></source>
+</class>
+
+<class classid="22" nclones="2" nlines="11" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/password_common.c.c" startline="550" endline="558" pcid="999"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/alias_mosq.c.c" startline="108" endline="117" pcid="1491"></source>
+</class>
+
+<class classid="23" nclones="5" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/password_common.c.c" startline="594" endline="605" pcid="1007"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="351" endline="357" pcid="5447"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="363" endline="377" pcid="5597"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="448" endline="470" pcid="5800"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="350" endline="360" pcid="5446"></source>
+</class>
+
+<class classid="24" nclones="2" nlines="14" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/password_common.c.c" startline="663" endline="678" pcid="1021"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/options.c.c" startline="608" endline="629" pcid="2487"></source>
+</class>
+
+<class classid="25" nclones="4" nlines="15" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/actions_publish.c.c" startline="67" endline="80" pcid="1033"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/actions_unsubscribe.c.c" startline="63" endline="76" pcid="1745"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/actions_subscribe.c.c" startline="67" endline="80" pcid="2342"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/connect.c.c" startline="331" endline="344" pcid="1919"></source>
+</class>
+
+<class classid="26" nclones="2" nlines="133" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/topic_common.c.c" startline="170" endline="337" pcid="1094"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/topic_common.c.c" startline="341" endline="511" pcid="1134"></source>
+</class>
+
+<class classid="27" nclones="2" nlines="10" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/topic_common.c.c" startline="264" endline="273" pcid="1118"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/topic_common.c.c" startline="594" endline="603" pcid="1191"></source>
+</class>
+
+<class classid="28" nclones="4" nlines="19" similarity="86">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="411" endline="440" pcid="1287"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="444" endline="469" pcid="1291"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="503" endline="525" pcid="1299"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="473" endline="499" pcid="1295"></source>
+</class>
+
+<class classid="29" nclones="4" nlines="17" similarity="91">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="782" endline="808" pcid="1353"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="865" endline="884" pcid="1368"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="838" endline="861" pcid="1363"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="812" endline="834" pcid="1358"></source>
+</class>
+
+<class classid="30" nclones="2" nlines="14" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="948" endline="959" pcid="1386"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/property_common.c.c" startline="999" endline="1012" pcid="1400"></source>
+</class>
+
+<class classid="31" nclones="2" nlines="23" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/alias_mosq.c.c" startline="95" endline="119" pcid="1488"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/alias_mosq.c.c" startline="123" endline="143" pcid="1495"></source>
+</class>
+
+<class classid="32" nclones="2" nlines="23" similarity="94">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/messages_mosq.c.c" startline="244" endline="267" pcid="1553"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/messages_mosq.c.c" startline="267" endline="289" pcid="1559"></source>
+</class>
+
+<class classid="33" nclones="2" nlines="51" similarity="79">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_suback.c.c" startline="39" endline="115" pcid="1581"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_unsuback.c.c" startline="43" endline="111" pcid="1708"></source>
+</class>
+
+<class classid="34" nclones="4" nlines="19" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/json_help.c.c" startline="31" endline="50" pcid="1592"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/json_help.c.c" startline="54" endline="73" pcid="1598"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/json_help.c.c" startline="77" endline="96" pcid="1604"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/json_help.c.c" startline="100" endline="121" pcid="1610"></source>
+</class>
+
+<class classid="35" nclones="2" nlines="18" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_pubrec.c.c" startline="72" endline="109" pcid="1630"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_pubrel.c.c" startline="84" endline="112" pcid="2026"></source>
+</class>
+
+<class classid="36" nclones="2" nlines="57" similarity="79">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/actions_unsubscribe.c.c" startline="45" endline="100" pcid="1741"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/actions_subscribe.c.c" startline="43" endline="107" pcid="2336"></source>
+</class>
+
+<class classid="37" nclones="4" nlines="18" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/socks_mosq.c.c" startline="66" endline="81" pcid="1774"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_mosq.c.c" startline="309" endline="331" pcid="2287"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_mosq.c.c" startline="377" endline="394" pcid="2295"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_mosq.c.c" startline="597" endline="625" pcid="2322"></source>
+</class>
+
+<class classid="38" nclones="3" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/socks_mosq.c.c" startline="70" endline="80" pcid="1776"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_mosq.c.c" startline="615" endline="624" pcid="2325"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/packet_mosq.c.c" startline="319" endline="330" pcid="2289"></source>
+</class>
+
+<class classid="39" nclones="15" nlines="19" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/socks_mosq.c.c" startline="88" endline="105" pcid="1779"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="187" endline="204" pcid="6751"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="167" endline="184" pcid="6749"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="147" endline="164" pcid="6747"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="226" endline="242" pcid="6755"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="142" endline="164" pcid="7620"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="207" endline="223" pcid="6753"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="112" endline="138" pcid="7618"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/loop.c.c" startline="264" endline="280" pcid="2081"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libmspack/mspack/system.c.c" startline="17" endline="49" pcid="2660"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_autotest.c.c" startline="32" endline="53" pcid="7758"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_soft_autotest.c.c" startline="36" endline="57" pcid="7737"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libmspack/mspack/system.c.c" startline="16" endline="51" pcid="2659"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_copy_autotest.c.c" startline="32" endline="53" pcid="7744"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="113" endline="135" pcid="7619"></source>
+</class>
+
+<class classid="40" nclones="2" nlines="103" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/strings_common.c.c" startline="33" endline="147" pcid="1781"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/strings_common.c.c" startline="172" endline="264" pcid="1787"></source>
+</class>
+
+<class classid="41" nclones="2" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="163" endline="175" pcid="1943"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="315" endline="329" pcid="1965"></source>
+</class>
+
+<class classid="42" nclones="6" nlines="18" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="179" endline="201" pcid="1945"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="226" endline="243" pcid="1952"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="294" endline="311" pcid="1962"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="205" endline="222" pcid="1949"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="268" endline="290" pcid="1958"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/callbacks.c.c" startline="247" endline="264" pcid="1955"></source>
+</class>
+
+<class classid="43" nclones="2" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_ping.c.c" startline="41" endline="60" pcid="2037"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/handle_ping.c.c" startline="64" endline="88" pcid="2040"></source>
+</class>
+
+<class classid="44" nclones="2" nlines="41" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/send_subscribe.c.c" startline="40" endline="100" pcid="2112"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/mosquitto/src/send_unsubscribe.c.c" startline="39" endline="98" pcid="2121"></source>
+</class>
+
+<class classid="45" nclones="2" nlines="18" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libmspack/mspack/qtmd.c.c" startline="395" endline="409" pcid="2765"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libmspack/mspack/lzxd.c.c" startline="622" endline="642" pcid="2844"></source>
+</class>
+
+<class classid="46" nclones="2" nlines="34" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/include/liquid.argparse.h.c" startline="186" endline="198" pcid="2879"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/include/liquid.argparse.h.c" startline="205" endline="223" pcid="2880"></source>
+</class>
+
+<class classid="47" nclones="2" nlines="13" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/src/vector_norm.proto.c.c" startline="71" endline="93" pcid="2914"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/src/vector_mul.proto.c.c" startline="67" endline="83" pcid="2929"></source>
+</class>
+
+<class classid="48" nclones="2" nlines="16" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/src/vectorf_mul.avx.c.c" startline="34" endline="60" pcid="2920"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/src/vectorf_mul.avx.c.c" startline="67" endline="96" pcid="2922"></source>
+</class>
+
+<class classid="49" nclones="3" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/tests/vectorf_autotest.c.c" startline="43" endline="77" pcid="2932"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/tests/vectorf_autotest.c.c" startline="80" endline="124" pcid="2933"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/tests/vectorf_autotest.c.c" startline="142" endline="175" pcid="2935"></source>
+</class>
+
+<class classid="50" nclones="2" nlines="13" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/tests/vectorcf_autotest.c.c" startline="27" endline="75" pcid="2936"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/vector/tests/vectorcf_autotest.c.c" startline="78" endline="151" pcid="2938"></source>
+</class>
+
+<class classid="51" nclones="2" nlines="11" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/core/src/error.c.c" startline="46" endline="65" pcid="2942"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/core/src/error.c.c" startline="72" endline="92" pcid="2943"></source>
+</class>
+
+<class classid="52" nclones="3" nlines="18" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/agc/tests/agc_crcf_autotest.c.c" startline="83" endline="109" pcid="3002"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/agc/tests/agc_crcf_autotest.c.c" startline="112" endline="145" pcid="3004"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/agc/tests/agc_crcf_autotest.c.c" startline="148" endline="181" pcid="3006"></source>
+</class>
+
+<class classid="53" nclones="2" nlines="25" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/agc/tests/agc_crcf_autotest.c.c" startline="223" endline="232" pcid="3010"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_apsk.proto.c.c" startline="72" endline="81" pcid="6645"></source>
+</class>
+
+<class classid="54" nclones="2" nlines="21" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/agc/tests/agc_crcf_autotest.c.c" startline="308" endline="337" pcid="3013"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_copy_autotest.c.c" startline="29" endline="65" pcid="4894"></source>
+</class>
+
+<class classid="55" nclones="2" nlines="13" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch2.proto.c.c" startline="38" endline="60" pcid="3016"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbchr.proto.c.c" startline="34" endline="54" pcid="3057"></source>
+</class>
+
+<class classid="56" nclones="2" nlines="35" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch2.proto.c.c" startline="72" endline="125" pcid="3017"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbchr.proto.c.c" startline="66" endline="117" pcid="3058"></source>
+</class>
+
+<class classid="57" nclones="2" nlines="27" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch2.proto.c.c" startline="136" endline="176" pcid="3020"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbchr.proto.c.c" startline="129" endline="170" pcid="3060"></source>
+</class>
+
+<class classid="58" nclones="2" nlines="16" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch2.proto.c.c" startline="213" endline="237" pcid="3023"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbchr.proto.c.c" startline="174" endline="195" pcid="3061"></source>
+</class>
+
+<class classid="59" nclones="2" nlines="11" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch2.proto.c.c" startline="385" endline="394" pcid="3036"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/msresamp.proto.c.c" startline="319" endline="328" pcid="4050"></source>
+</class>
+
+<class classid="60" nclones="2" nlines="24" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch.proto.c.c" startline="145" endline="174" pcid="3042"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/firpfbch.proto.c.c" startline="188" endline="222" pcid="3043"></source>
+</class>
+
+<class classid="61" nclones="25" nlines="15" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframegen.c.c" startline="161" endline="186" pcid="3077"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/equalization/src/eqrls.proto.c.c" startline="158" endline="177" pcid="3244"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/masking_veto.c.c" startline="109" endline="125" pcid="9562"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/dds.proto.c.c" startline="180" endline="203" pcid="4232"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="162" endline="178" pcid="5499"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/msresamp2.proto.c.c" startline="204" endline="226" pcid="4791"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="159" endline="181" pcid="6040"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="155" endline="172" pcid="5410"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/detector_cccf.c.c" startline="180" endline="208" pcid="5570"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="203" endline="235" pcid="5377"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="160" endline="177" pcid="5282"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdespm.c.c" startline="437" endline="463" pcid="4069"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="217" endline="237" pcid="5776"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframesync.c.c" startline="305" endline="347" pcid="3096"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="251" endline="280" pcid="5440"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="225" endline="246" pcid="5528"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="257" endline="307" pcid="5594"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/suppression_engine.c.c" startline="92" endline="106" pcid="9528"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_smoother.c.c" startline="95" endline="109" pcid="9587"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/masking_estimator.c.c" startline="165" endline="186" pcid="9612"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/framesync64.c.c" startline="173" endline="187" pcid="5867"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="167" endline="189" pcid="5317"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="247" endline="279" pcid="5725"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/absolute_hearing_thresholds.c.c" startline="94" endline="107" pcid="9775"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/msource.proto.c.c" startline="146" endline="165" pcid="6007"></source>
+</class>
+
+<class classid="62" nclones="6" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframegen.c.c" startline="189" endline="199" pcid="3078"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdetector.proto.c.c" startline="327" endline="337" pcid="5953"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframesync.c.c" startline="350" endline="360" pcid="3097"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="271" endline="281" pcid="5531"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="240" endline="250" pcid="5777"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/symstream.proto.c.c" startline="139" endline="148" pcid="5635"></source>
+</class>
+
+<class classid="63" nclones="2" nlines="25" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframesync.c.c" startline="403" endline="441" pcid="3101"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="336" endline="356" pcid="6051"></source>
+</class>
+
+<class classid="64" nclones="2" nlines="16" similarity="91">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframesync.c.c" startline="827" endline="852" pcid="3123"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframesync.c.c" startline="861" endline="885" pcid="3127"></source>
+</class>
+
+<class classid="65" nclones="2" nlines="33" similarity="89">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframe.common.c.c" startline="46" endline="99" pcid="3145"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframe.common.c.c" startline="113" endline="165" pcid="3151"></source>
+</class>
+
+<class classid="66" nclones="6" nlines="21" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframe.common.c.c" startline="319" endline="336" pcid="3168"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/cpfskdem.proto.c.c" startline="292" endline="304" pcid="6785"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/cpfskmod.proto.c.c" startline="212" endline="224" pcid="6677"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/ampmodem.c.c" startline="138" endline="150" pcid="6526"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/src/quantizer.proto.c.c" startline="67" endline="80" pcid="3213"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/src/nco.proto.c.c" startline="232" endline="267" pcid="6982"></source>
+</class>
+
+<class classid="67" nclones="4" nlines="12" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/src/ofdmframe.common.c.c" startline="326" endline="332" pcid="3170"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/src/nco.proto.c.c" startline="234" endline="240" pcid="6983"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fnyquist.c.c" startline="72" endline="84" pcid="4623"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="275" endline="287" pcid="5508"></source>
+</class>
+
+<class classid="68" nclones="2" nlines="13" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/multichannel/tests/ofdmframe_autotest.c.c" startline="206" endline="225" pcid="3196"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/ofdmflexframe_autotest.c.c" startline="118" endline="134" pcid="6197"></source>
+</class>
+
+<class classid="69" nclones="2" nlines="17" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/bench/quantizer_benchmark.c.c" startline="54" endline="72" pcid="3225"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/bench/random_benchmark.c.c" startline="139" endline="159" pcid="6937"></source>
+</class>
+
+<class classid="70" nclones="2" nlines="15" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/bench/compander_benchmark.c.c" startline="31" endline="48" pcid="3227"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/bench/compander_benchmark.c.c" startline="55" endline="72" pcid="3229"></source>
+</class>
+
+<class classid="71" nclones="2" nlines="19" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/tests/compand_autotest.c.c" startline="26" endline="48" pcid="3231"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/quantization/tests/quantize_autotest.c.c" startline="26" endline="53" pcid="3235"></source>
+</class>
+
+<class classid="72" nclones="7" nlines="18" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/equalization/src/eqlms.proto.c.c" startline="101" endline="126" pcid="3268"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firpfb.proto.c.c" startline="110" endline="134" pcid="4327"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firinterp.proto.c.c" startline="120" endline="144" pcid="4738"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdecim.proto.c.c" startline="124" endline="149" pcid="4425"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firpfb.proto.c.c" startline="147" endline="171" pcid="4328"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/symsync.proto.c.c" startline="180" endline="206" pcid="4506"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/symsync.proto.c.c" startline="218" endline="249" pcid="4507"></source>
+</class>
+
+<class classid="73" nclones="2" nlines="14" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/optim/src/utilities.c.c" startline="58" endline="75" pcid="3334"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/optim/tests/gradsearch_autotest.c.c" startline="80" endline="97" pcid="3376"></source>
+</class>
+
+<class classid="74" nclones="2" nlines="24" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/optim/tests/gradsearch_autotest.c.c" startline="33" endline="74" pcid="3373"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/optim/tests/gradsearch_autotest.c.c" startline="100" endline="141" pcid="3379"></source>
+</class>
+
+<class classid="75" nclones="15" nlines="15" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.sse.c.c" startline="64" endline="85" pcid="3390"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx512f.c.c" startline="64" endline="85" pcid="3426"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.sse.c.c" startline="64" endline="85" pcid="3409"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.av.c.c" startline="63" endline="84" pcid="3465"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.c.c" startline="38" endline="60" pcid="3517"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.sse.c.c" startline="65" endline="86" pcid="3498"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx.c.c" startline="63" endline="84" pcid="3479"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.neon.c.c" startline="71" endline="92" pcid="3541"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx512f.c.c" startline="68" endline="89" pcid="3624"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod.proto.c.c" startline="68" endline="91" pcid="3579"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.neon.c.c" startline="66" endline="87" pcid="3446"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx.c.c" startline="63" endline="84" pcid="3521"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx512f.c.c" startline="66" endline="87" pcid="3559"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx.c.c" startline="63" endline="84" pcid="3600"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.av.c.c" startline="63" endline="84" pcid="3641"></source>
+</class>
+
+<class classid="76" nclones="4" nlines="15" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.sse.c.c" startline="101" endline="124" pcid="3392"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.neon.c.c" startline="103" endline="126" pcid="3448"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx.c.c" startline="100" endline="123" pcid="3481"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx512f.c.c" startline="103" endline="126" pcid="3561"></source>
+</class>
+
+<class classid="77" nclones="4" nlines="11" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.sse.c.c" startline="159" endline="179" pcid="3398"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.neon.c.c" startline="161" endline="181" pcid="3454"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx512f.c.c" startline="161" endline="181" pcid="3567"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx.c.c" startline="158" endline="178" pcid="3487"></source>
+</class>
+
+<class classid="78" nclones="2" nlines="54" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.sse.c.c" startline="330" endline="414" pcid="3405"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.neon.c.c" startline="310" endline="392" pcid="3461"></source>
+</class>
+
+<class classid="79" nclones="4" nlines="30" similarity="79">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.sse.c.c" startline="353" endline="389" pcid="3406"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx.c.c" startline="337" endline="373" pcid="3495"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.neon.c.c" startline="334" endline="370" pcid="3462"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx512f.c.c" startline="341" endline="377" pcid="3575"></source>
+</class>
+
+<class classid="80" nclones="3" nlines="32" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.sse.c.c" startline="256" endline="322" pcid="3423"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.sse.c.c" startline="92" endline="147" pcid="3594"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.sse.c.c" startline="265" endline="328" pcid="3514"></source>
+</class>
+
+<class classid="81" nclones="10" nlines="17" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.sse.c.c" startline="270" endline="294" pcid="3424"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.neon.c.c" startline="108" endline="132" pcid="3663"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx.c.c" startline="259" endline="283" pcid="3615"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx.c.c" startline="283" endline="307" pcid="3538"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.sse.c.c" startline="285" endline="309" pcid="3515"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.sse.c.c" startline="103" endline="121" pcid="3595"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx512f.c.c" startline="255" endline="279" pcid="3639"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx512f.c.c" startline="281" endline="305" pcid="3443"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.avx.c.c" startline="95" endline="113" pcid="3656"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.avx512f.c.c" startline="90" endline="108" pcid="3619"></source>
+</class>
+
+<class classid="82" nclones="4" nlines="12" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx512f.c.c" startline="100" endline="118" pcid="3428"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx.c.c" startline="99" endline="117" pcid="3523"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.sse.c.c" startline="101" endline="119" pcid="3500"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.neon.c.c" startline="107" endline="125" pcid="3543"></source>
+</class>
+
+<class classid="83" nclones="2" nlines="34" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx512f.c.c" startline="261" endline="323" pcid="3442"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx512f.c.c" startline="244" endline="291" pcid="3638"></source>
+</class>
+
+<class classid="84" nclones="2" nlines="30" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.av.c.c" startline="190" endline="236" pcid="3476"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.av.c.c" startline="185" endline="229" pcid="3651"></source>
+</class>
+
+<class classid="85" nclones="2" nlines="10" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx.c.c" startline="268" endline="289" pcid="3493"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_cccf.avx512f.c.c" startline="269" endline="290" pcid="3573"></source>
+</class>
+
+<class classid="86" nclones="2" nlines="27" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.sse.c.c" startline="208" endline="259" pcid="3511"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.neon.c.c" startline="213" endline="265" pcid="3554"></source>
+</class>
+
+<class classid="87" nclones="3" nlines="35" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_crcf.avx.c.c" startline="263" endline="326" pcid="3537"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx.c.c" startline="248" endline="304" pcid="3614"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.avx.c.c" startline="84" endline="132" pcid="3655"></source>
+</class>
+
+<class classid="88" nclones="2" nlines="23" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/dotprod_rrrf.avx.c.c" startline="198" endline="242" pcid="3612"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/src/sumsq.avx.c.c" startline="38" endline="77" pcid="3653"></source>
+</class>
+
+<class classid="89" nclones="2" nlines="27" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/tests/dotprod_cccf_autotest.c.c" startline="27" endline="84" pcid="3686"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/tests/dotprod_crcf_autotest.c.c" startline="27" endline="79" pcid="3691"></source>
+</class>
+
+<class classid="90" nclones="2" nlines="30" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/tests/dotprod_cccf_autotest.c.c" startline="170" endline="215" pcid="3688"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/dotprod/tests/dotprod_crcf_autotest.c.c" startline="126" endline="171" pcid="3693"></source>
+</class>
+
+<class classid="91" nclones="2" nlines="20" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/src/bshift_array.c.c" startline="81" endline="114" pcid="3719"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/src/bshift_array.c.c" startline="124" endline="157" pcid="3721"></source>
+</class>
+
+<class classid="92" nclones="2" nlines="13" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/src/shift_array.c.c" startline="88" endline="115" pcid="3727"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/src/shift_array.c.c" startline="125" endline="152" pcid="3728"></source>
+</class>
+
+<class classid="93" nclones="8" nlines="10" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/src/byte_utilities.c.c" startline="224" endline="233" pcid="3749"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded2216.c.c" startline="86" endline="102" pcid="7568"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/audio/src/cvsd.c.c" startline="204" endline="215" pcid="3815"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded7264.c.c" startline="74" endline="95" pcid="7533"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded3932.c.c" startline="73" endline="91" pcid="7514"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded2216.c.c" startline="66" endline="82" pcid="7566"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded7264.c.c" startline="99" endline="122" pcid="7535"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded3932.c.c" startline="95" endline="113" pcid="7516"></source>
+</class>
+
+<class classid="94" nclones="2" nlines="13" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/pack_bytes_autotest.c.c" startline="27" endline="55" pcid="3768"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/pack_bytes_autotest.c.c" startline="57" endline="86" pcid="3770"></source>
+</class>
+
+<class classid="95" nclones="8" nlines="41" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/bshift_array_autotest.c.c" startline="27" endline="69" pcid="3781"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/shift_array_autotest.c.c" startline="132" endline="165" pcid="3807"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/shift_array_autotest.c.c" startline="27" endline="60" pcid="3798"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/bshift_array_autotest.c.c" startline="115" endline="157" pcid="3787"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/bshift_array_autotest.c.c" startline="160" endline="202" pcid="3790"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/shift_array_autotest.c.c" startline="62" endline="95" pcid="3801"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/shift_array_autotest.c.c" startline="97" endline="130" pcid="3804"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/bshift_array_autotest.c.c" startline="71" endline="113" pcid="3784"></source>
+</class>
+
+<class classid="96" nclones="2" nlines="12" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/count_bits_autotest.c.c" startline="26" endline="37" pcid="3793"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/count_bits_autotest.c.c" startline="39" endline="50" pcid="3794"></source>
+</class>
+
+<class classid="97" nclones="2" nlines="35" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/count_bits_autotest.c.c" startline="79" endline="123" pcid="3796"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/utility/tests/count_bits_autotest.c.c" startline="125" endline="169" pcid="3797"></source>
+</class>
+
+<class classid="98" nclones="2" nlines="18" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/audio/src/cvsd.c.c" startline="126" endline="161" pcid="3813"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/audio/src/cvsd.c.c" startline="166" endline="198" pcid="3814"></source>
+</class>
+
+<class classid="99" nclones="14" nlines="10" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/src/wdelay.proto.c.c" startline="88" endline="103" pcid="3832"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/symstream.proto.c.c" startline="104" endline="121" pcid="5633"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="285" endline="308" pcid="4663"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/symsync.proto.c.c" startline="253" endline="271" pcid="4508"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/symstreamr.proto.c.c" startline="93" endline="110" pcid="5985"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/ordfilt.proto.c.c" startline="101" endline="121" pcid="4252"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/asgram.proto.c.c" startline="86" endline="106" pcid="7191"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/channel/src/tvmpch.proto.c.c" startline="87" endline="104" pcid="4017"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/src/cbuffer.proto.c.c" startline="96" endline="111" pcid="3841"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firinterp.proto.c.c" startline="188" endline="201" pcid="4741"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/iirhilb.proto.c.c" startline="82" endline="96" pcid="4145"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fdelay.proto.c.c" startline="87" endline="100" pcid="4543"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/cpfskmod.proto.c.c" startline="179" endline="195" pcid="6675"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/msresamp.proto.c.c" startline="149" endline="168" pcid="4038"></source>
+</class>
+
+<class classid="100" nclones="2" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/src/cbuffer.proto.c.c" startline="73" endline="92" pcid="3840"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/autocorr.proto.c.c" startline="58" endline="78" pcid="4117"></source>
+</class>
+
+<class classid="101" nclones="2" nlines="17" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/src/cbuffer.proto.c.c" startline="204" endline="225" pcid="3853"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/src/buffer.proto.c.c" startline="202" endline="223" pcid="3883"></source>
+</class>
+
+<class classid="102" nclones="2" nlines="21" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/tests/buffer_window_autotest.c.c" startline="145" endline="176" pcid="3916"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/buffer/tests/wdelay_autotest.c.c" startline="88" endline="118" pcid="3935"></source>
+</class>
+
+<class classid="103" nclones="3" nlines="26" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/sequence/tests/bsequence_autotest.c.c" startline="27" endline="58" pcid="3983"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/sequence/tests/bsequence_autotest.c.c" startline="129" endline="171" pcid="3986"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/sequence/tests/bsequence_autotest.c.c" startline="84" endline="126" pcid="3985"></source>
+</class>
+
+<class classid="104" nclones="2" nlines="21" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/channel/tests/channel_copy_autotest.c.c" startline="31" endline="64" pcid="4027"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/channel/tests/tvmpch_copy_autotest.c.c" startline="31" endline="59" pcid="4030"></source>
+</class>
+
+<class classid="105" nclones="2" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/msresamp.proto.c.c" startline="55" endline="76" pcid="4033"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/symstream.proto.c.c" startline="31" endline="43" pcid="5630"></source>
+</class>
+
+<class classid="106" nclones="2" nlines="58" similarity="74">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdespm.c.c" startline="219" endline="311" pcid="4060"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdespm.c.c" startline="326" endline="401" pcid="4065"></source>
+</class>
+
+<class classid="107" nclones="5" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/autocorr.proto.c.c" startline="41" endline="51" pcid="4116"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fdelay.proto.c.c" startline="32" endline="41" pcid="4540"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdecim.proto.c.c" startline="30" endline="38" pcid="4422"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/presync.proto.c.c" startline="34" endline="48" pcid="5484"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="35" endline="51" pcid="4653"></source>
+</class>
+
+<class classid="108" nclones="2" nlines="16" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/iirfilt.proto.c.c" startline="281" endline="326" pcid="4188"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/iirfilt.proto.c.c" startline="330" endline="375" pcid="4190"></source>
+</class>
+
+<class classid="109" nclones="2" nlines="18" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/dds.proto.c.c" startline="32" endline="60" pcid="4227"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/msresamp2.proto.c.c" startline="38" endline="59" pcid="4786"></source>
+</class>
+
+<class classid="110" nclones="2" nlines="23" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/iirdes.pll.c.c" startline="52" endline="76" pcid="4262"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/iirdes.pll.c.c" startline="93" endline="118" pcid="4266"></source>
+</class>
+
+<class classid="111" nclones="2" nlines="19" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdes.c.c" startline="106" endline="139" pcid="4273"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdes.c.c" startline="146" endline="180" pcid="4277"></source>
+</class>
+
+<class classid="112" nclones="4" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdes.c.c" startline="715" endline="726" pcid="4312"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="97" endline="108" pcid="7615"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="83" endline="94" pcid="7702"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/windows.c.c" startline="86" endline="97" pcid="6239"></source>
+</class>
+
+<class classid="113" nclones="2" nlines="13" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firpfb.proto.c.c" startline="204" endline="216" pcid="4330"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/symsync.proto.c.c" startline="133" endline="145" pcid="4502"></source>
+</class>
+
+<class classid="114" nclones="2" nlines="35" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp.proto.c.c" startline="84" endline="131" pcid="4399"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp.fixed.proto.c.c" startline="59" endline="114" pcid="4682"></source>
+</class>
+
+<class classid="115" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp.proto.c.c" startline="389" endline="409" pcid="4419"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp.fixed.proto.c.c" startline="323" endline="343" pcid="4703"></source>
+</class>
+
+<class classid="116" nclones="2" nlines="17" similarity="93">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firdecim.proto.c.c" startline="88" endline="111" pcid="4424"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firinterp.proto.c.c" startline="84" endline="107" pcid="4737"></source>
+</class>
+
+<class classid="117" nclones="3" nlines="21" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp2.proto.c.c" startline="251" endline="285" pcid="4482"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firhilb.proto.c.c" startline="233" endline="269" pcid="4573"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firhilb.proto.c.c" startline="185" endline="222" pcid="4570"></source>
+</class>
+
+<class classid="118" nclones="3" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp2.proto.c.c" startline="321" endline="339" pcid="4486"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp2.proto.c.c" startline="375" endline="391" pcid="4488"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firhilb.proto.c.c" startline="327" endline="346" pcid="4579"></source>
+</class>
+
+<class classid="119" nclones="2" nlines="13" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/resamp2.proto.c.c" startline="349" endline="366" pcid="4487"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firhilb.proto.c.c" startline="278" endline="299" pcid="4576"></source>
+</class>
+
+<class classid="120" nclones="2" nlines="17" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fdelay.proto.c.c" startline="50" endline="75" pcid="4541"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/rresamp.proto.c.c" startline="56" endline="80" pcid="4583"></source>
+</class>
+
+<class classid="121" nclones="3" nlines="30" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fnyquist.c.c" startline="137" endline="175" pcid="4626"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fnyquist.c.c" startline="214" endline="252" pcid="4635"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fnyquist.c.c" startline="304" endline="343" pcid="4646"></source>
+</class>
+
+<class classid="122" nclones="2" nlines="11" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="103" endline="118" pcid="4655"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="197" endline="212" pcid="4659"></source>
+</class>
+
+<class classid="123" nclones="2" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="131" endline="146" pcid="4656"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/firfilt.proto.c.c" startline="155" endline="170" pcid="4657"></source>
+</class>
+
+<class classid="124" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/ellip.c.c" startline="178" endline="187" pcid="4761"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/ellip.c.c" startline="199" endline="208" pcid="4763"></source>
+</class>
+
+<class classid="125" nclones="3" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/src/fftfilt.proto.c.c" startline="132" endline="147" pcid="4778"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdetector.proto.c.c" startline="308" endline="324" pcid="5952"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/spgram.proto.c.c" startline="212" endline="227" pcid="7231"></source>
+</class>
+
+<class classid="126" nclones="2" nlines="19" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/groupdelay_autotest.c.c" startline="30" endline="67" pcid="4819"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/groupdelay_autotest.c.c" startline="74" endline="111" pcid="4822"></source>
+</class>
+
+<class classid="127" nclones="2" nlines="63" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/symsync_rrrf_autotest.c.c" startline="37" endline="156" pcid="4833"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/symsync_crcf_autotest.c.c" startline="37" endline="165" pcid="4854"></source>
+</class>
+
+<class classid="128" nclones="2" nlines="11" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="26" endline="57" pcid="4839"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="59" endline="90" pcid="4840"></source>
+</class>
+
+<class classid="129" nclones="2" nlines="21" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="140" endline="165" pcid="4842"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="168" endline="198" pcid="4843"></source>
+</class>
+
+<class classid="130" nclones="4" nlines="23" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="279" endline="301" pcid="4846"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_bessel_autotest.c.c" startline="57" endline="86" pcid="6442"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_gamma_autotest.c.c" startline="123" endline="150" pcid="6433"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_bessel_autotest.c.c" startline="101" endline="139" pcid="6444"></source>
+</class>
+
+<class classid="131" nclones="3" nlines="47" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="356" endline="375" pcid="4849"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="253" endline="280" pcid="5021"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="282" endline="309" pcid="5022"></source>
+</class>
+
+<class classid="132" nclones="2" nlines="20" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="378" endline="401" pcid="4850"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdes_autotest.c.c" startline="404" endline="430" pcid="4852"></source>
+</class>
+
+<class classid="133" nclones="9" nlines="12" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_xxxf_autotest.c.c" startline="94" endline="113" pcid="4858"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_xxxf_autotest.c.c" startline="96" endline="116" pcid="4935"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdecim_xxxf_autotest.c.c" startline="97" endline="116" pcid="4958"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_xxxf_autotest.c.c" startline="169" endline="189" pcid="4862"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_xxxf_autotest.c.c" startline="131" endline="151" pcid="4860"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_xxxf_autotest.c.c" startline="132" endline="153" pcid="4937"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_xxxf_autotest.c.c" startline="169" endline="190" pcid="4939"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdecim_xxxf_autotest.c.c" startline="172" endline="192" pcid="4962"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdecim_xxxf_autotest.c.c" startline="134" endline="154" pcid="4960"></source>
+</class>
+
+<class classid="134" nclones="4" nlines="19" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firinterp_autotest.c.c" startline="208" endline="236" pcid="4871"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirinterp_autotest.c.c" startline="87" endline="115" pcid="4891"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firhilb_autotest.c.c" startline="187" endline="214" pcid="4923"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirhilb_autotest.c.c" startline="186" endline="214" pcid="4980"></source>
+</class>
+
+<class classid="135" nclones="2" nlines="19" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfiltsos_autotest.c.c" startline="27" endline="81" pcid="4876"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfiltsos_autotest.c.c" startline="85" endline="135" pcid="4878"></source>
+</class>
+
+<class classid="136" nclones="2" nlines="19" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfiltsos_autotest.c.c" startline="138" endline="170" pcid="4880"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_autotest.c.c" startline="125" endline="155" pcid="4911"></source>
+</class>
+
+<class classid="137" nclones="4" nlines="52" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirinterp_autotest.c.c" startline="31" endline="78" pcid="4889"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/rresamp_crcf_autotest.c.c" startline="35" endline="94" pcid="4986"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/msresamp_crcf_autotest.c.c" startline="30" endline="75" pcid="4929"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/resamp_crcf_autotest.c.c" startline="30" endline="73" pcid="4995"></source>
+</class>
+
+<class classid="138" nclones="6" nlines="28" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_autotest.c.c" startline="27" endline="41" pcid="4897"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="311" endline="331" pcid="5023"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_autotest.c.c" startline="44" endline="58" pcid="4898"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_autotest.c.c" startline="94" endline="105" pcid="4901"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdespm_autotest.c.c" startline="149" endline="166" pcid="4943"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_autotest.c.c" startline="61" endline="75" pcid="4899"></source>
+</class>
+
+<class classid="139" nclones="2" nlines="19" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firfilt_autotest.c.c" startline="186" endline="212" pcid="4905"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/fdelay_rrrf_autotest.c.c" startline="119" endline="149" pcid="5033"></source>
+</class>
+
+<class classid="140" nclones="2" nlines="13" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_autotest.c.c" startline="27" endline="51" pcid="4907"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirfilt_autotest.c.c" startline="54" endline="77" pcid="4908"></source>
+</class>
+
+<class classid="141" nclones="2" nlines="21" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/symsync_copy_autotest.c.c" startline="27" endline="67" pcid="4915"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/msresamp_crcf_autotest.c.c" startline="135" endline="168" pcid="4934"></source>
+</class>
+
+<class classid="142" nclones="2" nlines="84" similarity="98">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firhilb_autotest.c.c" startline="111" endline="171" pcid="4921"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirhilb_autotest.c.c" startline="27" endline="88" pcid="4977"></source>
+</class>
+
+<class classid="143" nclones="2" nlines="22" similarity="94">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firhilb_autotest.c.c" startline="217" endline="246" pcid="4926"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirhilb_autotest.c.c" startline="217" endline="246" pcid="4983"></source>
+</class>
+
+<class classid="144" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/msresamp_crcf_autotest.c.c" startline="107" endline="117" pcid="4932"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/resamp_crcf_autotest.c.c" startline="115" endline="125" pcid="4997"></source>
+</class>
+
+<class classid="145" nclones="2" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdespm_autotest.c.c" startline="34" endline="83" pcid="4941"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdespm_autotest.c.c" startline="87" endline="146" pcid="4942"></source>
+</class>
+
+<class classid="146" nclones="2" nlines="15" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdespm_autotest.c.c" startline="314" endline="330" pcid="4949"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/firdespm_autotest.c.c" startline="333" endline="349" pcid="4950"></source>
+</class>
+
+<class classid="147" nclones="2" nlines="18" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_support_autotest.c.c" startline="28" endline="70" pcid="4970"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_support_autotest.c.c" startline="74" endline="144" pcid="4972"></source>
+</class>
+
+<class classid="148" nclones="3" nlines="16" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/fftfilt_xxxf_autotest.c.c" startline="95" endline="126" pcid="5005"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/fftfilt_xxxf_autotest.c.c" startline="191" endline="224" pcid="5008"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/fftfilt_xxxf_autotest.c.c" startline="142" endline="175" pcid="5006"></source>
+</class>
+
+<class classid="149" nclones="4" nlines="23" similarity="86">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="82" endline="104" pcid="5016"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="195" endline="217" pcid="5019"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="158" endline="180" pcid="5018"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/filter/tests/iirdes_autotest.c.c" startline="120" endline="142" pcid="5017"></source>
+</class>
+
+<class classid="150" nclones="2" nlines="35" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.ludecomp.proto.c.c" startline="36" endline="82" pcid="5065"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.ludecomp.proto.c.c" startline="91" endline="139" pcid="5073"></source>
+</class>
+
+<class classid="151" nclones="2" nlines="12" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/smatrix.proto.c.c" startline="295" endline="308" pcid="5130"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/smatrix.proto.c.c" startline="447" endline="460" pcid="5141"></source>
+</class>
+
+<class classid="152" nclones="4" nlines="19" similarity="86">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.math.proto.c.c" startline="252" endline="278" pcid="5196"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.math.proto.c.c" startline="286" endline="312" pcid="5200"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.math.proto.c.c" startline="353" endline="378" pcid="5208"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/src/matrix.math.proto.c.c" startline="320" endline="345" pcid="5204"></source>
+</class>
+
+<class classid="153" nclones="2" nlines="26" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixf_autotest.c.c" startline="247" endline="288" pcid="5223"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixf_autotest.c.c" startline="291" endline="332" pcid="5229"></source>
+</class>
+
+<class classid="154" nclones="2" nlines="21" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixf_autotest.c.c" startline="360" endline="408" pcid="5236"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixf_autotest.c.c" startline="411" endline="457" pcid="5238"></source>
+</class>
+
+<class classid="155" nclones="6" nlines="10" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="75" endline="92" pcid="5239"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="298" endline="322" pcid="5263"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="147" endline="168" pcid="5245"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="171" endline="197" pcid="5247"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="122" endline="144" pcid="5243"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="95" endline="119" pcid="5241"></source>
+</class>
+
+<class classid="156" nclones="2" nlines="31" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="200" endline="246" pcid="5249"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/matrix/tests/matrixcf_autotest.c.c" startline="249" endline="295" pcid="5256"></source>
+</class>
+
+<class classid="157" nclones="9" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="203" endline="222" pcid="5286"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="237" endline="252" pcid="5289"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="361" endline="378" pcid="5734"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="300" endline="321" pcid="5419"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="296" endline="316" pcid="5533"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="237" endline="261" pcid="5415"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="251" endline="265" pcid="5324"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="353" endline="372" pcid="5537"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="302" endline="321" pcid="5785"></source>
+</class>
+
+<class classid="158" nclones="2" nlines="23" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="273" endline="301" pcid="5292"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="348" endline="401" pcid="5422"></source>
+</class>
+
+<class classid="159" nclones="2" nlines="14" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="306" endline="327" pcid="5293"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="412" endline="432" pcid="5423"></source>
+</class>
+
+<class classid="160" nclones="3" nlines="17" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="358" endline="373" pcid="5299"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="463" endline="478" pcid="5427"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="428" endline="437" pcid="5387"></source>
+</class>
+
+<class classid="161" nclones="2" nlines="18" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="389" endline="409" pcid="5304"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframegen.c.c" startline="412" endline="432" pcid="5308"></source>
+</class>
+
+<class classid="162" nclones="6" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="198" endline="212" pcid="5319"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="335" endline="356" pcid="5596"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="290" endline="309" pcid="5727"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="239" endline="251" pcid="5378"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframe64sync.c.c" startline="187" endline="202" pcid="5666"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="185" endline="197" pcid="6041"></source>
+</class>
+
+<class classid="163" nclones="2" nlines="22" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="268" endline="293" pcid="5325"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="387" endline="418" pcid="5735"></source>
+</class>
+
+<class classid="164" nclones="2" nlines="24" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="300" endline="336" pcid="5328"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="430" endline="479" pcid="5738"></source>
+</class>
+
+<class classid="165" nclones="3" nlines="14" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="339" endline="364" pcid="5331"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="488" endline="523" pcid="5741"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdsync.proto.c.c" startline="417" endline="442" pcid="5941"></source>
+</class>
+
+<class classid="166" nclones="2" nlines="15" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="367" endline="391" pcid="5333"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="531" endline="564" pcid="5743"></source>
+</class>
+
+<class classid="167" nclones="4" nlines="12" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="422" endline="434" pcid="5337"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="600" endline="621" pcid="5750"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="659" endline="681" pcid="5473"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="559" endline="580" pcid="5610"></source>
+</class>
+
+<class classid="168" nclones="2" nlines="13" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="440" endline="457" pcid="5338"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframesync.c.c" startline="539" endline="558" pcid="5347"></source>
+</class>
+
+<class classid="169" nclones="2" nlines="25" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qpilotsync.c.c" startline="59" endline="105" pcid="5356"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qpilotgen.c.c" startline="64" endline="105" pcid="5620"></source>
+</class>
+
+<class classid="170" nclones="2" nlines="16" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="292" endline="337" pcid="5380"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="270" endline="307" pcid="6046"></source>
+</class>
+
+<class classid="171" nclones="2" nlines="11" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="359" endline="372" pcid="5383"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="451" endline="463" pcid="5542"></source>
+</class>
+
+<class classid="172" nclones="3" nlines="10" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="448" endline="462" pcid="5390"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="465" endline="477" pcid="5392"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframegen.c.c" startline="480" endline="493" pcid="5394"></source>
+</class>
+
+<class classid="173" nclones="2" nlines="23" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketgen.c.c" startline="81" endline="125" pcid="5396"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="106" endline="159" pcid="5498"></source>
+</class>
+
+<class classid="174" nclones="2" nlines="14" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketgen.c.c" startline="198" endline="210" pcid="5399"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="181" endline="194" pcid="5500"></source>
+</class>
+
+<class classid="175" nclones="2" nlines="20" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframegen.c.c" startline="265" endline="296" pcid="5416"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/flexframesync.c.c" startline="318" endline="343" pcid="5729"></source>
+</class>
+
+<class classid="176" nclones="2" nlines="15" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="291" endline="312" pcid="5442"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="232" endline="253" pcid="6044"></source>
+</class>
+
+<class classid="177" nclones="2" nlines="13" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="736" endline="756" pcid="5477"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="635" endline="656" pcid="5613"></source>
+</class>
+
+<class classid="178" nclones="2" nlines="10" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframesync.c.c" startline="823" endline="843" pcid="5483"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="279" endline="295" pcid="6047"></source>
+</class>
+
+<class classid="179" nclones="2" nlines="24" similarity="95">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/presync.proto.c.c" startline="181" endline="210" pcid="5493"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpresync.proto.c.c" startline="182" endline="211" pcid="5905"></source>
+</class>
+
+<class classid="180" nclones="2" nlines="24" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="333" endline="369" pcid="5512"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/bpacketsync.c.c" startline="373" endline="414" pcid="5517"></source>
+</class>
+
+<class classid="181" nclones="2" nlines="10" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="249" endline="262" pcid="5529"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="324" endline="342" pcid="5787"></source>
+</class>
+
+<class classid="182" nclones="2" nlines="24" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="320" endline="349" pcid="5534"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframesync.c.c" startline="254" endline="284" pcid="5778"></source>
+</class>
+
+<class classid="183" nclones="2" nlines="24" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="631" endline="671" pcid="5553"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="675" endline="712" pcid="5560"></source>
+</class>
+
+<class classid="184" nclones="2" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/ofdmflexframegen.c.c" startline="716" endline="733" pcid="5566"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/spgram.proto.c.c" startline="232" endline="247" pcid="7232"></source>
+</class>
+
+<class classid="185" nclones="2" nlines="32" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="498" endline="586" pcid="5607"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/fskframesync.c.c" startline="590" endline="662" pcid="5611"></source>
+</class>
+
+<class classid="186" nclones="3" nlines="24" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/framegen64.c.c" startline="52" endline="86" pcid="5651"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframe64gen.c.c" startline="55" endline="89" pcid="5826"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframe64sync.c.c" startline="90" endline="134" pcid="5661"></source>
+</class>
+
+<class classid="187" nclones="3" nlines="12" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframe64sync.c.c" startline="138" endline="159" pcid="5663"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/dsssframe64gen.c.c" startline="93" endline="108" pcid="5828"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/framesync64.c.c" startline="138" endline="169" pcid="5866"></source>
+</class>
+
+<class classid="188" nclones="2" nlines="25" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qsource.proto.c.c" startline="166" endline="187" pcid="5687"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qsource.proto.c.c" startline="196" endline="216" pcid="5689"></source>
+</class>
+
+<class classid="189" nclones="3" nlines="21" similarity="95">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdetector.proto.c.c" startline="149" endline="177" pcid="5948"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdetector.proto.c.c" startline="190" endline="218" pcid="5949"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/qdetector.proto.c.c" startline="237" endline="265" pcid="5950"></source>
+</class>
+
+<class classid="190" nclones="2" nlines="14" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="461" endline="477" pcid="6061"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/src/gmskframegen.c.c" startline="480" endline="496" pcid="6063"></source>
+</class>
+
+<class classid="191" nclones="2" nlines="37" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/bench/presync_benchmark.c.c" startline="36" endline="80" pcid="6095"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/bench/bpresync_benchmark.c.c" startline="36" endline="80" pcid="6099"></source>
+</class>
+
+<class classid="192" nclones="2" nlines="20" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/dsssframe64_autotest.c.c" startline="31" endline="64" pcid="6137"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/framesync64_autotest.c.c" startline="31" endline="63" pcid="6162"></source>
+</class>
+
+<class classid="193" nclones="2" nlines="18" similarity="93">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/qpacketmodem_autotest.c.c" startline="35" endline="71" pcid="6141"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/qpacketmodem_autotest.c.c" startline="135" endline="171" pcid="6144"></source>
+</class>
+
+<class classid="194" nclones="2" nlines="31" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/qpacketmodem_autotest.c.c" startline="183" endline="233" pcid="6146"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/packetizer_copy_autotest.c.c" startline="28" endline="77" pcid="7799"></source>
+</class>
+
+<class classid="195" nclones="2" nlines="47" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/symstreamcf_autotest.c.c" startline="33" endline="78" pcid="6191"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/symstreamrcf_autotest.c.c" startline="33" endline="80" pcid="6198"></source>
+</class>
+
+<class classid="196" nclones="2" nlines="13" similarity="91">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/symstreamcf_autotest.c.c" startline="86" endline="114" pcid="6193"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/symstreamrcf_autotest.c.c" startline="88" endline="116" pcid="6200"></source>
+</class>
+
+<class classid="197" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/qpilotsync_autotest.c.c" startline="185" endline="199" pcid="6207"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/framing/tests/qpilotsync_autotest.c.c" startline="202" endline="216" pcid="6208"></source>
+</class>
+
+<class classid="198" nclones="4" nlines="17" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/windows.c.c" startline="62" endline="82" pcid="6236"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="69" endline="93" pcid="7612"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_utilities.c.c" startline="123" endline="143" pcid="6744"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="60" endline="80" pcid="7699"></source>
+</class>
+
+<class classid="199" nclones="3" nlines="13" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/windows.c.c" startline="264" endline="280" pcid="6258"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/windows.c.c" startline="308" endline="323" pcid="6262"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/windows.c.c" startline="285" endline="303" pcid="6260"></source>
+</class>
+
+<class classid="200" nclones="3" nlines="15" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/poly.expand.proto.c.c" startline="40" endline="59" pcid="6376"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/poly.expand.proto.c.c" startline="153" endline="175" pcid="6383"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/poly.expand.proto.c.c" startline="69" endline="96" pcid="6379"></source>
+</class>
+
+<class classid="201" nclones="2" nlines="21" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/modular_arithmetic.c.c" startline="58" endline="78" pcid="6399"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/modular_arithmetic.c.c" startline="87" endline="113" pcid="6403"></source>
+</class>
+
+<class classid="202" nclones="2" nlines="13" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/modular_arithmetic.c.c" startline="91" endline="106" pcid="6404"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/src/modular_arithmetic.c.c" startline="174" endline="191" pcid="6417"></source>
+</class>
+
+<class classid="203" nclones="2" nlines="12" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_autotest.c.c" startline="28" endline="39" pcid="6436"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_autotest.c.c" startline="58" endline="70" pcid="6438"></source>
+</class>
+
+<class classid="204" nclones="2" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/polynomial_autotest.c.c" startline="133" endline="150" pcid="6460"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/polynomial_autotest.c.c" startline="229" endline="247" pcid="6465"></source>
+</class>
+
+<class classid="205" nclones="2" nlines="12" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/polynomial_autotest.c.c" startline="264" endline="279" pcid="6467"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/polynomial_autotest.c.c" startline="282" endline="298" pcid="6468"></source>
+</class>
+
+<class classid="206" nclones="6" nlines="12" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="27" endline="74" pcid="6469"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="178" endline="226" pcid="6475"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="128" endline="175" pcid="6473"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="78" endline="125" pcid="6471"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="281" endline="329" pcid="6479"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/math/tests/math_complex_autotest.c.c" startline="229" endline="278" pcid="6477"></source>
+</class>
+
+<class classid="207" nclones="7" nlines="11" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_arb.proto.c.c" startline="55" endline="68" pcid="6492"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam32.proto.c.c" startline="29" endline="48" pcid="6559"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_ook.proto.c.c" startline="37" endline="49" pcid="6556"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_bpsk.proto.c.c" startline="37" endline="49" pcid="6545"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_qpsk.proto.c.c" startline="37" endline="49" pcid="6763"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam128.proto.c.c" startline="29" endline="48" pcid="6720"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_pi4dqpsk.proto.c.c" startline="37" endline="49" pcid="6581"></source>
+</class>
+
+<class classid="208" nclones="2" nlines="11" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_arb.proto.c.c" startline="322" endline="329" pcid="6517"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_common.proto.c.c" startline="532" endline="540" pcid="6620"></source>
+</class>
+
+<class classid="209" nclones="2" nlines="12" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/ampmodem.c.c" startline="165" endline="176" pcid="6529"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/ampmodem.c.c" startline="179" endline="190" pcid="6531"></source>
+</class>
+
+<class classid="210" nclones="2" nlines="18" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/ampmodem.c.c" startline="285" endline="316" pcid="6541"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/ampmodem.c.c" startline="344" endline="379" pcid="6543"></source>
+</class>
+
+<class classid="211" nclones="2" nlines="22" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam32.proto.c.c" startline="54" endline="72" pcid="6560"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam128.proto.c.c" startline="54" endline="72" pcid="6721"></source>
+</class>
+
+<class classid="212" nclones="7" nlines="16" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam32.proto.c.c" startline="62" endline="70" pcid="6561"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam32.proto.c.c" startline="86" endline="94" pcid="6563"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam128.proto.c.c" startline="87" endline="95" pcid="6724"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam128.proto.c.c" startline="62" endline="70" pcid="6722"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/src/scramble.c.c" startline="72" endline="78" pcid="6902"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_pi4dqpsk.proto.c.c" startline="98" endline="104" pcid="6585"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_pi4dqpsk.proto.c.c" startline="57" endline="63" pcid="6583"></source>
+</class>
+
+<class classid="213" nclones="2" nlines="36" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam32.proto.c.c" startline="78" endline="119" pcid="6562"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_sqam128.proto.c.c" startline="79" endline="120" pcid="6723"></source>
+</class>
+
+<class classid="214" nclones="4" nlines="48" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_dpsk.proto.c.c" startline="29" endline="63" pcid="6638"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_psk.proto.c.c" startline="29" endline="75" pcid="6800"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_ask.proto.c.c" startline="29" endline="66" pcid="6716"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_qam.proto.c.c" startline="31" endline="97" pcid="6736"></source>
+</class>
+
+<class classid="215" nclones="3" nlines="30" similarity="77">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_dpsk.proto.c.c" startline="32" endline="43" pcid="6639"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_qam.proto.c.c" startline="55" endline="76" pcid="6739"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/modem_psk.proto.c.c" startline="32" endline="43" pcid="6801"></source>
+</class>
+
+<class classid="216" nclones="2" nlines="19" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/gmskmod.c.c" startline="54" endline="87" pcid="6662"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/src/gmskdem.c.c" startline="73" endline="119" pcid="6727"></source>
+</class>
+
+<class classid="217" nclones="2" nlines="36" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/bench/freqdem_benchmark.c.c" startline="33" endline="76" pcid="6804"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/bench/freqmod_benchmark.c.c" startline="33" endline="79" pcid="6810"></source>
+</class>
+
+<class classid="218" nclones="2" nlines="25" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/gmskmodem_autotest.c.c" startline="99" endline="138" pcid="6817"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/fskmodem_autotest.c.c" startline="88" endline="127" pcid="6845"></source>
+</class>
+
+<class classid="219" nclones="2" nlines="25" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/gmskmodem_autotest.c.c" startline="142" endline="182" pcid="6820"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/fskmodem_autotest.c.c" startline="131" endline="169" pcid="6848"></source>
+</class>
+
+<class classid="220" nclones="2" nlines="13" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/modem_demodstats_autotest.c.c" startline="43" endline="66" pcid="6832"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/modem/tests/modem_demodstats_autotest.c.c" startline="69" endline="92" pcid="6833"></source>
+</class>
+
+<class classid="221" nclones="2" nlines="16" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/src/randnakm.c.c" startline="65" endline="84" pcid="6885"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/src/randnakm.c.c" startline="95" endline="111" pcid="6888"></source>
+</class>
+
+<class classid="222" nclones="2" nlines="15" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/bench/random_benchmark.c.c" startline="32" endline="50" pcid="6929"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/bench/random_benchmark.c.c" startline="58" endline="76" pcid="6931"></source>
+</class>
+
+<class classid="223" nclones="3" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/tests/random_autotest.c.c" startline="30" endline="47" pcid="6939"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/tests/random_autotest.c.c" startline="50" endline="67" pcid="6941"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/random/tests/random_autotest.c.c" startline="121" endline="139" pcid="6947"></source>
+</class>
+
+<class classid="224" nclones="2" nlines="15" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/vco_benchmark.c.c" startline="31" endline="47" pcid="7077"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/nco_benchmark.c.c" startline="31" endline="50" pcid="7084"></source>
+</class>
+
+<class classid="225" nclones="4" nlines="17" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/vco_benchmark.c.c" startline="52" endline="74" pcid="7079"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/nco_benchmark.c.c" startline="82" endline="100" pcid="7089"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/nco_benchmark.c.c" startline="55" endline="77" pcid="7086"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/nco/bench/vco_benchmark.c.c" startline="79" endline="97" pcid="7082"></source>
+</class>
+
+<class classid="226" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_rader.proto.c.c" startline="111" endline="124" pcid="7185"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_rader2.proto.c.c" startline="167" endline="181" pcid="7291"></source>
+</class>
+
+<class classid="227" nclones="2" nlines="16" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/dct_execute.proto.c.c" startline="34" endline="51" pcid="7213"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="95" endline="113" pcid="7299"></source>
+</class>
+
+<class classid="228" nclones="10" nlines="13" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/dct_execute.proto.c.c" startline="55" endline="70" pcid="7216"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="241" endline="257" pcid="7320"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="201" endline="217" pcid="7314"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="181" endline="197" pcid="7311"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="157" endline="173" pcid="7308"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="137" endline="153" pcid="7305"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/dct_execute.proto.c.c" startline="93" endline="108" pcid="7222"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/dct_execute.proto.c.c" startline="74" endline="89" pcid="7219"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="117" endline="133" pcid="7302"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_r2r_1d.proto.c.c" startline="221" endline="237" pcid="7317"></source>
+</class>
+
+<class classid="229" nclones="2" nlines="22" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_dft.proto.c.c" startline="495" endline="502" pcid="7285"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_dft.proto.c.c" startline="513" endline="521" pcid="7287"></source>
+</class>
+
+<class classid="230" nclones="2" nlines="22" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_dft.proto.c.c" startline="502" endline="509" pcid="7286"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/src/fft_dft.proto.c.c" startline="521" endline="529" pcid="7288"></source>
+</class>
+
+<class classid="231" nclones="2" nlines="22" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/bench/asgramcf_benchmark.c.c" startline="36" endline="74" pcid="7333"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/bench/spgramcf_benchmark.c.c" startline="35" endline="70" pcid="7343"></source>
+</class>
+
+<class classid="232" nclones="2" nlines="31" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/tests/spwaterfall_autotest.c.c" startline="148" endline="188" pcid="7379"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fft/tests/spgram_autotest.c.c" startline="307" endline="350" pcid="7398"></source>
+</class>
+
+<class classid="233" nclones="3" nlines="13" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming3126.c.c" startline="70" endline="101" pcid="7443"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming128.c.c" startline="66" endline="94" pcid="7457"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming1511.c.c" startline="56" endline="84" pcid="7450"></source>
+</class>
+
+<class classid="234" nclones="3" nlines="21" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming3126.c.c" startline="104" endline="144" pcid="7445"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming128.c.c" startline="97" endline="141" pcid="7459"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming1511.c.c" startline="87" endline="136" pcid="7452"></source>
+</class>
+
+<class classid="235" nclones="3" nlines="20" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming128.c.c" startline="348" endline="375" pcid="7475"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming128.c.c" startline="433" endline="463" pcid="7478"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming84.c.c" startline="201" endline="220" pcid="7676"></source>
+</class>
+
+<class classid="236" nclones="2" nlines="18" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_rep3.c.c" startline="127" endline="151" pcid="7511"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_rep5.c.c" startline="128" endline="154" pcid="7559"></source>
+</class>
+
+<class classid="237" nclones="3" nlines="21" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded3932.c.c" startline="175" endline="212" pcid="7520"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded7264.c.c" startline="182" endline="215" pcid="7539"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded2216.c.c" startline="161" endline="196" pcid="7572"></source>
+</class>
+
+<class classid="238" nclones="5" nlines="23" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded3932.c.c" startline="315" endline="355" pcid="7530"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded7264.c.c" startline="251" endline="291" pcid="7546"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded7264.c.c" startline="305" endline="344" pcid="7549"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded2216.c.c" startline="293" endline="329" pcid="7582"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_secded2216.c.c" startline="232" endline="279" pcid="7579"></source>
+</class>
+
+<class classid="239" nclones="4" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="138" endline="148" pcid="7590"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="157" endline="167" pcid="7591"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="176" endline="186" pcid="7592"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="195" endline="205" pcid="7593"></source>
+</class>
+
+<class classid="240" nclones="4" nlines="24" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="216" endline="241" pcid="7594"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="283" endline="310" pcid="7602"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="318" endline="349" pcid="7606"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/interleaver.c.c" startline="248" endline="274" pcid="7598"></source>
+</class>
+
+<class classid="241" nclones="2" nlines="11" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="180" endline="189" pcid="7624"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="193" endline="201" pcid="7626"></source>
+</class>
+
+<class classid="242" nclones="2" nlines="51" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="210" endline="275" pcid="7628"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="401" endline="468" pcid="7636"></source>
+</class>
+
+<class classid="243" nclones="3" nlines="48" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="211" endline="273" pcid="7629"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="475" endline="546" pcid="7639"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="402" endline="465" pcid="7637"></source>
+</class>
+
+<class classid="244" nclones="2" nlines="50" similarity="80">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="474" endline="552" pcid="7638"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec.c.c" startline="585" endline="652" pcid="7643"></source>
+</class>
+
+<class classid="245" nclones="2" nlines="15" similarity="84">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming74.c.c" startline="173" endline="197" pcid="7662"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming84.c.c" startline="161" endline="185" pcid="7673"></source>
+</class>
+
+<class classid="246" nclones="2" nlines="24" similarity="95">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming74.c.c" startline="205" endline="233" pcid="7664"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/fec_hamming84.c.c" startline="193" endline="222" pcid="7675"></source>
+</class>
+
+<class classid="247" nclones="3" nlines="22" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="98" endline="111" pcid="7705"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="204" endline="220" pcid="7715"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="120" endline="136" pcid="7707"></source>
+</class>
+
+<class classid="248" nclones="4" nlines="13" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="259" endline="271" pcid="7718"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="315" endline="327" pcid="7724"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="343" endline="355" pcid="7727"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/src/crc.c.c" startline="287" endline="299" pcid="7721"></source>
+</class>
+
+<class classid="249" nclones="3" nlines="49" similarity="74">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_soft_autotest.c.c" startline="34" endline="103" pcid="7736"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_copy_autotest.c.c" startline="30" endline="98" pcid="7743"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_autotest.c.c" startline="30" endline="86" pcid="7757"></source>
+</class>
+
+<class classid="250" nclones="2" nlines="19" similarity="94">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_hamming84_autotest.c.c" startline="64" endline="92" pcid="7741"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_hamming74_autotest.c.c" startline="65" endline="92" pcid="7749"></source>
+</class>
+
+<class classid="251" nclones="3" nlines="17" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_hamming74_autotest.c.c" startline="27" endline="62" pcid="7748"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_rep3_autotest.c.c" startline="27" endline="57" pcid="7776"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_rep5_autotest.c.c" startline="27" endline="77" pcid="7751"></source>
+</class>
+
+<class classid="252" nclones="2" nlines="14" similarity="91">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_hamming1511_autotest.c.c" startline="30" endline="66" pcid="7755"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_hamming3126_autotest.c.c" startline="30" endline="63" pcid="7777"></source>
+</class>
+
+<class classid="253" nclones="2" nlines="13" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded2216_autotest.c.c" startline="30" endline="47" pcid="7760"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded3932_autotest.c.c" startline="30" endline="51" pcid="7766"></source>
+</class>
+
+<class classid="254" nclones="2" nlines="24" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded2216_autotest.c.c" startline="50" endline="82" pcid="7761"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded3932_autotest.c.c" startline="54" endline="92" pcid="7767"></source>
+</class>
+
+<class classid="255" nclones="2" nlines="28" similarity="74">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded2216_autotest.c.c" startline="85" endline="138" pcid="7763"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded3932_autotest.c.c" startline="95" endline="150" pcid="7769"></source>
+</class>
+
+<class classid="256" nclones="2" nlines="25" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded3932_autotest.c.c" startline="57" endline="91" pcid="7768"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_secded3932_autotest.c.c" startline="101" endline="149" pcid="7770"></source>
+</class>
+
+<class classid="257" nclones="2" nlines="29" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_config_autotest.c.c" startline="88" endline="116" pcid="7781"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/liquid-dsp/src/fec/tests/fec_config_autotest.c.c" startline="119" endline="147" pcid="7782"></source>
+</class>
+
+<class classid="258" nclones="2" nlines="26" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="292" endline="316" pcid="7839"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="118" endline="142" pcid="8176"></source>
+</class>
+
+<class classid="259" nclones="2" nlines="34" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="322" endline="353" pcid="7845"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="148" endline="179" pcid="8182"></source>
+</class>
+
+<class classid="260" nclones="2" nlines="62" similarity="89">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="356" endline="421" pcid="7848"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="182" endline="247" pcid="8185"></source>
+</class>
+
+<class classid="261" nclones="2" nlines="57" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="428" endline="491" pcid="7854"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="254" endline="317" pcid="8191"></source>
+</class>
+
+<class classid="262" nclones="2" nlines="30" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="493" endline="520" pcid="7857"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="319" endline="346" pcid="8194"></source>
+</class>
+
+<class classid="263" nclones="2" nlines="38" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="523" endline="554" pcid="7863"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="349" endline="380" pcid="8200"></source>
+</class>
+
+<class classid="264" nclones="2" nlines="41" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="557" endline="594" pcid="7869"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="383" endline="420" pcid="8206"></source>
+</class>
+
+<class classid="265" nclones="2" nlines="41" similarity="97">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="599" endline="637" pcid="7873"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="425" endline="463" pcid="8210"></source>
+</class>
+
+<class classid="266" nclones="2" nlines="77" similarity="98">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="641" endline="720" pcid="7877"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="467" endline="546" pcid="8214"></source>
+</class>
+
+<class classid="267" nclones="2" nlines="80" similarity="98">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="725" endline="801" pcid="7884"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="551" endline="627" pcid="8221"></source>
+</class>
+
+<class classid="268" nclones="2" nlines="72" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="805" endline="888" pcid="7891"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="631" endline="714" pcid="8228"></source>
+</class>
+
+<class classid="269" nclones="2" nlines="76" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="892" endline="977" pcid="7896"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="718" endline="803" pcid="8233"></source>
+</class>
+
+<class classid="270" nclones="6" nlines="54" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="980" endline="1024" pcid="7901"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="998" endline="1042" pcid="8269"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="806" endline="850" pcid="8238"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1174" endline="1218" pcid="7932"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1027" endline="1071" pcid="7909"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="853" endline="897" pcid="8246"></source>
+</class>
+
+<class classid="271" nclones="2" nlines="27" similarity="95">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1074" endline="1098" pcid="7917"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="899" endline="922" pcid="8254"></source>
+</class>
+
+<class classid="272" nclones="4" nlines="32" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1103" endline="1133" pcid="7923"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1136" endline="1171" pcid="7927"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="960" endline="995" pcid="8264"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="927" endline="957" pcid="8260"></source>
+</class>
+
+<class classid="273" nclones="2" nlines="45" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1364" endline="1406" pcid="7968"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft.c.c" startline="1408" endline="1439" pcid="7970"></source>
+</class>
+
+<class classid="274" nclones="2" nlines="49" similarity="81">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="383" endline="430" pcid="8067"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="434" endline="481" pcid="8078"></source>
+</class>
+
+<class classid="275" nclones="2" nlines="84" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="485" endline="571" pcid="8089"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="575" endline="652" pcid="8103"></source>
+</class>
+
+<class classid="276" nclones="2" nlines="102" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="711" endline="807" pcid="8123"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="811" endline="916" pcid="8132"></source>
+</class>
+
+<class classid="277" nclones="2" nlines="47" similarity="82">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="920" endline="966" pcid="8141"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="970" endline="1016" pcid="8148"></source>
+</class>
+
+<class classid="278" nclones="3" nlines="22" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="933" endline="955" pcid="8144"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1131" endline="1151" pcid="8158"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="983" endline="1005" pcid="8151"></source>
+</class>
+
+<class classid="279" nclones="2" nlines="27" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1189" endline="1215" pcid="8161"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1220" endline="1246" pcid="8162"></source>
+</class>
+
+<class classid="280" nclones="2" nlines="22" similarity="76">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1252" endline="1273" pcid="8163"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1277" endline="1300" pcid="8165"></source>
+</class>
+
+<class classid="281" nclones="2" nlines="17" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1304" endline="1321" pcid="8167"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/fft4g.h.c" startline="1325" endline="1342" pcid="8169"></source>
+</class>
+
+<class classid="282" nclones="2" nlines="12" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="1073" endline="1084" pcid="8281"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="1084" endline="1095" pcid="8284"></source>
+</class>
+
+<class classid="283" nclones="2" nlines="22" similarity="89">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="1762" endline="1780" pcid="8306"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/r8brain/fft/pffft_priv_impl.h.c" startline="1784" endline="1802" pcid="8309"></source>
+</class>
+
+<class classid="284" nclones="2" nlines="20" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inflate.c.c" startline="836" endline="860" pcid="8361"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/infback.c.c" startline="289" endline="309" pcid="8563"></source>
+</class>
+
+<class classid="285" nclones="2" nlines="15" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inflate.c.c" startline="883" endline="894" pcid="8364"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/infback.c.c" startline="328" endline="340" pcid="8565"></source>
+</class>
+
+<class classid="286" nclones="2" nlines="47" similarity="97">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inflate.c.c" startline="940" endline="985" pcid="8368"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/infback.c.c" startline="386" endline="431" pcid="8569"></source>
+</class>
+
+<class classid="287" nclones="4" nlines="11" similarity="88">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inflate.c.c" startline="1041" endline="1051" pcid="8382"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/infback.c.c" startline="486" endline="495" pcid="8583"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/infback.c.c" startline="540" endline="549" pcid="8590"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inflate.c.c" startline="1093" endline="1103" pcid="8389"></source>
+</class>
+
+<class classid="288" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inffast.c.c" startline="197" endline="206" pcid="8629"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/inffast.c.c" startline="226" endline="235" pcid="8637"></source>
+</class>
+
+<class classid="289" nclones="2" nlines="11" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/uncompr.c.c" startline="57" endline="67" pcid="8653"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/compress.c.c" startline="44" endline="54" pcid="8969"></source>
+</class>
+
+<class classid="290" nclones="2" nlines="26" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="166" endline="196" pcid="8757"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="332" endline="362" pcid="8771"></source>
+</class>
+
+<class classid="291" nclones="4" nlines="30" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="202" endline="235" pcid="8760"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="443" endline="485" pcid="8777"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="294" endline="327" pcid="8767"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/test/example.c.c" startline="368" endline="403" pcid="8773"></source>
+</class>
+
+<class classid="292" nclones="2" nlines="15" similarity="92">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/gzread.c.c" startline="377" endline="400" pcid="8861"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/gzwrite.c.c" startline="262" endline="284" pcid="9017"></source>
+</class>
+
+<class classid="293" nclones="4" nlines="12" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/zutil.c.c" startline="35" endline="40" pcid="8955"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/zutil.c.c" startline="41" endline="46" pcid="8956"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/zutil.c.c" startline="47" endline="52" pcid="8957"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/zlib/zutil.c.c" startline="53" endline="58" pcid="8958"></source>
+</class>
+
+<class classid="294" nclones="2" nlines="28" similarity="86">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="41" endline="80" pcid="9037"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_denoiser.c.c" startline="40" endline="82" pcid="9105"></source>
+</class>
+
+<class classid="295" nclones="6" nlines="16" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="82" endline="100" pcid="9043"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/core/noise_floor_manager.c.c" startline="61" endline="72" pcid="9385"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/fft_transform.c.c" startline="129" endline="150" pcid="9835"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/stft_windows.c.c" startline="84" endline="101" pcid="9901"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/stft_processor.c.c" startline="101" endline="124" pcid="9879"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_denoiser.c.c" startline="84" endline="102" pcid="9111"></source>
+</class>
+
+<class classid="296" nclones="2" nlines="11" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="149" endline="165" pcid="9054"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_denoiser.c.c" startline="143" endline="158" pcid="9122"></source>
+</class>
+
+<class classid="297" nclones="3" nlines="10" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="179" endline="191" pcid="9059"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="194" endline="206" pcid="9062"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="209" endline="221" pcid="9065"></source>
+</class>
+
+<class classid="298" nclones="2" nlines="20" similarity="94">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_2d_denoiser.c.c" startline="225" endline="255" pcid="9068"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/specbleach_denoiser.c.c" startline="200" endline="229" pcid="9133"></source>
+</class>
+
+<class classid="299" nclones="2" nlines="45" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/denoiser/spectral_denoiser.c.c" startline="173" endline="225" pcid="9083"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/denoiser2d/spectral_2d_denoiser.c.c" startline="238" endline="286" pcid="9153"></source>
+</class>
+
+<class classid="300" nclones="2" nlines="20" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/denoiser/spectral_denoiser.c.c" startline="228" endline="257" pcid="9098"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/processors/denoiser2d/spectral_2d_denoiser.c.c" startline="289" endline="323" pcid="9165"></source>
+</class>
+
+<class classid="301" nclones="2" nlines="15" similarity="72">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/brandt_noise_estimator.c.c" startline="172" endline="187" pcid="9197"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/brandt_noise_estimator.c.c" startline="246" endline="264" pcid="9210"></source>
+</class>
+
+<class classid="302" nclones="10" nlines="15" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="36" endline="54" pcid="9223"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/transient_detector.c.c" startline="37" endline="57" pcid="9811"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/fft_transform.c.c" startline="69" endline="84" pcid="9825"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="79" endline="97" pcid="9229"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="57" endline="76" pcid="9226"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/tonal_reducer.c.c" startline="20" endline="37" pcid="9402"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/fft_transform.c.c" startline="47" endline="67" pcid="9822"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/stft_buffer.c.c" startline="37" endline="56" pcid="9859"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_features.c.c" startline="34" endline="57" pcid="9788"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/spp_mmse_noise_estimator.c.c" startline="64" endline="87" pcid="9320"></source>
+</class>
+
+<class classid="303" nclones="3" nlines="15" similarity="90">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="194" endline="210" pcid="9252"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="213" endline="228" pcid="9257"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/adaptive_noise_estimator.c.c" startline="231" endline="246" pcid="9262"></source>
+</class>
+
+<class classid="304" nclones="2" nlines="20" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/noise_estimator.c.c" startline="39" endline="67" pcid="9267"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/core/noise_floor_manager.c.c" startline="35" endline="59" pcid="9381"></source>
+</class>
+
+<class classid="305" nclones="3" nlines="11" similarity="71">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/spp_mmse_noise_estimator.c.c" startline="155" endline="167" pcid="9335"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/spp_mmse_noise_estimator.c.c" startline="170" endline="180" pcid="9338"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/estimators/spp_mmse_noise_estimator.c.c" startline="183" endline="194" pcid="9341"></source>
+</class>
+
+<class classid="306" nclones="2" nlines="19" similarity="83">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/gain_calculator.c.c" startline="29" endline="46" pcid="9429"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/gain_calculator.c.c" startline="51" endline="68" pcid="9436"></source>
+</class>
+
+<class classid="307" nclones="2" nlines="10" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/nlm_filter.c.c" startline="605" endline="617" pcid="9518"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/denoiser_logic/processing/nlm_filter.c.c" startline="622" endline="634" pcid="9521"></source>
+</class>
+
+<class classid="308" nclones="2" nlines="18" similarity="85">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/tonal_detector.c.c" startline="142" endline="170" pcid="9664"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/tonal_detector.c.c" startline="174" endline="197" pcid="9668"></source>
+</class>
+
+<class classid="309" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_utils.c.c" startline="91" endline="101" pcid="9715"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_utils.c.c" startline="104" endline="114" pcid="9718"></source>
+</class>
+
+<class classid="310" nclones="2" nlines="18" similarity="78">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_features.c.c" startline="82" endline="107" pcid="9796"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/utils/spectral_features.c.c" startline="138" endline="163" pcid="9804"></source>
+</class>
+
+<class classid="311" nclones="2" nlines="12" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/fft_transform.c.c" startline="165" endline="182" pcid="9845"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/third_party/libspecbleach/src/shared/stft/fft_transform.c.c" startline="184" endline="201" pcid="9849"></source>
+</class>
+
+<class classid="312" nclones="2" nlines="51" similarity="89">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/core/TgxlConnection.h.c" startline="9" endline="74" pcid="9933"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/core/PgxlConnection.h.c" startline="9" endline="55" pcid="9945"></source>
+</class>
+
+<class classid="313" nclones="5" nlines="23" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientRxDspApplet.h.c" startline="5" endline="29" pcid="9960"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/MeterApplet.h.c" startline="5" endline="40" pcid="10002"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientReverbApplet.h.c" startline="7" endline="38" pcid="9991"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/PooDooLogo.h.c" startline="7" endline="43" pcid="10015"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientDeEssApplet.h.c" startline="8" endline="49" pcid="10028"></source>
+</class>
+
+<class classid="314" nclones="2" nlines="27" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/TciApplet.h.c" startline="9" endline="61" pcid="9965"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/DaxApplet.h.c" startline="8" endline="48" pcid="10008"></source>
+</class>
+
+<class classid="315" nclones="2" nlines="46" similarity="93">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientEqOutputFader.h.c" startline="7" endline="73" pcid="9970"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientCompThresholdFader.h.c" startline="7" endline="71" pcid="10049"></source>
+</class>
+
+<class classid="316" nclones="3" nlines="29" similarity="74">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/PanFloatingWindow.h.c" startline="7" endline="44" pcid="9976"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientTubeCurveWidget.h.c" startline="7" endline="49" pcid="10012"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientDeEssCurveWidget.h.c" startline="9" endline="62" pcid="9996"></source>
+</class>
+
+<class classid="317" nclones="2" nlines="17" similarity="73">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/PhaseKnob.h.c" startline="5" endline="29" pcid="9981"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientCompLimiterButton.h.c" startline="6" endline="41" pcid="9989"></source>
+</class>
+
+<class classid="318" nclones="2" nlines="14" similarity="75">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/DxClusterStartupCommandsDialog.h.c" startline="7" endline="38" pcid="9983"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/SwrSweepLicenseDialog.h.c" startline="7" endline="36" pcid="10019"></source>
+</class>
+
+<class classid="319" nclones="2" nlines="25" similarity="87">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientEqIconRow.h.c" startline="8" endline="51" pcid="9987"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/ClientEqParamRow.h.c" startline="8" endline="43" pcid="10061"></source>
+</class>
+
+<class classid="320" nclones="2" nlines="19" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/WaveformsDialog.h.c" startline="8" endline="33" pcid="10024"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/MultiFlexDialog.h.c" startline="9" endline="29" pcid="10026"></source>
+</class>
+
+<class classid="321" nclones="2" nlines="20" similarity="89">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/CompactColorPicker.h.c" startline="44" endline="62" pcid="10037"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/CompactColorPicker.h.c" startline="64" endline="84" pcid="10039"></source>
+</class>
+
+<class classid="322" nclones="2" nlines="20" similarity="70">
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/FramelessWindowTitleBar.h.c" startline="7" endline="27" pcid="10043"></source>
+<source file="/home/localadm/nicad_work/farm_AetherSDR/src/gui/EditorFramelessTitleBar.h.c" startline="7" endline="49" pcid="10045"></source>
+</class>
+
+</clones>

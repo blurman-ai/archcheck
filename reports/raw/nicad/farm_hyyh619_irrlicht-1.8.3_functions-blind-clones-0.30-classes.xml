@@ -1,0 +1,246 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_hyyh619_irrlicht-1.8.3" granularity="functions-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="799" npairs="63"/>
+<runinfo ncompares="36383" cputime="29410"/>
+<classinfo nclasses="46"/>
+
+<class classid="1" nclones="2" nlines="24" similarity="76">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jchuff.c.c" startline="305" endline="341" pcid="17"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jchuff.c.c" startline="344" endline="382" pcid="18"></source>
+</class>
+
+<class classid="2" nclones="4" nlines="19" similarity="83">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/djpeg.c.c" startline="90" endline="159" pcid="40"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="350" endline="380" pcid="93"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/cjpeg.c.c" startline="141" endline="204" pcid="312"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jpegtran.c.c" startline="45" endline="93" pcid="162"></source>
+</class>
+
+<class classid="3" nclones="2" nlines="65" similarity="75">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/djpeg.c.c" startline="424" endline="617" pcid="44"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/cjpeg.c.c" startline="497" endline="643" pcid="314"></source>
+</class>
+
+<class classid="4" nclones="2" nlines="84" similarity="92">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdhuff.c.c" startline="1059" endline="1178" pcid="58"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdhuff.c.c" startline="1187" endline="1302" pcid="59"></source>
+</class>
+
+<class classid="5" nclones="2" nlines="23" similarity="73">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdhuff.c.c" startline="1508" endline="1541" pcid="61"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdarith.c.c" startline="744" endline="776" pcid="122"></source>
+</class>
+
+<class classid="6" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="104" endline="116" pcid="83"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdjpgcom.c.c" startline="89" endline="101" pcid="216"></source>
+</class>
+
+<class classid="7" nclones="2" nlines="18" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="186" endline="210" pcid="88"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdjpgcom.c.c" startline="141" endline="165" pcid="217"></source>
+</class>
+
+<class classid="8" nclones="3" nlines="13" similarity="81">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="243" endline="261" pcid="90"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdjpgcom.c.c" startline="198" endline="215" pcid="219"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="263" endline="280" pcid="91"></source>
+</class>
+
+<class classid="9" nclones="2" nlines="46" similarity="72">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="288" endline="342" pcid="92"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdjpgcom.c.c" startline="339" endline="400" pcid="222"></source>
+</class>
+
+<class classid="10" nclones="2" nlines="17" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/wrjpgcom.c.c" startline="383" endline="405" pcid="94"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdjpgcom.c.c" startline="424" endline="446" pcid="224"></source>
+</class>
+
+<class classid="11" nclones="2" nlines="34" similarity="73">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jddctmgr.c.c" startline="89" endline="354" pcid="127"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcdctmgr.c.c" startline="179" endline="456" pcid="174"></source>
+</class>
+
+<class classid="12" nclones="2" nlines="13" similarity="75">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcarith.c.c" startline="916" endline="937" pcid="152"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcdctmgr.c.c" startline="463" endline="482" pcid="175"></source>
+</class>
+
+<class classid="13" nclones="2" nlines="33" similarity="77">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcapimin.c.c" startline="30" endline="88" pcid="153"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdapimin.c.c" startline="30" endline="84" pcid="295"></source>
+</class>
+
+<class classid="14" nclones="3" nlines="22" similarity="73">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdapistd.c.c" startline="152" endline="176" pcid="171"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdapistd.c.c" startline="185" endline="216" pcid="172"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcapistd.c.c" startline="120" endline="161" pcid="338"></source>
+</class>
+
+<class classid="15" nclones="3" nlines="15" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jctrans.c.c" startline="220" endline="241" pcid="179"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcoefct.c.c" startline="79" endline="100" pcid="183"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccoefct.c.c" startline="72" endline="93" pcid="315"></source>
+</class>
+
+<class classid="16" nclones="2" nlines="22" similarity="70">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcoefct.c.c" startline="677" endline="741" pcid="188"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccoefct.c.c" startline="409" endline="454" pcid="318"></source>
+</class>
+
+<class classid="17" nclones="2" nlines="14" similarity="92">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcmarker.c.c" startline="662" endline="682" pcid="210"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdinput.c.c" startline="640" endline="661" pcid="294"></source>
+</class>
+
+<class classid="18" nclones="2" nlines="27" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="415" endline="460" pcid="229"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="469" endline="514" pcid="230"></source>
+</class>
+
+<class classid="19" nclones="2" nlines="17" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="555" endline="581" pcid="231"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="585" endline="611" pcid="232"></source>
+</class>
+
+<class classid="20" nclones="2" nlines="20" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="740" endline="774" pcid="234"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="777" endline="811" pcid="235"></source>
+</class>
+
+<class classid="21" nclones="2" nlines="54" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="815" endline="920" pcid="236"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jmemmgr.c.c" startline="924" endline="1029" pcid="237"></source>
+</class>
+
+<class classid="22" nclones="2" nlines="44" similarity="74">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcsample.c.c" startline="477" endline="545" pcid="248"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdsample.c.c" startline="293" endline="361" pcid="370"></source>
+</class>
+
+<class classid="23" nclones="2" nlines="32" similarity="76">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcolor.c.c" startline="140" endline="178" pcid="250"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcolor.c.c" startline="357" endline="398" pcid="257"></source>
+</class>
+
+<class classid="24" nclones="4" nlines="25" similarity="72">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcolor.c.c" startline="212" endline="241" pcid="252"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccolor.c.c" startline="130" endline="173" pcid="278"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccolor.c.c" startline="186" endline="214" pcid="279"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccolor.c.c" startline="225" endline="271" pcid="280"></source>
+</class>
+
+<class classid="25" nclones="2" nlines="20" similarity="94">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdcolor.c.c" startline="249" endline="273" pcid="253"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jccolor.c.c" startline="309" endline="333" pcid="282"></source>
+</class>
+
+<class classid="26" nclones="2" nlines="51" similarity="93">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jcmaster.c.c" startline="571" endline="653" pcid="272"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/jdinput.c.c" startline="387" endline="462" pcid="288"></source>
+</class>
+
+<class classid="27" nclones="2" nlines="25" similarity="71">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdswitch.c.c" startline="267" endline="295" pcid="333"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/jpeglib/rdswitch.c.c" startline="299" endline="330" pcid="334"></source>
+</class>
+
+<class classid="28" nclones="2" nlines="70" similarity="95">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/pngminus/png2pnm.c.c" startline="60" endline="160" pcid="407"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/pngminus/pnm2png.c.c" startline="61" endline="159" pcid="410"></source>
+</class>
+
+<class classid="29" nclones="2" nlines="13" similarity="91">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/pngminus/png2pnm.c.c" startline="166" endline="182" pcid="408"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/pngminus/pnm2png.c.c" startline="165" endline="180" pcid="411"></source>
+</class>
+
+<class classid="30" nclones="4" nlines="13" similarity="72">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/writepng.c.c" startline="258" endline="288" pcid="437"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/writepng.c.c" startline="296" endline="318" pcid="438"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/writepng.c.c" startline="326" endline="349" pcid="439"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/readpng2.c.c" startline="189" endline="211" pcid="476"></source>
+</class>
+
+<class classid="31" nclones="2" nlines="13" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/writepng.c.c" startline="368" endline="400" pcid="441"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/readpng2.c.c" startline="479" endline="511" pcid="481"></source>
+</class>
+
+<class classid="32" nclones="2" nlines="154" similarity="71">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-x.c.c" startline="162" endline="423" pcid="442"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-win.c.c" startline="166" endline="478" pcid="460"></source>
+</class>
+
+<class classid="33" nclones="2" nlines="159" similarity="76">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-x.c.c" startline="429" endline="680" pcid="443"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="801" endline="1046" pcid="484"></source>
+</class>
+
+<class classid="34" nclones="2" nlines="27" similarity="72">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-x.c.c" startline="861" endline="888" pcid="445"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="2054" endline="2091" pcid="489"></source>
+</class>
+
+<class classid="35" nclones="2" nlines="10" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-x.c.c" startline="894" endline="904" pcid="446"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="2097" endline="2107" pcid="490"></source>
+</class>
+
+<class classid="36" nclones="2" nlines="205" similarity="72">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-win.c.c" startline="274" endline="631" pcid="452"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="293" endline="739" pcid="482"></source>
+</class>
+
+<class classid="37" nclones="2" nlines="29" similarity="84">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-win.c.c" startline="641" endline="679" pcid="453"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="749" endline="795" pcid="483"></source>
+</class>
+
+<class classid="38" nclones="2" nlines="227" similarity="73">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-win.c.c" startline="831" endline="1062" pcid="455"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="1052" endline="1342" pcid="485"></source>
+</class>
+
+<class classid="39" nclones="2" nlines="28" similarity="96">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-win.c.c" startline="1216" endline="1253" pcid="459"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng-win.c.c" startline="688" endline="728" pcid="464"></source>
+</class>
+
+<class classid="40" nclones="2" nlines="164" similarity="78">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="1348" endline="1564" pcid="486"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/libpng/contrib/gregbook/rpng2-x.c.c" startline="1588" endline="1829" pcid="488"></source>
+</class>
+
+<class classid="41" nclones="2" nlines="154" similarity="78">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzip2.c.c" startline="1132" endline="1309" pcid="536"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzip2.c.c" startline="1313" endline="1507" pcid="537"></source>
+</class>
+
+<class classid="42" nclones="2" nlines="10" similarity="87">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzcompress.c.c" startline="105" endline="115" pcid="555"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/decompress.c.c" startline="26" endline="36" pcid="559"></source>
+</class>
+
+<class classid="43" nclones="2" nlines="11" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzip2recover.c.c" startline="154" endline="163" pcid="565"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzip2recover.c.c" startline="167" endline="176" pcid="566"></source>
+</class>
+
+<class classid="44" nclones="2" nlines="20" similarity="100">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzlib.c.c" startline="468" endline="484" pcid="599"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/bzip2/bzlib.c.c" startline="862" endline="878" pcid="605"></source>
+</class>
+
+<class classid="45" nclones="2" nlines="28" similarity="76">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/zlib/inflate.c.c" startline="175" endline="211" pcid="632"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/zlib/infback.c.c" startline="28" endline="65" pcid="672"></source>
+</class>
+
+<class classid="46" nclones="2" nlines="27" similarity="73">
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/zlib/uncompr.c.c" startline="24" endline="55" pcid="678"></source>
+<source file="/home/localadm/nicad_work/farm_hyyh619_irrlicht-1.8.3/source/Irrlicht/zlib/compress.c.c" startline="22" endline="53" pcid="745"></source>
+</class>
+
+</clones>

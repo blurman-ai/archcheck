@@ -1,0 +1,17 @@
+repo,commit,loc,granularity,wall_s,peak_mb,parse_fail_pct,clone_pairs,clone_classes,largest_class,vendored_classes,authored_classes,report_bytes,status
+Catch2,69e0473,74486,functions,11,70,83.3,0,0,0,0,0,6199,ok
+Catch2,69e0473,74486,blocks,11,70,83.3,0,0,0,0,0,6191,ok
+GWToolboxpp,c8c0faa,172651,functions,59,376,86.6,9,2,4,2,0,30449,ok
+GWToolboxpp,c8c0faa,172651,blocks,59,376,86.6,19,5,7,5,0,107393,ok
+Kartend,54bfbdf,157689,functions,54,213,93.9,0,0,0,0,0,6203,ok
+Kartend,54bfbdf,157689,blocks,56,212,93.9,99,1,23,0,1,131333,ok
+IrredenEngine,3a825a5,138991,functions,53,370,90.3,32,2,9,2,0,154207,ok
+IrredenEngine,3a825a5,138991,blocks,57,370,90.3,35,3,9,3,0,158993,ok
+LibreSprite,276fdbd,167918,functions,92,378,86.2,6,4,3,1,3,45689,ok
+LibreSprite,276fdbd,167918,blocks,89,378,86.2,30,8,6,1,7,71366,ok
+hyyh619_irrlicht-1.8.3,4280a27,388036,functions,131,267,46.2,63,46,4,46,0,620422,ok
+hyyh619_irrlicht-1.8.3,4280a27,388036,blocks,139,267,46.2,0,0,0,0,0,0,rc=99
+AetherSDR,44ce91c,1614089,functions,198,308,37.7,1070,215,37,215,0,2140017,ok
+AetherSDR,44ce91c,1614089,blocks,190,308,37.7,1166,322,25,311,11,2807491,ok
+BambuStudio,a206a95,1399710,functions,258,373,86.9,608,76,43,76,0,756846,ok
+BambuStudio,a206a95,1399710,blocks,250,373,86.9,651,118,44,118,0,960677,ok

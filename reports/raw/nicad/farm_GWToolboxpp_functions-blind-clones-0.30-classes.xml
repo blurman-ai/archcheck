@@ -1,0 +1,20 @@
+<clones>
+<systeminfo processor="nicad6" system="farm_GWToolboxpp" granularity="functions-blind" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="36" npairs="9"/>
+<runinfo ncompares="78" cputime="10601"/>
+<classinfo nclasses="2"/>
+
+<class classid="1" nclones="3" nlines="33" similarity="89">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="168" endline="222" pcid="22"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="272" endline="326" pcid="24"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_gtk.c.c" startline="328" endline="379" pcid="25"></source>
+</class>
+
+<class classid="2" nclones="4" nlines="23" similarity="70">
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="180" endline="209" pcid="30"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="278" endline="307" pcid="33"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="246" endline="276" pcid="32"></source>
+<source file="/home/localadm/nicad_work/farm_GWToolboxpp/Dependencies/nativefiledialog/nfd_zenity.c.c" startline="212" endline="244" pcid="31"></source>
+</class>
+
+</clones>
