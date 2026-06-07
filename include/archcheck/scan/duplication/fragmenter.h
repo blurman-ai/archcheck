@@ -26,7 +26,11 @@ struct Fragment
 struct FragmentOptions
 {
   std::size_t minTokens = 30;
-  std::size_t maxTokens = 400;
+  // 600 not 400 (#091): twin functions that straddle the cap fragment
+  // differently — one stays whole, the other subdivides — so the clone never
+  // aligns. 600 keeps ~120-line functions whole, recovering function-level
+  // copy-paste (LibreSprite algo_line/algo_line_float) without an FP blow-up.
+  std::size_t maxTokens = 600;
 };
 
 // Extract function-scale fragments from tokenized source.
