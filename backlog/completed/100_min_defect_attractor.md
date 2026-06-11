@@ -132,3 +132,9 @@
 - **Тесты**: 11 unit-тестов
 - **Качество**: CCN≤15, NLOC≤30, все гейты зелёные
 - **Переиспользование**: history_query, file_classification, violation-структуры
+
+## Итог
+**Статус:** completed — HIST.1: top-decile файлов по fix-like касаниям
+(regex-классификация коммитов, >30 файлов = skip механических) (commit cb6e09d:
+`src/scan/defect_attractor.cpp`, 11 unit-тестов на синтетической истории).
+**Дата завершения:** 2026-06-11

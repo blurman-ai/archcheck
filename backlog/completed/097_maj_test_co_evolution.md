@@ -185,3 +185,9 @@
 | `tests/unit/` | Churn aggregation и classification |
 | `tests/integration/` | Diff-based сценарии |
 | `fixtures/test_co_evolution/` | `pass/` и `fail/` numstat fixtures |
+
+## Итог
+**Статус:** completed — numstat-парсинг, ratio тестового/продуктового churn,
+advisory в `--diff` (commit cb6e09d: `src/scan/test_co_evolution.cpp` + unit-тесты +
+`fixtures/test_co_evolution/`).
+**Дата завершения:** 2026-06-11

@@ -140,3 +140,9 @@
 | `tests/unit/` | History aggregation |
 | `tests/integration/` | Стоимостные и end-to-end сценарии |
 | `fixtures/god_file_growth/` | Synthetic history fixtures |
+
+## Итог
+**Статус:** completed — HIST-сигнал: 5+ последовательных growth-коммитов файла,
+CLI `--history` (advisory) (commit cb6e09d: `src/scan/god_file_growth.cpp` +
+unit-тесты на синтетической истории — file-фикстуры не нужны, сигнал history-based).
+**Дата завершения:** 2026-06-11

@@ -177,3 +177,9 @@
 | `tests/unit/` | Marker / regex logic |
 | `tests/integration/` | Diff fixtures |
 | `fixtures/satd_delta/` | `pass/` и `fail/` сценарии |
+
+## Итог
+**Статус:** completed — SATD-маркеры (TODO/FIXME/HACK/XXX) на added-строках диффа,
+advisory в `--diff` (commit cb6e09d: `src/scan/satd_scan.cpp` + unit-тесты +
+`fixtures/satd_delta/`). Подробности механики — в теле задачи и CHANGELOG (f80a83c).
+**Дата завершения:** 2026-06-11
