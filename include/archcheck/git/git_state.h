@@ -44,7 +44,6 @@ public:
   ~Worktree();
 
   const std::filesystem::path &path() const { return work_; }
-  bool valid() const { return !work_.empty(); }
 
 private:
   void release();
