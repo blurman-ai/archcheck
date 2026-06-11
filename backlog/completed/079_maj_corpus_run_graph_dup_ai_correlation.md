@@ -211,3 +211,11 @@
 - [[backlog/new/077_maj_per_commit_graph_drift_export.md]] — генератор graph-drift (база).
 - [[backlog/new/078_maj_clone_cochange_harm_signal.md]] — co-change harm-сигнал.
 - [[backlog/new/071_fp_classification_rules.md]] — FP/TP правила + vendor-exclude (e55d0fe).
+
+## Итог
+**Статус:** completed — оркестратор, graph-drift per-commit на 280k+ коммитов,
+дупликация на HEAD, attribution (AI-коммиты недопредставлены в дрейфе), итоги
+зафиксированы в секции «Итоги» выше. Результаты — `experiments/` (вне гита,
+регенерируемы), синтез — в память (`velocity_surge_tail_agentic`) и research-доки.
+Идеи «Возможные продолжения» (trend analysis, graph-SCC) — не обязательства.
+**Дата завершения:** 2026-06-11 (фактически завершена ранее, закрыта при проходе бэклога)

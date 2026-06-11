@@ -191,3 +191,9 @@ rm -rf /tmp/drift_selftest
 ### Эскалация (когда остановиться и передать старшей модели)
 
 Остановись, запиши сюда «Заблокировано: <что/почему/что пробовал>» и доложи, если: self-test падает дважды по непонятной причине; контракт скрипта конфликтует с чем-то, чего нет в этой задаче; нужен файл вне `scripts/drift_run.sh` + `docs/research/ai_drift_runlog.md`. Дальше — Sonnet, затем Opus.
+
+## Итог
+**Статус:** completed — оба шага выполнены (контракт `scripts/drift_run.sh`
+с clean-checkout последовательностью + методология в `docs/research/ai_drift_runlog.md`).
+**Изменённые файлы:** `scripts/drift_run.sh`, `docs/research/ai_drift_runlog.md` (commit 82f91ef)
+**Дата завершения:** 2026-06-11
