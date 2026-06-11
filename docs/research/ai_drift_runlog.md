@@ -116,16 +116,43 @@ Milestone-сводки — в [milestones.md](../milestones.md).
 - Tier 2 из задачи #033: PX4 (запрещают AI attribution),
   nodos-dev/sys-device (1 файл)
 
+## Методология: clean checkout обязателен (2026-06-11)
+
+### Причина
+
+`git checkout <sha> -- <path>` обновляет только файлы, которые существуют в `<sha>`. Файлы, которые присутствуют в working tree (с прошлой итерации цикла или с master HEAD) но отсутствуют в `<sha>` — остаются в working tree. `git clean -fd` удаляет только untracked файлы; tracked файлы из других ревизий, которые числятся в индексе, не убираются. Итог: при scan'е `archcheck --save-graph-baseline` видит файлы, которых не должно быть в `parent` ревизии, и сохраняет их рёбра. Дальше при checkout'е `after` эти файлы могут пропасть или остаться. Если меняется список файлов или их edge'и — DRIFT ложно срабатывает.
+
+### Эмпирические данные
+
+| Repo | PR | Dirty | Clean | Дельта |
+|------|----|-------|-------|--------|
+| Kartend | #26 errorutils refactor | 26 DRIFT.1 | 0 | -26 (все FP) |
+| Kartend | #27 promote uiconstants | 5 DRIFT.1 | 5 DRIFT.1 | 0 (real) |
+| Kartend | #34 covers leaf-struct | 0 | 0 | 0 |
+| OreStudio | #547 service-to-service auth | 1 DRIFT.1 | 0 | -1 (FP) |
+| OreStudio | #558 sql isolation | 0 | 0 | 0 |
+| OreStudio | #588 composite instrument | 2 DRIFT.1 | 0 | -2 (FP) |
+| OreStudio | #618 ORE instrument | 4 DRIFT.1 | 0 | -4 (FP) |
+| IrredenEngine | #727 render LOD | 2 DRIFT.1 | 2 DRIFT.1 | 0 (real) |
+| vmecpp | #360, #340 | 0 | 0 | 0 |
+
+### Правило
+
+Любой DRIFT-прогон на чужом репо — только через `scripts/drift_run.sh`:
+
+```bash
+scripts/drift_run.sh <repo-path> <subdir> <before-sha> <after-sha> <label>
+```
+
+Скрипт гарантирует чистое состояние перед каждой ревизией через `git clean -fdx` + `git checkout -f`.
+
 ## Команды воспроизведения
 
 ```bash
 # Один PR:
-bash /tmp/drift_one.sh <repo-path> <subdir> <merge-sha> <label>
+bash scripts/drift_run.sh <repo-path> <subdir> <before-sha> <after-sha> <label>
 
 # Пример:
-bash /tmp/drift_one.sh /home/localadm/oss/LibreSprite src \
-    276fdbdb27b537a074c3e170af6afc88c244a539 libresprite_581
+bash scripts/drift_run.sh /home/localadm/oss/LibreSprite src \
+    5f0fcd28ab2d5e74e0fa5b0e7bda79d8fafcc61a 276fdbdb27b537a074c3e170af6afc88c244a539 libresprite_581
 ```
-
-Helper-скрипт хранится в `/tmp/drift_one.sh` (нужно перенести в `scripts/`
-вместе с реализацией #048).
