@@ -1,8 +1,8 @@
 # [DRIFT][DIFF] Local Complexity Drift Advisory Signal
 
 **Дата создания:** 2026-06-10
-**Дата старта:** —
-**Статус:** new
+**Дата старта:** 2026-06-11
+**Статус:** wip
 **Модуль:** GIT / SCAN / DIFF / REPORT
 **Приоритет:** major
 **Сложность:** medium
@@ -140,8 +140,10 @@ Per-file aggregate:
 - Итог: `localComplexityScore = branchScore` (cognitive-style).
 - Пороги findings — иерархия из дизайн-дока (cognitive_complexity_delta_design.md §5):
   (1) функция пересекла абсолютный порог **25** (default Sonar C-family и clang-tidy);
-  (2) `delta > 0` в функции, уже бывшей выше порога (CodeScene-паттерн);
-  (3) `delta >= K` (старт K≈5, калибровать на корпусе #102) — мягкий warning.
+  (2) `delta >= 3` в функции, уже бывшей выше порога (CodeScene-паттерн; пол Δ≥3 —
+  из вердикта корпуса #102: хвост Δ1–2 на уже-огромных функциях, 72/210 находок,
+  неактионабелен);
+  (3) `delta >= K` (K=5, нестрогое; подтверждение K на втором срезе — открытый пункт #102) — мягкий warning.
   PR-агрегат = сумма положительных дельт; отрицательные репортить как улучшение.
   **Не делить на размер диффа** (возвращает корреляцию с объёмом — Gil & Lalouche).
   Абсолютный `delta >= 5` из прототипа на функции со score 2000+ срабатывает
@@ -359,13 +361,58 @@ corpus re-run #102: switch-парсеры и TEST_F ушли из топа, 6/6 
 - Auto-refactoring suggestions.
 - New strict mode.
 
+## Решения старта реализации (2026-06-11)
+
+| Решение | Причина |
+|---------|---------|
+| Вывод v1 — через уже shipped `printDiffAdvisories()` в main.cpp (паттерн #096/#097: text-блок после структурного диффа) | Волна #096–#100 заземлила advisory-паттерн ПОСЛЕ написания этой задачи; отдельный diff-JSON-writer отложен — у `--diff` сегодня нет JSON ни для одного сигнала, вводить его в одиночку из #101 — scope creep |
+| Новые функции дают только LCX.1 (`crossed_25`), не LCX.3 | Корпусная валидация #102 шла с отсечением новых функций; LCX.3 на новых функциях (любая новая функция со score ≥ 5) не валидирован и почти наверняка шумен; LCX.1 на новых — прямое требование Detection contract |
+| Порт скорера — точный порт v2 `scan_commit.py` (включая column-эвристику glued-`&&` для rvalue-ссылок) | Семантика валидирована корпусом (1612 коммитов) и synthetic suite 13/13; «улучшения» при порте = расхождение с валидацией |
+| В `duplication::Token` добавляется поле `col` (выставляется в `lex()`) | Нужно для glued-эвристики rvalue-`&&`; аддитивно, существующие инициализаторы не ломает |
+
 ## Сделано
 
-- (пусто)
+- Задача переведена в wip; в Scoring model вшит пол LCX.2 `delta >= 3` из вердикта корпуса #102.
+- **Реализация v1 завершена (2026-06-11):**
+  - `Token::off` (байтовое смещение) добавлен в `token_normalizer` — нужен для
+    glued-эвристики rvalue-`&&`; выставляется одной строкой в `lex()`.
+  - `include/archcheck/scan/function_body_scan.h` + `src/scan/function_body_scan.cpp` —
+    токенное обнаружение определений функций: id-цепочки с `::`, `~Name`, `operator@`
+    (включая `operator()`), арность top-level (с угловыми скобками), квалификаторы,
+    trailing return, ctor init-list. В отличие от прототипа находит и inline-методы
+    в телах классов.
+  - `include/archcheck/scan/local_complexity_metrics.h` + `src/scan/local_complexity_metrics.cpp` —
+    точный порт v2-скорера #102 (state machine `metric_for_span`): structural/hybrid/flat
+    инкременты, control-nesting через классифицированный brace-стек, lastOp-серии
+    `&&`/`||` по глубине скобок, do-while-спарка, braceless-тела, лямбда-вложенность.
+    Плюс `stripDirectiveTokens()` — фильтр препроцессорных строк (ловушка `#if defined` → фальшивый `if`).
+  - `include/archcheck/scan/local_complexity_drift.h` + `src/scan/local_complexity_drift.cpp` —
+    матчинг `(qualifiedName, paramArity)` → nearest-line/low-confidence; иерархия LCX.1/2/3
+    (пороги 25 / Δ≥3 / Δ≥5); блэклист TEST*-макросов; vendor/test-фильтры из
+    `file_classification.h`; агрегаты positiveDelta/negativeDelta.
+  - Wiring: `printComplexityAdvisory()` в `main.cpp` из `printDiffAdvisories()` —
+    паттерн #096/#097, advisory-блок после структурного диффа, exit code не трогает.
+  - Тесты: вся тест-матрица из спеки (14 кейсов ядра, все числа сошлись с первого прогона),
+    function_body_scan (10 кейсов), drift (9 кейсов), fixtures-тест (6), два repo-level
+    integration-кейса в `git_diff_test.cpp`. Итого 458/458 зелёные.
+  - `fixtures/local_complexity_drift/{pass,fail_growth,fail_new_complex}` — 8 файлов по списку спеки.
+  - Верификация: build Debug ✓, ctest 458/458 ✓, lizard 0 warnings на новом коде ✓,
+    clang-format 18.1.3 ✓, dogfood `src/include/tests` = 0 нарушений ✓; смоук
+    `--diff HEAD` на самом репо: единственный finding — собственная фикстура
+    `saturate` (26 ≥ 25), корректный TP, exit code не изменён.
 
 ## В работе
 
-- (пусто)
+- (пусто — ожидает коммита и закрытия)
+
+## Осталось до закрытия
+
+- Коммит(ы) по команде владельца.
+- DoD-пункт «ручная сверка с clang-tidy на ~20 функциях реального кода» — не выполнялся
+  в этой сессии (требует clang-tidy прогона; ядро покрыто тест-матрицей и корпусной
+  валидацией #102).
+- Решение по #099 (fold/absorb) — после лендинга.
+- Подтверждение K=5 на втором срезе корпуса — открытый пункт #102, не блокирует.
 
 ## Следующие шаги
 
