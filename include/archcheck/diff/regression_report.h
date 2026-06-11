@@ -48,7 +48,6 @@ struct NewCrossAreaDependency
 
 struct MetricThresholds
 {
-  std::size_t chainLengthLimit = 10; // unused in comparison; reserved for rule engine
   std::size_t godHeaderFanIn = 30;
 };
 

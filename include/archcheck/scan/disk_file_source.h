@@ -20,8 +20,6 @@ public:
   std::vector<ProjectFile> list() override;
   std::string read(const std::string &repoRelativePath) override;
 
-  const std::filesystem::path &root() const { return root_; }
-
 private:
   std::filesystem::path root_;
 };

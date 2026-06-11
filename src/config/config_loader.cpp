@@ -11,9 +11,8 @@
 namespace archcheck::config
 {
 
-ConfigError::ConfigError(std::string file, int line, int column, const std::string &message)
-    : std::runtime_error(file + ":" + std::to_string(line) + ":" + std::to_string(column) + ": " + message),
-      file_(std::move(file)), line_(line), column_(column)
+ConfigError::ConfigError(const std::string &file, int line, int column, const std::string &message)
+    : std::runtime_error(file + ":" + std::to_string(line) + ":" + std::to_string(column) + ": " + message)
 {
 }
 

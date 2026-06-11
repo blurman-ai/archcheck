@@ -39,7 +39,6 @@ std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragment
     Pair p;
     p.a = pr.first;
     p.b = pr.second;
-    p.sharedRare = shared;
     p.weighted = weightedJaccard(allFragments[p.a], allFragments[p.b], index.idf);
     p.plain = plainJaccard(allFragments[p.a], allFragments[p.b]);
     p.line = lineOverlap(allFragments[p.a], allFragments[p.b]);

@@ -164,37 +164,6 @@ std::vector<std::vector<NodeId>> computeScc(const DependencyGraph &g)
 
 std::unordered_set<NodeId> reachableFrom(const DependencyGraph &g, NodeId from) { return bfs(g, from, true); }
 
-std::unordered_set<NodeId> reverseReachableFrom(const DependencyGraph &g, NodeId from) { return bfs(g, from, false); }
-
-bool hasPath(const DependencyGraph &g, NodeId from, NodeId to)
-{
-  if (from == to)
-  {
-    return true;
-  }
-  std::unordered_set<NodeId> visited;
-  std::queue<NodeId> q;
-  visited.insert(from);
-  q.push(from);
-  while (!q.empty())
-  {
-    const NodeId v = q.front();
-    q.pop();
-    for (NodeId n : g.successors(v))
-    {
-      if (n == to)
-      {
-        return true;
-      }
-      if (visited.insert(n).second)
-      {
-        q.push(n);
-      }
-    }
-  }
-  return false;
-}
-
 std::vector<std::unordered_set<std::size_t>> buildCondensation(std::size_t nSccs, std::size_t count,
                                                                const DependencyGraph &g,
                                                                const std::vector<std::size_t> &nodeToScc)

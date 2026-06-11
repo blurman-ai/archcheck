@@ -10,10 +10,8 @@
 
 using archcheck::graph::computeScc;
 using archcheck::graph::DependencyGraph;
-using archcheck::graph::hasPath;
 using archcheck::graph::NodeId;
 using archcheck::graph::reachableFrom;
-using archcheck::graph::reverseReachableFrom;
 
 TEST_CASE("compute_scc on empty graph returns empty result", "[graph][algorithms][scc]")
 {
@@ -110,63 +108,6 @@ TEST_CASE("reachable_from on isolated node returns just itself", "[graph][algori
   const auto r = reachableFrom(g, a);
   REQUIRE(r.size() == 1);
   REQUIRE(r.count(a) == 1);
-}
-
-TEST_CASE("reverseReachableFrom mirrors forward reachability", "[graph][algorithms][reachability]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  const NodeId b = g.addNode("b.h");
-  const NodeId c = g.addNode("c.h");
-  g.addEdge(a, b);
-  g.addEdge(b, c);
-  const auto fwd = reachableFrom(g, a);
-  const auto rev = reverseReachableFrom(g, c);
-  REQUIRE(fwd == rev);
-}
-
-TEST_CASE("hasPath returns true for direct edge", "[graph][algorithms][path]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  const NodeId b = g.addNode("b.h");
-  g.addEdge(a, b);
-  REQUIRE(hasPath(g, a, b));
-}
-
-TEST_CASE("hasPath returns true for transitive reachability", "[graph][algorithms][path]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  const NodeId b = g.addNode("b.h");
-  const NodeId c = g.addNode("c.h");
-  g.addEdge(a, b);
-  g.addEdge(b, c);
-  REQUIRE(hasPath(g, a, c));
-}
-
-TEST_CASE("hasPath returns false for unreachable target", "[graph][algorithms][path]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  const NodeId b = g.addNode("b.h");
-  REQUIRE_FALSE(hasPath(g, a, b));
-}
-
-TEST_CASE("hasPath returns true for self-path", "[graph][algorithms][path]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  REQUIRE(hasPath(g, a, a));
-}
-
-TEST_CASE("hasPath respects edge direction", "[graph][algorithms][path]")
-{
-  DependencyGraph g;
-  const NodeId a = g.addNode("a.h");
-  const NodeId b = g.addNode("b.h");
-  g.addEdge(a, b);
-  REQUIRE_FALSE(hasPath(g, b, a));
 }
 
 TEST_CASE("include depths survive a pathologically deep chain", "[graph][algorithms][depth]")

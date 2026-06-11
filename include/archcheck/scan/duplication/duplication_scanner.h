@@ -13,14 +13,13 @@ namespace archcheck::scan::duplication
 
 struct Pair
 {
-  std::size_t a = 0;          // first fragment index
-  std::size_t b = 0;          // second fragment index
-  double weighted = 0.0;      // weighted Jaccard similarity
-  double plain = 0.0;         // plain Jaccard similarity
-  double line = 0.0;          // line-based overlap
-  double lcs = 0.0;           // token-LCS Dice ratio
-  std::size_t sharedRare = 0; // count of shared rare tokens
-  std::string type;           // clone type: EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (see clone_classifier)
+  std::size_t a = 0;     // first fragment index
+  std::size_t b = 0;     // second fragment index
+  double weighted = 0.0; // weighted Jaccard similarity
+  double plain = 0.0;    // plain Jaccard similarity
+  double line = 0.0;     // line-based overlap
+  double lcs = 0.0;      // token-LCS Dice ratio
+  std::string type;      // clone type: EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (see clone_classifier)
 };
 
 struct ScannerOptions

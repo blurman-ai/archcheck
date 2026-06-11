@@ -22,7 +22,6 @@ struct BaselineLoadError
 
   Kind kind;
   std::string message;
-  int line = 0;
 };
 
 // Serialize `g` as a deterministic YAML baseline into `out`.

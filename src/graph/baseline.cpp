@@ -128,7 +128,7 @@ std::string read_all(std::istream &in)
 
 BaselineLoadError make_error(BaselineLoadError::Kind kind, std::string msg)
 {
-  return BaselineLoadError{kind, std::move(msg), 0};
+  return BaselineLoadError{kind, std::move(msg)};
 }
 
 std::string_view csub_to_sv(ryml::csubstr s) { return std::string_view{s.str, s.len}; }
