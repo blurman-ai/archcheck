@@ -136,3 +136,14 @@
 | `tests/unit/` | Метрики и шумоподавление |
 | `tests/integration/` | Ref-comparison сценарии |
 | `fixtures/indentation_complexity_drift/` | `pass/` и `fail/` фикстуры |
+
+## Итог (закрытие)
+
+**Статус:** dropped (absorbed)
+**Дата:** 2026-06-12
+
+Закрыта по вердикту #109: корпусная валидация (945 находко-коммитов на 84
+репах, фиксы A–K) доказала, что function-aware discovery (#101) надёжно
+покрывает реальные репы — text-only indentation proxy как fallback не нужен.
+Сценарии, ради которых он задумывался (битый парс, макро-тяжёлый код),
+закрыты точечно: brace-guard, largest-#if-branch, scope-tracking.
