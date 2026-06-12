@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+from datetime import date as _date
 import glob
 import json
 import os
@@ -33,9 +34,11 @@ from pathlib import Path
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 MASS_TOUCH_THRESHOLD = 150    # commits with more added edges are vendor/reorg dumps
-GRACE_PERIOD_COMMITS = 10     # skip first N commits for a newly-seen module
+GRACE_PERIOD_COMMITS = 10     # hybrid floor: skip first N commits for a newly-seen module
+GRACE_PERIOD_DAYS = 30        # hybrid ceiling: skip first N calendar days (hot repos)
 SDP_DELTA = 0.10              # Martin instability delta for LATERAL.SDP
 SHARED_FID_RATIO = 0.50       # B is shared if FID(B) >= this fraction of max FID
+SPLIT_CONTENT_RATIO = 0.50    # ≥50% of new-header lines came from donor → file-split FP
 
 OSS_DIR = '/home/localadm/oss'
 # Same agent-author markers as agent_author_scan.py
@@ -256,6 +259,77 @@ def confirm_backedge(repo_dir: str, sha: str, mod_a: str, mod_b: str, depth: int
     return False
 
 
+def detect_splits(repo_dir: str, sha: str,
+                  candidate_targets: set[str]) -> dict[str, str]:
+    """Return {to_f: origin_f} for file-split FP candidates.
+
+    A new header `to_f` is a split of `origin_f` when ≥SPLIT_CONTENT_RATIO of
+    its non-blank lines appeared in `origin_f` at sha~1.  Only called for event
+    candidates where `to_f` did not exist at sha~1 (git cat-file -e check).
+    """
+    if not candidate_targets or not os.path.isdir(repo_dir):
+        return {}
+    parent = f'{sha}~1'
+
+    # Collect non-new changed headers from this commit to use as donors.
+    try:
+        changed = subprocess.run(
+            ['git', '-C', repo_dir, '-c', 'gc.auto=0', 'show',
+             '--no-renames', '--name-only', '--format=', sha],
+            capture_output=True, text=True, timeout=60, check=True,
+        ).stdout.splitlines()
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return {}
+
+    donor_candidates: list[str] = []
+    for f in changed:
+        f = f.strip()
+        if not f.endswith(_HEADER_EXTS):
+            continue
+        # Donor must exist at parent (not a new file).
+        exists = subprocess.run(
+            ['git', '-C', repo_dir, '-c', 'gc.auto=0', 'cat-file', '-e', f'{parent}:{f}'],
+            capture_output=True, timeout=10,
+        ).returncode == 0
+        if exists:
+            donor_candidates.append(f)
+
+    if not donor_candidates:
+        return {}
+
+    result: dict[str, str] = {}
+    for to_f in candidate_targets:
+        # to_f must be NEW at this commit (absent at parent).
+        is_new = subprocess.run(
+            ['git', '-C', repo_dir, '-c', 'gc.auto=0', 'cat-file', '-e', f'{parent}:{to_f}'],
+            capture_output=True, timeout=10,
+        ).returncode != 0
+        if not is_new:
+            continue
+        try:
+            new_lines = [l for l in subprocess.run(
+                ['git', '-C', repo_dir, '-c', 'gc.auto=0', 'show', f'{sha}:{to_f}'],
+                capture_output=True, text=True, timeout=30, check=True,
+            ).stdout.splitlines() if l.strip()]
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            continue
+        if not new_lines:
+            continue
+        for donor in donor_candidates:
+            try:
+                old_lines = set(l for l in subprocess.run(
+                    ['git', '-C', repo_dir, '-c', 'gc.auto=0', 'show', f'{parent}:{donor}'],
+                    capture_output=True, text=True, timeout=30, check=True,
+                ).stdout.splitlines() if l.strip())
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                continue
+            overlap = sum(1 for l in new_lines if l in old_lines)
+            if overlap / len(new_lines) >= SPLIT_CONTENT_RATIO:
+                result[to_f] = donor
+                break
+    return result
+
+
 _COAUTHOR_RE = re.compile(
     r'co-authored-by:.*\b(claude|copilot|cursor|devin|aider|codex|jules)\b', re.IGNORECASE)
 
@@ -321,6 +395,9 @@ class IncrementalGraph:
         #   basename (compat.h -> compat/compat.h re-points every consumer).
         self.edge_signature: dict[tuple[str, str], set[str]] = collections.defaultdict(set)
         self.target_basenames: dict[str, set[str]] = collections.defaultdict(set)
+        # File-split aliases: to_f → origin_f (new header is split from donor).
+        # Pairs involving a split target inherit the donor's pair history.
+        self.split_origin: dict[str, str] = {}
 
     def looks_like_move(self, from_f: str, to_f: str) -> bool:
         sig = (Path(from_f).name, to_f)
@@ -345,6 +422,25 @@ class IncrementalGraph:
             self.mod_edges.add(pair)
             self.fid[mod_b] += 1
             self.fod[mod_a] += 1
+
+    def remove(self, from_f: str, to_f: str) -> None:
+        """Remove a file edge; update module-level FID/FOD counters.
+        Pair disappears from mod_edges when no file edges remain for it."""
+        if (from_f, to_f) not in self._file_edges:
+            return
+        self._file_edges.discard((from_f, to_f))
+        mod_a = get_module(from_f, self.depth)
+        mod_b = get_module(to_f, self.depth)
+        if mod_a == mod_b:
+            return
+        pair = (mod_a, mod_b)
+        # Pair disappears only if no file edges remain between these modules
+        if not any(f_a == mod_a and f_b == mod_b
+                   for f_a, f_b in ((get_module(e[0], self.depth), get_module(e[1], self.depth))
+                                     for e in self._file_edges)):
+            self.mod_edges.discard(pair)
+            self.fid[mod_b] -= 1
+            self.fod[mod_a] -= 1
 
     def instability(self, mod: str) -> float:
         ca, ce = self.fid.get(mod, 0), self.fod.get(mod, 0)
@@ -430,13 +526,18 @@ def scan_repo(jsonl_path: str, agentic_map: dict[str, int], baseline_dir: str) -
 
     graph = IncrementalGraph(depth)
     mod_pair_first: dict[tuple[str, str], str] = {}
+    # Hybrid grace: skip events if either module is younger than GRACE_PERIOD_DAYS
+    # calendar days OR GRACE_PERIOD_COMMITS commits (whichever is more protective).
+    # CYCLE events are excluded from grace: a cycle at module birth is still a smell.
+    # Baseline modules get _date.min → no grace (they are established).
+    mod_first_date: dict[str, _date] = {}
     mod_first_idx: dict[str, int] = {}
-    # Seed pre-window state: existing module pairs are not "first contact",
-    # established modules get no grace period.
     for a, b in baseline_edges:
         na, nb = normalize(a, strips), normalize(b, strips)
         graph.add(na, nb)
         mod_a, mod_b = get_module(na, depth), get_module(nb, depth)
+        mod_first_date.setdefault(mod_a, _date.min)
+        mod_first_date.setdefault(mod_b, _date.min)
         mod_first_idx.setdefault(mod_a, -GRACE_PERIOD_COMMITS)
         mod_first_idx.setdefault(mod_b, -GRACE_PERIOD_COMMITS)
         if mod_a != mod_b:
@@ -446,11 +547,19 @@ def scan_repo(jsonl_path: str, agentic_map: dict[str, int], baseline_dir: str) -
     repo_dir = os.path.join(OSS_DIR, local_name)
     touched_cache: dict[str, set[str] | None] = {}
     backedge_cache: dict[tuple[str, str, str], bool | None] = {}
+    split_cache: dict[str, dict[str, str]] = {}  # sha → {new_to_f: donor_f}
 
     for idx, rec in enumerate(records):
         sha = rec['sha']
         date = rec['date']
+        removed_list = rec.get('removed', [])
         added_list = rec.get('added', [])
+
+        # Apply removed edges before added (git diff semantics: delete before insert)
+        for s in removed_list:
+            edge = parse_edge_line(s)
+            if edge:
+                graph.remove(normalize(edge[0], strips), normalize(edge[1], strips))
 
         if len(added_list) > MASS_TOUCH_THRESHOLD:
             for s in added_list:
@@ -475,11 +584,26 @@ def scan_repo(jsonl_path: str, agentic_map: dict[str, int], baseline_dir: str) -
                 continue
             commit_pairs.add((mod_a, mod_b))
 
+            commit_date = _date.fromisoformat(date) if date else _date.min
             for mod in (mod_a, mod_b):
                 mod_first_idx.setdefault(mod, idx)
+                mod_first_date.setdefault(mod, commit_date)
 
-            if (idx - mod_first_idx[mod_a] < GRACE_PERIOD_COMMITS
-                    or idx - mod_first_idx[mod_b] < GRACE_PERIOD_COMMITS):
+            # Hybrid grace (skip for CYCLE — module cycle at birth is still a smell).
+            # Suppress if either module is younger than 30 days OR 10 commits.
+            def _in_grace(mod: str) -> bool:
+                return (
+                    (idx - mod_first_idx[mod] < GRACE_PERIOD_COMMITS)
+                    or (commit_date - mod_first_date[mod]).days < GRACE_PERIOD_DAYS
+                )
+
+            grade_tentative = None  # will be set after all guards pass
+
+            # Determine tentative grade early only to decide grace exception for CYCLE.
+            # Full grade is computed below after remaining guards.
+            rev_pair_pre = (mod_b, mod_a)
+            is_cycle_candidate = (rev_pair_pre in commit_pairs or rev_pair_pre in graph.mod_edges)
+            if not is_cycle_candidate and (_in_grace(mod_a) or _in_grace(mod_b)):
                 continue
 
             if not are_siblings(mod_a, mod_b):
@@ -511,6 +635,36 @@ def scan_repo(jsonl_path: str, agentic_map: dict[str, int], baseline_dir: str) -
             touched = touched_cache[sha]
             if touched is not None and edge[0] not in touched:
                 continue
+
+            # File-split guard: if to_f is a new header, check whether its
+            # content was split from an existing header in this commit.
+            # Run detect_splits once per sha (lazy, only when a candidate arrives).
+            if to_f.endswith(_HEADER_EXTS):
+                if sha not in split_cache:
+                    split_targets = set()
+                    for s2 in added_list:
+                        e2 = parse_edge_line(s2)
+                        if e2 and e2[1].endswith(_HEADER_EXTS):
+                            split_targets.add(normalize(e2[1], strips))
+                    split_cache[sha] = detect_splits(repo_dir, sha, split_targets)
+                origin_f = split_cache[sha].get(to_f)
+                if origin_f is not None:
+                    # Register alias for future commits too.
+                    graph.split_origin[to_f] = normalize(origin_f, strips)
+                    # Suppress if the consumer already had an edge to donor's module.
+                    origin_mod = get_module(normalize(origin_f, strips), depth)
+                    donor_pair = (mod_a, origin_mod)
+                    if (donor_pair in mod_pair_first or donor_pair in graph.mod_edges
+                            or origin_mod == mod_a):
+                        continue
+
+            # Also suppress if to_f inherits a split alias from a prior commit.
+            elif to_f in graph.split_origin:
+                origin_mod = get_module(graph.split_origin[to_f], depth)
+                donor_pair = (mod_a, origin_mod)
+                if (donor_pair in mod_pair_first or donor_pair in graph.mod_edges
+                        or origin_mod == mod_a):
+                    continue
 
             rev_pair = (mod_b, mod_a)
             i_a = graph.instability(mod_a)

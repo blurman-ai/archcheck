@@ -168,8 +168,9 @@ def main() -> int:
             "subject": subject,
             "returncode": rc,
             **summary,
-            "added": collect_section(out, "added:"),
-            "new_cross_area_dependencies": collect_section(out, "new_cross_area_dependencies:"),
+            "added": collect_section(out, "added (advisory):"),
+            "removed": collect_section(out, "removed (advisory):"),
+            "new_cross_area_dependencies": collect_section(out, "new_cross_area_dependencies (advisory):"),
         }
         records.append(record)
 
