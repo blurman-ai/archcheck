@@ -43,8 +43,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--since",
-        default="2025-05-01",
-        help="only scan commits since this date (window); matches the corpus window",
+        default="2024-06-01",
+        help=(
+            "only scan commits since this date (analysis window). Policy: last "
+            "~24 months (CORPUS_CRITERIA.md). Prior runs used 2025-05-01; a full "
+            "regen with the wider window re-pins downstream jsonl/baselines."
+        ),
     )
     parser.add_argument(
         "--until",
