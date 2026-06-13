@@ -13,6 +13,11 @@ import sys
 sys.path.insert(0, "/home/localadm/projects/cpparch/experiments/ai_repo_run")
 from classify_dup import classify, PAIR  # noqa: E402
 
+# Corpus rule: clone OSS without smudging LFS blobs — pointer files suffice for
+# source scanning and LFS payloads can be many GB (CORPUS_CRITERIA). This clone
+# is `--depth 1` (full HEAD checkout), so the LFS smudge fires without it.
+os.environ.setdefault("GIT_LFS_SKIP_SMUDGE", "1")
+
 AC = "/home/localadm/projects/cpparch/build/debug/src/archcheck"
 HERE = "/home/localadm/projects/cpparch/experiments/ai_repo_run"
 TMP = "/home/localadm/oss_control"

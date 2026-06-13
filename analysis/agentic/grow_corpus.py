@@ -17,6 +17,12 @@ from __future__ import annotations
 import csv, os, subprocess, sys, time
 from pathlib import Path
 
+# Corpus rule: clone OSS without smudging LFS blobs — pointer files suffice for
+# source scanning and LFS payloads can be many GB (CORPUS_CRITERIA). `--filter=
+# blob:none` does NOT skip LFS; the smudge filter still runs on checkout.
+# Inherited by every git subprocess this run spawns.
+os.environ.setdefault("GIT_LFS_SKIP_SMUDGE", "1")
+
 OSS_ROOT   = Path("/home/localadm/oss")
 LEDGER     = Path("/home/localadm/projects/cpparch/experiments/ai_repo_run/grow_corpus_ledger.tsv")
 TARGET     = 9999   # стоп по count отключён: oss/ уже >1000 мусором; идём по worklist (#122)
