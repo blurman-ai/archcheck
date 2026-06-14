@@ -13,6 +13,7 @@ backlog/
   dropped/*.md          — won't do: superseded / cancelled / obsolete; точная причина — в секции «Итог» файла
   backlog_review.md     — последний отчёт /backlog-review (генерируется)
   TASK_TRACKER.md       — канонический трекер текущего релиза / MVP
+  DEBT.md               — реестр гэпов/тех-долга; разгребается на /backlog-review
 ```
 
 ## Формат имени файла
