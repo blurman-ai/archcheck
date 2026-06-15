@@ -122,3 +122,36 @@ TEST_CASE("e2e --diff --format=json: bulk import exposes skip marker (#117/#124)
   REQUIRE(r.output.find("\"complexity_skipped_added_lines\":") != std::string::npos);
   REQUIRE(r.output.find("\"complexity_skipped_added_lines\": 0,") == std::string::npos);
 }
+
+TEST_CASE("e2e --diff: unresolvable baseline ref warns on stderr (#124)", "[diff][e2e]")
+{
+  TempDir repo;
+  commitChain(repo.path);
+
+  // A baseline ref that does not resolve: the diff degrades to "whole current vs
+  // empty tree" (correct for a real root commit, here a typo). archcheck must
+  // surface it instead of silently treating everything as added.
+  const auto r = runArchcheck(repo.path, "--diff nonexistentref..HEAD");
+  REQUIRE(r.output.find("warning: baseline ref 'nonexistentref' does not resolve") != std::string::npos);
+}
+
+TEST_CASE("e2e --diff: bulk import skips graph gating — cycle not gated (#124)", "[diff][e2e]")
+{
+  TempDir repo;
+  commitChain(repo.path);
+  // This PR both closes the a->b->c->a cycle (which alone gates → exit 1) AND adds
+  // >10000 lines (bulk import). A bulk dump is not the project's authored evolution
+  // (vendored / generated / committed-as-is), so the graph checks are skipped and
+  // the cycle must NOT block the merge — only slow incremental drift should gate.
+  writeFile(repo.path / "c.h", "#include \"a.h\"\n");
+  std::string body;
+  for (int i = 0; i < 10100; ++i)
+    body += "int v" + std::to_string(i) + " = 0;\n";
+  writeFile(repo.path / "big.h", body);
+  commitAll(repo.path, "bulk import that also closes a cycle");
+
+  const auto r = runArchcheck(repo.path, "--diff HEAD~1..HEAD");
+  REQUIRE(r.exitCode == 0); // cycle present but NOT gated, because bulk
+  REQUIRE(r.output.find("graph checks:   skipped") != std::string::npos);
+  REQUIRE(r.output.find("gate: fail") == std::string::npos);
+}
