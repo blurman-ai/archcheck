@@ -9,6 +9,7 @@
 #include "archcheck/diff/diff_json_report.h"
 #include "archcheck/diff/regression_report.h"
 #include "archcheck/git/diff_query.h"
+#include "archcheck/git/git_exec.h"
 #include "archcheck/git/git_object_file_source.h"
 #include "archcheck/git/git_state.h"
 #include "archcheck/graph/graph_builder.h"
@@ -261,32 +262,88 @@ int emitJsonDiff(const archcheck::diff::RegressionReport &report, DiffAdvisories
   return report.gates() ? 1 : 0;
 }
 
-int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed, DiffMode mode,
-                    OutputFormat format)
+// Warn (do not fail) when the baseline ref does not resolve. The diff then degrades
+// to "whole current revision vs empty tree", which is correct for a real initial
+// commit but silently hides a typo'd ref. Surface it on stderr without touching the
+// exit code or gating. (#124 DEBT: silent empty-baseline.)
+void warnIfBaselineUnresolved(const std::filesystem::path &repoRoot, const std::string &baselineRef)
 {
-  const auto thresholds = loadDiffThresholds(repoRoot);
-  if (!thresholds)
-    return 2;
+  if (baselineRef == archcheck::git::kWorktreeRef)
+    return;
+  const auto r = archcheck::git::runGit({"rev-parse", "--verify", "--quiet", baselineRef + "^{object}"}, repoRoot);
+  if (r.exitCode != 0)
+    std::cerr << "archcheck: warning: baseline ref '" << baselineRef
+              << "' does not resolve; diffing against an empty tree (the whole current revision "
+                 "is treated as added). Check the revspec if this was unintended.\n";
+}
+
+// Both graph sides + the regression report (memory or disk backend). ok=false on a
+// ref-materialisation failure (caller returns exit 2). Only built for non-bulk diffs.
+struct DiffGraph
+{
+  archcheck::diff::RegressionReport report;
+  std::size_t baselineNodes = 0;
+  std::size_t currentNodes = 0;
+  bool ok = true;
+};
+
+DiffGraph buildDiffGraph(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed, DiffMode mode,
+                         const archcheck::diff::MetricThresholds &metric)
+{
   bool okBase = false, okCurr = false;
   const auto baseline = (mode == DiffMode::Memory) ? buildSideMemory(repoRoot, parsed.baseline, okBase)
                                                    : buildSideDisk(repoRoot, parsed.baseline, "baseline", okBase);
   const auto current = (mode == DiffMode::Memory) ? buildSideMemory(repoRoot, parsed.current, okCurr)
                                                   : buildSideDisk(repoRoot, parsed.current, "current", okCurr);
   if (!okBase || !okCurr)
-    return 2;
+    return {{}, 0, 0, false};
+  return {archcheck::diff::buildRegressionReport(baseline.graph, current.graph, metric), baseline.graph.nodeCount(),
+          current.graph.nodeCount(), true};
+}
 
-  const auto report = archcheck::diff::buildRegressionReport(baseline.graph, current.graph, thresholds->metric);
-  auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines);
-  if (format == OutputFormat::Json)
-    return emitJsonDiff(report, std::move(advisories), parsed);
+void printDiffText(const archcheck::git::Revspec &parsed, DiffMode mode, bool bulk, const DiffGraph &graph,
+                   const DiffAdvisories &advisories)
+{
   std::cout << "baseline_ref:   " << parsed.baseline << '\n'
             << "current_ref:    " << parsed.current << '\n'
-            << "diff_mode:      " << (mode == DiffMode::Memory ? "memory" : "disk") << '\n'
-            << "baseline_nodes: " << baseline.graph.nodeCount() << '\n'
-            << "current_nodes:  " << current.graph.nodeCount() << '\n';
-  archcheck::diff::writeTextReport(report, std::cout);
+            << "diff_mode:      " << (mode == DiffMode::Memory ? "memory" : "disk") << '\n';
+  if (bulk)
+    std::cout << "graph checks:   skipped — diff adds " << advisories.complexitySkippedAddedLines
+              << " lines (bulk import; thresholds.diff_max_added_lines)\n";
+  else
+    std::cout << "baseline_nodes: " << graph.baselineNodes << '\n' << "current_nodes:  " << graph.currentNodes << '\n';
+  archcheck::diff::writeTextReport(graph.report, std::cout);
   printDiffAdvisories(advisories);
-  return report.gates() ? 1 : 0;
+}
+
+int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed, DiffMode mode,
+                    OutputFormat format)
+{
+  const auto thresholds = loadDiffThresholds(repoRoot);
+  if (!thresholds)
+    return 2;
+  warnIfBaselineUnresolved(repoRoot, parsed.baseline);
+
+  // Advisories first: they compute the bulk-import signal (#117). A bulk import is
+  // not the project's authored evolution (vendored / generated / "committed as-is,
+  // fix later" / not even the author's code), so block-gating a merge over its graph
+  // is unfair and noisy. Skip the graph checks (gating AND drift) on bulk commits,
+  // as clone/complexity already do — archcheck's job is slow incremental drift. (#124)
+  auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines);
+  const bool bulk = advisories.complexitySkippedAddedLines > 0;
+
+  DiffGraph graph; // bulk ⇒ stays empty (no gating, no drift)
+  if (!bulk)
+  {
+    graph = buildDiffGraph(repoRoot, parsed, mode, thresholds->metric);
+    if (!graph.ok)
+      return 2;
+  }
+
+  if (format == OutputFormat::Json)
+    return emitJsonDiff(graph.report, std::move(advisories), parsed);
+  printDiffText(parsed, mode, bulk, graph, advisories);
+  return graph.report.gates() ? 1 : 0;
 }
 
 } // namespace
