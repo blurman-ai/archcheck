@@ -101,3 +101,39 @@ TEST_CASE("graph excludes vendored directory subtrees", "[graph][vendor]")
   REQUIRE_FALSE(graph_contains(built.graph, "extern"));
   REQUIRE(built.graph.nodeCount() == 1);
 }
+
+TEST_CASE("graph excludes external_libraries container subtree (#127)", "[graph][vendor]")
+{
+  // supercollider: bcp-trimmed Boost + ICU under external_libraries/, a name the
+  // bare `external` token misses. Own QtCollider code must stay in.
+  const TempTree tree = make_tree();
+  write(tree.root / "QtCollider" / "QcMenu.h", "// author code\n");
+  write(tree.root / "external_libraries" / "boost" / "asio.hpp", "// vendored boost\n");
+  write(tree.root / "external_libraries" / "icu" / "utf.h", "// vendored icu\n");
+
+  const auto built = buildGraphForPath(tree.root);
+
+  REQUIRE(graph_contains(built.graph, "QtCollider/QcMenu.h"));
+  REQUIRE_FALSE(graph_contains(built.graph, "external_libraries"));
+  REQUIRE(built.graph.nodeCount() == 1);
+}
+
+TEST_CASE("graph excludes generated/copied files by header banner (#127)", "[graph][vendor]")
+{
+  // Coco/R banner + kernel UAPI: name-independent markers, no vendor dir, no path
+  // marker. Own code mentioning generation/copying in prose must stay in (#131:
+  // "copied from" is prose and was dropped — its own-FP class is asserted here).
+  const TempTree tree = make_tree();
+  write(tree.root / "Parser.h", "/* Compiler Generator Coco/R */\n// vendored\n");
+  write(tree.root / "posix_types.h", "/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */\n");
+  write(tree.root / "config_parser.h", "// hand-written parser; regenerate by hand if the DSL changes\n");
+  write(tree.root / "util.h", "// helpers copied from the old impl, then rewritten by hand\n");
+
+  const auto built = buildGraphForPath(tree.root);
+
+  REQUIRE(graph_contains(built.graph, "config_parser.h")); // own code, prose only
+  REQUIRE(graph_contains(built.graph, "util.h"));          // "copied from" prose is NOT a marker
+  REQUIRE_FALSE(graph_contains(built.graph, "Parser.h"));
+  REQUIRE_FALSE(graph_contains(built.graph, "posix_types"));
+  REQUIRE(built.graph.nodeCount() == 2);
+}
