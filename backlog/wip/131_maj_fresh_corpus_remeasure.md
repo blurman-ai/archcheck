@@ -1,7 +1,33 @@
 # [RESEARCH][SCAN] Новый корпус-прогон: верификация изменений сканера
 
 **Дата создания:** 2026-06-19
-**Статус:** new
+**Дата старта:** 2026-06-19
+**Статус:** wip (Группа 1 выполнена; Группы 2–6 ждут)
+
+## Прогон 2026-06-19 — Группа 1 (SF.*/graph golden) ВЫПОЛНЕНА
+
+Release-бинарь пересобран на HEAD (#129/#127/#131). Прогон default-скана по всему
+growth-корпусу (**1689 реп**, 0 таймаутов/ошибок, ~минуты). Сырьё + разбор:
+`experiments/corpus_remeasure_131/{run_corpus_sf.py,corpus_sf_131.tsv,FINDINGS.md}`.
+
+Итоги (пер-репо, не агрегат — #115):
+- clean 332 (20%); SF.9-гейт на 505 репах (реальные include-циклы).
+- **Регрессий authored-детекта нет.** rmm чисто (total=2), foundationdb SF.9=5 —
+  настоящие циклы (не #109-артефакты), bpftrace почти чисто.
+- **#127 gap (actionable):** vendored-exclusion ловит in-repo `third_party/`-СЕГМЕНТ,
+  но НЕ (a) whole-repo-vendored зеркала (musl/gnulib/android-kernel — SF.8 сотни-тысячи),
+  (b) bundled kernel-хедеры (bpftrace `src/stdlib/include/linux/`). → расширить признак
+  bundled-kernel + whole-repo-vendored эвристику.
+- **Корпус-критерии (#122):** pure-vendored зеркала и ports/data-деревья
+  (FreeBSD-Electron SF.8=9704) искажают агрегаты — фильтровать на входе
+  ([[project_corpus_criteria_gate]]).
+- Курированные golden из таблицы ниже (openvdb/mlpack/pcl/supercollider/newsboat/swig)
+  В КОРПУСЕ ОТСУТСТВУЮТ — exact-delta проверки требуют клонирования; growth-корпус дал
+  эквивалентные находки на присутствующих вендоренных репах.
+
+**Входы из #132** (дубликат-валидация той же сессии): test-файлы исключаются из dup
+(#129 подтверждён); @generated Rcpp-биндинги (tulpa) — реальные дубли, кандидат на
+generated-исключение если несут banner; corpus dup HEAD-sweep 18 реп — 0 FP.
 **Модуль:** RESEARCH / SCAN
 **Приоритет:** major
 **Заблокирован:** #122 (рост корпуса до ~1000 + реген — для full-corpus частей; часть
