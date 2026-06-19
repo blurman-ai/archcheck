@@ -1,12 +1,22 @@
 # [SCAN] один проход по дереву + общий authored/vendored/generated view для всех правил
 
 **Дата создания:** 2026-06-18
-**Дата старта:** —
-**Статус:** new
+**Дата старта:** 2026-06-18
+**Статус:** wip — ядро (шаги 1–6) закоммичено; остаток = шаг 7
 **Модуль:** SCAN
 **Приоритет:** major
-**Сложность:** unknown
+**Сложность:** hard
 **Блокирует:** консистентность вердиктов правил; применимость отчёта (#124)
+
+## Прогресс (на 2026-06-19)
+
+Ядро плана уехало коммитами `ec5988b` (unify vendored/generated в read-once
+snapshot), `9cc349b` (check-mode читает дерево через SourceSnapshot), `b01707a`
+(один snapshot на ref для graph+advisories в `--diff`), + docs `83127ca`/`7e1de3c`.
+Остаток — **шаг 7**: финальный dogfood + пер-репо корпус vs golden + обновить
+`docs/research/agent_drift_within_repo.md` (числа сдвинулись от шагов 3–5: clone
+recall ↑, graph −generated). Файл лежал в `new/` ошибочно — перенесён в `wip/`.
+Perf-нит из ревью этой задачи вынесен в #130 (findFile-индекс там уже сделан).
 **Заблокирован:** —
 **Related:** #127 (точность vendored/generated-предиката — вставляется сюда), #068 (graph vendor exclude), #069 (vendored file exclude), #081 (over-exclusion), #113 (apache-banner dominant-guard — переиспользовать), #124 (корпус-прогон, вскрывший расхождение)
 
