@@ -92,12 +92,39 @@
 **Предусловие: сначала фича** (план выше) — без duplication-ветки в `diff_command.cpp`
 любой прогон на копипаст покажет пустой отчёт.
 
-**Ступень 1 — эмулируем CI локально.** Прогнать те же 10 коммитов через
-`archcheck --diff parent..commit` локально (то же, что CI вызовет на runner'е).
-Быстрый цикл на известном ground truth: сверить, что все 10 ведут себя как надо,
-до всякого GitHub. Тут ловятся баги детектора, а не плумбинга.
+**Ступень 1 — эмулируем CI локально. ✅ ВЫПОЛНЕНА (2026-06-20): 10/10.**
+Прогнать те же 10 коммитов через `archcheck --diff parent..commit` локально (то же,
+что CI вызовет на runner'е). Быстрый цикл на известном ground truth.
 
-**Ступень 2 — тестовая репа на GitHub.** Когда локально чисто — завести тестовый
+Харнесс: `experiments/clone_gate_validation_123/run_control_set.py` (release-бинарь;
+база = реальный monit-4.2 для реалистичного IDF + его pre-existing клоны для
+parent-guard негатива; сид-файл distinctive-функций как ground truth). Каждый
+сценарий — изолированная ветка от base, один коммит, `--diff base..branch`.
+
+| сценарий | ожидание | факт |
+|---|---|---|
+| P1 копия функции в существующий файл | FIRE | ✅ EXACT |
+| P2 whole-file копия | FIRE | ✅ (4 пары) |
+| P3 крупный блок | FIRE | ✅ |
+| P4 exact-копия | FIRE | ✅ |
+| P5 renamed-копия (умеренный rename) | FIRE | ✅ |
+| N1 уникальный новый код | SILENT | ✅ |
+| N2 move (код переехал) | SILENT | ✅ |
+| N3 ниже порога токенов | SILENT | ✅ |
+| N4 pre-existing клон задет (parent-guard) | SILENT | ✅ |
+| N5 formatting-only | SILENT | ✅ |
+
+Вывод: `DRIFT.NEW_CLONE — copy-paste introduced (EXACT): clone of <file>:<lines>`,
+advisory (gate: ok). parent-guard и move-обработка работают корректно.
+
+**Урок про fixture-дизайн (важно для будущих тестов):** renamed-копия срабатывает
+ТОЛЬКО если у функции distinctive (редкие, df≤4) имена вызовов. Если сид-функции
+делят общие хелперы → df растёт → rename теряет fingerprint-кандидатуру и редкий
+общий токен → молчит (это анти-FP §3, не баг). Heavy-rename (каждый токен) тоже
+молчит — P0.6 line-floor (#070/#059 tradeoff). Реалистичный rename-позитив = редкие
+вызовы + умеренный rename. EXACT-копии срабатывают через fingerprints (#092) всегда.
+
+**Ступень 2 — тестовая репа на GitHub. ⏳ ОСТАЁТСЯ (outward-facing).** Когда локально чисто — завести тестовый
 репо, workflow на push-триггере (не PR), диапазон коммита через
 `github.event.before..github.sha`:
 ```
@@ -131,10 +158,16 @@ summary. (Можно и через PR — тогда
 
 ## Следующие шаги
 
-1. diff-вход + пересечение spans/added-lines (минимальная версия, advisory).
-2. parent-guard от «задели старый дубль».
-3. Тестовый репо на GitHub + push-триггерный workflow.
-4. Собрать 10 коммитов (5+5), запушить, прочитать отчёты в Actions.
+1. ✅ diff-вход + пересечение spans/added-lines (минимальная версия, advisory).
+2. ✅ parent-guard от «задели старый дубль».
+3. ✅ Ступень 1: 10-commit control set локально — 10/10 (2026-06-20).
+4. ⏳ Ступень 2 (outward-facing, нужен надзор): тестовый репо на GitHub +
+   push-триггерный workflow; собрать те же 10 коммитов, запушить, прочитать отчёты
+   в Actions.
+5. ⏳ (опц., durable) Перенести control set в committed Catch2 E2E
+   (`tests/integration/diff/`): нужна synth-база ~15+ distinctive-файлов, чтобы IDF
+   не вырождался (крошечные репы не срабатывают, §3). Сейчас ядро покрыто
+   unit-тестами (`new_clone_drift_test.cpp`: fires / parent-guard / outside / empty).
 
 ## Ключевые решения
 

@@ -16,7 +16,7 @@ The single remaining MVP work-item is the **clone-gate validation trilogy**:
 
 | task | what | status | role |
 |---|---|---|---|
-| **#123** | 10-commit control set (5+/5−) behaves correctly locally + on a GitHub test repo | wip | acceptance proof for the `--diff` entry point |
+| **#123** | 10-commit control set (5+/5−), local + GitHub test repo | **Stage 1 ✅ (10/10, 2026-06-20)**; Stage 2 (GitHub) remains | acceptance proof for the `--diff` entry point |
 | **#103** | per-commit copy-paste precision measured on the corpus | wip (phases 1–5 done; presentation numbers move to product run) | "is the gold real" — precision baseline |
 | **#124** | corpus-wide `archcheck --diff` fire-rate on real clone-commits (1.05M commits / 1685 repos) | wip (resumable run in progress; 2 product bugs found+fixed) | recall/precision at scale for the gate decision |
 
@@ -38,7 +38,7 @@ Everything else on the MVP list is shipped and verified.
 | 7 | fixtures per shipped rule | ✅ | ✅ | 8/8 rules; duplication advisory + unit-tested |
 | 8 | safe on untrusted repos (S3–S6) | ◑ #105 | ✅ | **#105 closed** (commit cb6e09d): symlink-escape, 64 MiB cap, RFC 8259 JSON, git hardening |
 | 9 | dogfood green in CI | ✅ | ✅ | own src/include/tests gated |
-| 10 | copy-paste not hidden in `--diff` | ○ open | ◐ **code shipped, validation open** | #123 `--diff` copy-paste surfacing shipped (CHANGELOG). Open: #123 control-set + #103 precision + #124 fire-rate |
+| 10 | copy-paste not hidden in `--diff` | ○ open | ◐ **code shipped; Stage-1 validated** | #123 `--diff` surfacing shipped; **Stage-1 control set 10/10 (06-20)**. Open: #123 Stage-2 (GitHub live), #103 precision, #124 fire-rate |
 
 Also shipped since 06-11 (not new criteria, but de-risk the first-run experience):
 **#133** check-mode advisory-first — a bare `archcheck` exits 1 only on SF.9 cycles;
@@ -92,9 +92,10 @@ authored-code signal the MVP is graded on.
 
 ## The road to v0.1 (ordered)
 
-1. **#123 control set** — assemble 5 positive / 5 negative commits, confirm `--diff`
-   copy-paste surfacing behaves locally + on a GitHub test repo. *Smallest, unblocks
-   criterion 10's acceptance wording.*
+1. **#123 control set** — **Stage 1 done (10/10 local, 2026-06-20)**: all 5 positives
+   fire, all 5 negatives (incl. parent-guard, move, below-threshold) stay silent.
+   Remaining: Stage 2 (GitHub test repo, push-triggered workflow — outward-facing) and,
+   optionally, port the control set to a committed Catch2 E2E.
 2. **#103 precision numbers** — finish the per-commit copy-paste measurement on the
    product `archcheck --diff` run (phases 1–5 done; needs presentation-grade numbers).
 3. **#124 fire-rate** — let the resumable corpus run accumulate coverage; it yields the
