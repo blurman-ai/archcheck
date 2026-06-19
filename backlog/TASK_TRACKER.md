@@ -1,6 +1,6 @@
 # Backlog Task Tracker — MVP v1
 
-_2026-06-13 (третий проход); синхронизировано с backlog_review.md. #073 и #075 закрыты (completed 2026-06-12). Новый P0 блокер: #123 (new-clone-gate). Известный ID-clash: #117 (два файла в completed — diff\_max\_added\_lines + lateral\_backedge\_confirm), #118 (completed drift4\_lateral + new diff\_max\_added\_lines — **вероятный дубль**, diffMaxAddedLines уже реализован в коде). Долг: #071 (completed + future), #029 в new/ (реализован c480e39), #109 closed._
+_2026-06-19 (четвёртый проход); синхронизировано с backlog_review.md. #073 и #075 закрыты (completed 2026-06-12). P0-остаток сузился: #123 ядро+parent-guard закоммичены (остаток = фикстуры), #103 research-цифры по факту получены. С прошлого прохода уехало #129 (unify source scan — ядро в 6 коммитах, файл всё ещё в new/, надо move→wip). Известный ID-clash: #117 (два файла в completed — diff\_max\_added\_lines + lateral\_backedge\_confirm), #118 (completed drift4\_lateral + new diff\_max\_added\_lines — **вероятный дубль**, diffMaxAddedLines уже реализован в коде). Долг: #071 (completed + future), #029 в new/ (реализован c480e39), #109 closed._
 
 ## Что считаем MVP v1
 
@@ -41,8 +41,8 @@ _2026-06-13 (третий проход); синхронизировано с bac
 | ~~Контракты и alignment~~ | ~~#073~~, ~~#045~~ ✅ completed 2026-06-12 | выровнены контракты, docs актуализированы |
 | ~~Product-grade diff workflow~~ | ~~#075~~ ✅ completed 2026-06-12 | advisory-first + stable JSON output shipped |
 | Trust floor для SF.9 | ~~#032~~ ✅ реализовано 04b523b | conditional-рёбра трекаются, SF.9 пропускает all-conditional циклы |
-| **Copypaste precision на корпусе** | **#103 wip** | per-commit precision нужна до публикации (MVP.md §Acceptance #10); скрипт готов, нужен overnight прогон 185 реп |
-| **new-clone-gate в --diff** | **#123 wip** | ядро закоммичено 344870f: `detectNewClones` + правило DRIFT.NEW_CLONE, advisory в `--diff`, gated bulk-import guard'ом (#117). Остаток: parent-guard (клон, который коммит лишь задел) — «next step» по плану |
+| **Copypaste precision на корпусе** | **#103 wip → close** | per-commit precision нужна до публикации (MVP.md §Acceptance #10); research-цель достигнута (порядок величины получен, «185 реп не добиваем» зафиксировано), Шаг 6 необязателен → кандидат на `completed/` |
+| **new-clone-gate в --diff** | **#123 wip** | ядро (344870f: `detectNewClones` + DRIFT.NEW_CLONE, advisory, bulk-import guard) **+ parent-guard закоммичены** (хэш нормализованного seq, 4 теста). Остаток: фикстуры `fixtures/diff_new_clone/` (MVP-критерий) + тестовый GitHub-репо |
 
 ## P1 — делать в текущей волне, если не ломает P0
 
@@ -131,9 +131,11 @@ _2026-06-13 (третий проход); синхронизировано с bac
 
 ## Сжатый вердикт
 
-До MVP v1 осталось **2 активных хвоста**:
+До MVP v1 осталось **2 хвоста, оба почти закрыты**:
 
-1. `#103` wip — overnight copypaste scan (185 реп) + анализ (пороги для #123).
-2. `#123` wip — ядро закоммичено (344870f); остаток = parent-guard.
+1. `#103` wip — research-цифры получены; формально закрыть (move → `completed/`).
+2. `#123` wip — ядро + parent-guard закоммичены; остаток = фикстуры `fixtures/diff_new_clone/` + тестовый GitHub-репо.
 
-`#073`, `#075`, `#032`, `#045` — все закрыты. Если #103 и #123 закрыты, MVP v1 тегируется.
+`#073`, `#075`, `#032`, `#045` — все закрыты. После фикстур #123 и закрытия #103 — MVP v1 тегируется.
+
+**Не-MVP, требует гигиены борда (см. backlog_review.md 2026-06-19):** #129 (unify source scan) лежит в `new/`, но ядро уехало 6 коммитами → `new/`→`wip/`; #072 закрывается одним scope-решением (dup-pairs JSON: v0.1 vs v0.2).
