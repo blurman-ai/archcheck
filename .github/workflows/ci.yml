@@ -235,18 +235,24 @@ jobs:
         working-directory: build/coverage
         run: ctest --output-on-failure
 
-      # gcovr-гейт по src/ только. --exclude-throw-branches убирает throw-arc'и,
-      # из-за которых на lcov branches застревали на ~63%. Пороги из
-      # docs/dev/coverage_constraints.md; любой fail-under → ненулевой exit → red.
+      # gcovr-гейт по src/ только. Путь поиска сужен до build/coverage/src —
+      # объектов самого archcheck: иначе gcovr парсит и инструментированные .gcno
+      # зависимостей (_deps/catch2 без .gcda для невыполненного benchmark-кода) и
+      # падает с no_working_dir_found. --filter 'src/' оставлен на отчётный слой.
+      # --gcov-ignore-errors no_working_dir_found — страховка на невыполненный src-TU.
+      # --exclude-throw-branches убирает throw-arc'и (на lcov из-за них branches
+      # застревали на ~63%). Пороги из docs/dev/coverage_constraints.md;
+      # любой fail-under → ненулевой exit → red.
       - name: Coverage gate
         run: |
           gcovr \
             --root . \
             --filter 'src/' \
             --gcov-executable gcov-13 \
+            --gcov-ignore-errors no_working_dir_found \
             --exclude-throw-branches \
             --print-summary \
             --fail-under-line 90 \
             --fail-under-function 90 \
             --fail-under-branch 40 \
-            build/coverage
+            build/coverage/src
