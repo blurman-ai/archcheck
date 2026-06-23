@@ -52,6 +52,7 @@ add_executable(archcheck_tests
    unit/scan/local_complexity_metrics_test.cpp
    unit/scan/local_complexity_drift_test.cpp
    unit/scan/new_clone_drift_test.cpp
+   unit/scan/bool_field_drift_test.cpp
    unit/graph/dependency_graph_test.cpp
    unit/graph/algorithms_test.cpp
    unit/graph/diff_test.cpp

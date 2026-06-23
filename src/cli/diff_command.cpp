@@ -14,6 +14,7 @@
 #include "archcheck/git/git_object_file_source.h"
 #include "archcheck/git/git_state.h"
 #include "archcheck/graph/graph_builder.h"
+#include "archcheck/scan/bool_field_drift.h"
 #include "archcheck/scan/disk_file_source.h"
 #include "archcheck/scan/duplication/token_normalizer.h"
 #include "archcheck/scan/flag_argument_scan.h"
@@ -124,6 +125,21 @@ archcheck::scan::ComplexityDriftResult collectComplexityDrift(const std::filesys
   return archcheck::scan::detectLocalComplexityDrift(baseSnap, curSnap, *changed);
 }
 
+// Bool-field accretion drift (#090/#135): a struct that existed in the baseline and gained
+// net depth-0 bool fields — incremental boolean-state drift (constraint decay). Advisory
+// only. vendored / test / generated files are dropped via the shared snapshot `authored`
+// verdict (#129), so no separate exclusion list is reimplemented here.
+archcheck::scan::BoolFieldDriftResult collectBoolFieldDrift(const std::filesystem::path &repoRoot,
+                                                            const archcheck::git::Revspec &parsed,
+                                                            const archcheck::scan::SourceSnapshot &baseSnap,
+                                                            const archcheck::scan::SourceSnapshot &curSnap)
+{
+  const auto changed = archcheck::git::changedCppFiles(repoRoot, parsed.baseline, parsed.current);
+  if (!changed || changed->empty())
+    return {};
+  return archcheck::scan::detectBoolFieldDrift(baseSnap, curSnap, *changed);
+}
+
 // New-clone drift (#123): copy-paste a commit introduces — duplication pairs in
 // the new tree touching the diff's added lines. Advisory only. Consumes the shared
 // per-ref snapshots (#129); the parent (baseline) snapshot feeds the parent-guard:
@@ -172,6 +188,7 @@ struct DiffAdvisories
   archcheck::scan::ComplexityDriftResult complexity;
   archcheck::scan::NewCloneDriftResult newClones;
   archcheck::rules::ViolationList flagArguments;
+  archcheck::scan::BoolFieldDriftResult boolFields;
   std::size_t complexitySkippedAddedLines = 0; // >0: bulk import, advisory skipped (#117)
   // #129 read-once: the per-ref snapshots built here are kept so the graph build
   // reuses them in memory mode instead of re-reading both trees. Empty on a bulk
@@ -206,6 +223,7 @@ DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, cons
   result.complexity = collectComplexityDrift(repoRoot, parsed, *baseSnap, *curSnap);
   result.newClones = collectNewClones(*curSnap, *baseSnap, addedLines);
   result.flagArguments = collectFlagArguments(*curSnap, addedLines);
+  result.boolFields = collectBoolFieldDrift(repoRoot, parsed, *baseSnap, *curSnap);
   result.baseSnapshot = std::move(baseSnap);
   result.currentSnapshot = std::move(curSnap);
   return result;
@@ -240,6 +258,7 @@ void printDiffAdvisories(const DiffAdvisories &a)
   printComplexityResult(a.complexity);
   printViolationList("new-clone drift (advisory)", a.newClones.violations);
   printViolationList("flag-argument drift (advisory)", a.flagArguments);
+  printViolationList("bool-field accretion (advisory)", a.boolFields.violations);
 }
 
 // One flat list for the JSON document: SATD + test co-evolution + complexity.
@@ -250,6 +269,7 @@ archcheck::rules::ViolationList flattenAdvisories(DiffAdvisories a)
   all.insert(all.end(), a.complexity.violations.begin(), a.complexity.violations.end());
   all.insert(all.end(), a.newClones.violations.begin(), a.newClones.violations.end());
   all.insert(all.end(), a.flagArguments.begin(), a.flagArguments.end());
+  all.insert(all.end(), a.boolFields.violations.begin(), a.boolFields.violations.end());
   return all;
 }
 

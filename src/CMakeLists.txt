@@ -13,6 +13,7 @@ add_library(archcheck_core STATIC
    scan/local_complexity_drift.cpp
    scan/new_clone_drift.cpp
    scan/flag_argument_scan.cpp
+   scan/bool_field_drift.cpp
    scan/duplication/token_normalizer.cpp
    scan/duplication/fragmenter.cpp
    scan/duplication/similarity.cpp
