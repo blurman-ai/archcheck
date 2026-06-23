@@ -75,6 +75,7 @@
 - **SATD.1 / SATD.2** — добавленный самопризнанный техдолг. Advisory.
 - **TEST (co-evolution)** — prod-код изменён, тесты молчат. Advisory.
 - **ARG.1** — flag-argument drift: рост числа булевых аргументов функции (#093, scan-уровень). Advisory.
+- **DRIFT.BOOL_FIELD_ACCRETION** — нетто-прирост depth-0 bool-полей в структуре, существовавшей в baseline (#090/#135). Net-счёт (rename/reformat → 0); greenfield не считается. Advisory; фильтр vendored/test/generated через `authored`.
 - **Gate vs advisory** — **гейт** (exit 1) дают только регрессии: DRIFT.1, DRIFT.2, DRIFT.4.CYCLE
   в drift-режиме; SF.9-цикл в обычном. Всё остальное — **advisory** (репортится, exit 0), чтобы
   легаси-долг не валил первый прогон. См. `--baseline`.

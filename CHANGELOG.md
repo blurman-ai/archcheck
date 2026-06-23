@@ -8,6 +8,15 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- **`DRIFT.BOOL_FIELD_ACCRETION` — boolean-state drift advisory** — `--diff` reports a
+  struct/class that existed in the baseline and gained net depth-0 `bool` fields (incremental
+  boolean state — "Make Illegal States Unrepresentable", Martin). Net count, so a rename /
+  typo-fix / reformat keeps the count and does not fire; a struct absent from the baseline
+  (new file / new struct) is greenfield, not drift, and is skipped. Advisory only — never
+  gates. vendored / test / generated files drop out via the shared `SourceSnapshot` `authored`
+  verdict, so no exclusion list is reimplemented. Native rule replacing the research sidecar;
+  metric validated field-for-field against it (#090, #135). The brace-neutralisation parser
+  also fixes a literal-brace miscount that corrupted depth and struct-body matching (#136).
 - **`--diff` now surfaces copy-paste a commit introduces** — when a change adds new code,
   `--diff` reports duplicate blocks that the change itself brought in (a block copied from
   code already in the tree, or two identical blocks added together), not just a snapshot of

@@ -28,13 +28,17 @@ Rename/replace/реформат → 0. Парсер — порт `perstruct_drif
 `writeViolations` → `advisory.violations[]`. **Оракул валидации — Python-сайдкар #135** (C++ == Python).
 
 ### Commit-план (≤50 строк/коммит, ≤2 файла, фикстуры обязательны)
-- [ ] C1: `include/archcheck/scan/bool_field_drift.h` — интерфейс (`BoolFieldDriftResult`, `compareBoolFields`, `detectBoolFieldDrift`).
-- [ ] C2: `src/scan/bool_field_drift.cpp` — парсер struct/bool (порт + фикс #136) + `compareBoolFields` (нетто per struct) + unit-тесты.
-- [ ] C3: `detectBoolFieldDrift` (changedFiles + `findFile`/`authored`) + CMake.
-- [ ] C4: проводка в `diff_command.cpp` + JSON.
-- [ ] C5: фикстуры `fixtures/bool_field_drift/{pass,fail_accretion}` + тест.
-- [ ] C6: дугфуд + сверка с сайдкаром #135 на ≥20 коммитах (C++ == Python).
-- [ ] C7: CHANGELOG + docs + порог advisory (открытый вопрос: сырой +1 шумен для PR, но корпус-колонке нужен raw).
+- [x] C1: `include/archcheck/scan/bool_field_drift.h` — интерфейс. Коммит `e778f13`.
+- [x] C2: `src/scan/bool_field_drift.cpp` — парсер (порт + полный фикс #136 `neutralizeBraces`) + `compareBoolFields` + 8 unit-тестов. `e778f13`.
+- [x] C3: `detectBoolFieldDrift` (`findFile`/`authored`) + CMake. `e778f13`.
+- [x] C4: проводка в `diff_command.cpp` + JSON. End-to-end: FlashCpp +3, ovn +1, vendored SDL→0, KsanaLLM-баг отсутствует. `e778f13`.
+- [x] C5: фикстуры `fixtures/bool_field_drift/{pass,fail_accretion}` + integration-тест (25 assert / 11 кейсов).
+- [x] C6: сверка C++ == Python-оракул на выборке — **паритет идеальный** (11/11 по file+struct+delta, 0 расхождений); фильтр точнее regex (держит свой `lib/Engine`, отбрасывает реальный vendored).
+- [x] C7: CHANGELOG + GLOSSARY. **Решение по порогу: фейрим на delta≥1, advisory-only, без knob** (YAGNI; advisory терпит +1 как SATD-на-каждый-TODO; корпус-колонке нужен raw-счёт). Дугфуд + полный прогон — ниже.
+
+### Осталось
+- [ ] Дугфуд: `archcheck --diff` на самом archcheck не должен врать (advisory, не гейтит — проверить, что не шумит на своём коде).
+- [ ] Полный корпус-прогон нативным правилом → колонка `n_bool_field` в `results_full.jsonl`: пересобрать release-бинарь, добавить bucket в `run_worklist.py categorize()` (сумма delta из BOOL_FIELD-violations), прогнать.
 
 ---
 
