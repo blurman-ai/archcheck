@@ -6,6 +6,11 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-25
+
+First tagged release. Ships prebuilt Linux x86_64 binaries (tarball + `.sha256`)
+via GitHub Releases for pinned, checksummed CI install. (#142)
+
 ### Added
 
 - **`DRIFT.BOOL_FIELD_ACCRETION` — boolean-state drift advisory** — `--diff` reports a
@@ -184,4 +189,5 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 - **Relative include paths with `../` not resolved** — scanner now normalises `..`/`.` segments so relative includes resolve to the correct target instead of being dropped.
 - **Duplication scanner over-excluded files** — the test/vendor exclusion no longer removes legitimate files from the duplication scan. (#081)
 
-[Unreleased]: https://github.com/blurman-ai/cpparch/commits/master
+[Unreleased]: https://github.com/blurman-ai/cpparch/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/blurman-ai/cpparch/releases/tag/v0.1.0

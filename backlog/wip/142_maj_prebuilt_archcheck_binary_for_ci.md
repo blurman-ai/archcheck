@@ -86,11 +86,23 @@ run показал цену: job `Archcheck` занял около 4 минут,
   (libstdc++/libgcc_s ушли), `--version` = `archcheck 0.1.0`.
 - End-to-end pack→sha256→verify(ЦЕЛ)→extract→`archcheck --version`→`archcheck empty`(exit 0) — OK.
 
+Закоммичено + запушено в master:
+- 3bd3c07 — release pipeline + /release command.
+- b79b96b — version-check vs tag numeric core (rc-теги не падают).
+- 167bbf0 — fix checksum verify в release notes (rename-форма падала у потребителя;
+  воспроизвёл обе формы локально: rename → exit 1, original-names → OK).
+
+Dry-run на реальных GitHub-runner'ах (rc1, затем rc2 после фикса) — оба полностью
+зелёные, после проверки оба прибраны (тег+release удалены). На чистом ubuntu-24.04:
+checksum `...tar.gz: OK`, `archcheck 0.1.0`, `Usage:`, `No violations found.`.
+Версия бинаря (статик-линк, ldd=libm/libc/ld) совпала с тегом. Asset ~1.3 MB gz.
+
 Осталось (требует команды пользователя):
-- Закоммитить инфраструктуру (ci/docs/chore) в master.
-- Выпустить релиз: `/release 0.1.0` (финализирует CHANGELOG `[Unreleased]`→`[0.1.0]`,
-  тег `v0.1.0`, push → реальный asset + закрытие двух `[~]`-пунктов).
-- Проверить на `leadline`: заменить build-from-source на release-download.
+- Боевой релиз `v0.1.0`: `/release 0.1.0` — финализирует CHANGELOG
+  `[Unreleased]`→`[0.1.0]`, тег `v0.1.0`, push → постоянный Release + asset
+  (закрывает два `[~]`-пункта acceptance).
+- Проверить на `leadline`: заменить build-from-source на release-download,
+  full scan остаётся `No violations found`.
 
 ## Не делать в этой задаче
 
