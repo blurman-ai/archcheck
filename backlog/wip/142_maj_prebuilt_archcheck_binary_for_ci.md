@@ -97,12 +97,30 @@ Dry-run на реальных GitHub-runner'ах (rc1, затем rc2 после
 checksum `...tar.gz: OK`, `archcheck 0.1.0`, `Usage:`, `No violations found.`.
 Версия бинаря (статик-линк, ldd=libm/libc/ld) совпала с тегом. Asset ~1.3 MB gz.
 
-Осталось (требует команды пользователя):
-- Боевой релиз `v0.1.0`: `/release 0.1.0` — финализирует CHANGELOG
-  `[Unreleased]`→`[0.1.0]`, тег `v0.1.0`, push → постоянный Release + asset
-  (закрывает два `[~]`-пункта acceptance).
-- Проверить на `leadline`: заменить build-from-source на release-download,
-  full scan остаётся `No violations found`.
+Боевой релиз **v0.1.0 выпущен** (fed39d9 → tag v0.1.0):
+https://github.com/blurman-ai/cpparch/releases/tag/v0.1.0, prerelease=false, 4 asset'а.
+
+### Astra 1.7 / старый glibc (по ходу задачи)
+
+Находка (скептик-проверка): динамический ubuntu-24.04 asset требует **glibc ≥ 2.38**
+и НЕ запускается на Astra 1.7 (glibc 2.28) — `version 'GLIBC_2.38' not found`.
+Решение (выбор юзера — «два asset'а»): второй asset собирается с `-static`
+(libc вшита, зависимости от glibc нет; archcheck форкает git и не трогает
+NSS/getpwnam → статическая glibc безопасна). Релиз теперь публикует оба:
+- `archcheck-X.Y.Z-linux-x86_64.tar.gz` — динамический, glibc ≥ 2.38, меньше;
+- `archcheck-X.Y.Z-linux-x86_64-static.tar.gz` — статический, любой Linux ≥ 3.2 (Astra/Debian10/RHEL8).
+
+Доказано в CI: job `smoke-oldglibc` в контейнере `debian:10` (glibc 2.28 = база
+Astra) скачивает static-asset и запускает — `ldd ... 2.28`, `archcheck 0.1.0`,
+`No violations found.`, exit 0. Локально на этой машине (тоже Astra 1.7, glibc 2.28)
+static-бинарь тоже работает (`ldd` → «не является динамическим…»).
+
+Коммиты: c4350b9 (glibc-нота в доке), fed39d9 (static-asset + debian:10 smoke).
+Dry-run rc3 — все 3 job'а зелёные, прибран.
+
+Осталось (внешнее, на стороне пользователя):
+- Проверить на `leadline`: заменить build-from-source на release-download
+  (static-asset под Astra-раннер, если он там), full scan = `No violations found`.
 
 ## Не делать в этой задаче
 
