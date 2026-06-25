@@ -33,11 +33,13 @@ jobs:
       - name: Resolve version from tag
         id: meta
         run: |
-          tag="${GITHUB_REF_NAME}"          # e.g. v0.1.0
-          version="${tag#v}"                # 0.1.0
+          tag="${GITHUB_REF_NAME}"          # e.g. v0.1.0 or v0.1.0-rc1
+          version="${tag#v}"                # 0.1.0   or 0.1.0-rc1
+          core="${version%%-*}"             # 0.1.0   (strip prerelease suffix)
           asset="archcheck-${version}-linux-x86_64.tar.gz"
           echo "tag=$tag"           >> "$GITHUB_OUTPUT"
           echo "version=$version"   >> "$GITHUB_OUTPUT"
+          echo "core=$core"         >> "$GITHUB_OUTPUT"
           echo "asset=$asset"       >> "$GITHUB_OUTPUT"
           # Mark rc/alpha/beta tags as prerelease.
           if [[ "$tag" == *-* ]]; then
@@ -68,10 +70,12 @@ jobs:
       - name: Verify binary version matches tag
         run: |
           bin=./build/release/src/archcheck
-          got="$("$bin" --version)"          # "archcheck 0.1.0"
-          want="archcheck ${{ steps.meta.outputs.version }}"
+          got="$("$bin" --version)"          # "archcheck 0.1.0" (CMake numeric version)
+          # Compare against the tag's numeric core — CMake VERSION can't hold a
+          # prerelease suffix, so a vX.Y.Z-rc1 tag still ships an X.Y.Z binary.
+          want="archcheck ${{ steps.meta.outputs.core }}"
           echo "binary: $got"
-          echo "tag:    $want"
+          echo "expect: $want"
           test "$got" = "$want"
           echo "--- ldd (portability surface) ---"
           ldd "$bin" || true
