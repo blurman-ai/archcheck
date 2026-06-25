@@ -45,7 +45,9 @@ jobs:
           ARCHCHECK_VERSION: v0.1.0
           GH_TOKEN: ${{ github.token }}  # required by `gh release download`
         run: |
-          asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64.tar.gz"
+          # -static: runs on any glibc (incl. ubuntu-22.04, Astra, Debian 10).
+          # Drop "-static" for the smaller dynamic build (needs glibc >= 2.38).
+          asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64-static.tar.gz"
           cd /tmp
           gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset"
           gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset.sha256"

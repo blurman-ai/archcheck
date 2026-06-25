@@ -85,6 +85,8 @@ archcheck --scan src/
 archcheck --graph src/
 ```
 
+**Встраиваете в CI?** Старт — [docs/ci_usage.md](docs/ci_usage.md): оба сценария
+(полный скан репы и diff на PR), готовые workflow-сниппеты, контракт exit-кодов.
 A ready-to-copy GitHub Actions job for the PR workflow (sticky PR comment +
 step summary) lives in
 [`.github/workflows/example_archcheck_pr.yml`](.github/workflows/example_archcheck_pr.yml).
