@@ -115,10 +115,18 @@ CI использует `clang-format-18` из Ubuntu apt. Локальная с
 
 ## Release-процесс (черновик до v1.0)
 
+Автоматизирован командой [`/release`](../../.claude/commands/release.md); вручную — те же шаги:
+
 1. Все коммиты для релиза влиты в master.
 2. `CHANGELOG.md`: переименовать `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, добавить пустую `[Unreleased]`.
-3. Bump версию в build-системе (когда появится CMakeLists.txt).
+3. Bump версию в `CMakeLists.txt` (`project(... VERSION X.Y.Z)`).
 4. Коммит: `chore(release): bump to X.Y.Z`.
 5. Тег: `git tag -a vX.Y.Z -m "Release X.Y.Z"`.
 6. Push: `git push origin master --follow-tags`.
-7. GitHub Release: через UI или `gh release create vX.Y.Z`.
+7. **GitHub Release создаётся автоматически** — workflow [`release.yml`](../../.github/workflows/release.yml)
+   ловит push тега `vX.Y.Z`, собирает Linux x86_64 binary, пакует
+   `archcheck-X.Y.Z-linux-x86_64.tar.gz` + `.sha256`, публикует Release и
+   прогоняет smoke-job на чистом runner. Вручную трогать не нужно.
+
+Dry-run: запушить временный тег (`vX.Y.Z-rc1` → помечается prerelease),
+проверить asset, потом удалить тег и release.

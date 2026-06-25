@@ -1,0 +1,180 @@
+# Cuts a GitHub Release with a prebuilt archcheck binary when a vX.Y.Z tag is
+# pushed. Downstream CI then downloads a pinned, checksummed asset instead of
+# building from source (3-4 min → seconds). See docs/ci_usage.md.
+#
+# Asset layout (flat tarball, extracts to CWD):
+#   archcheck-<version>-linux-x86_64.tar.gz         → archcheck, LICENSE, README.install
+#   archcheck-<version>-linux-x86_64.tar.gz.sha256  → checksum for `sha256sum -c`
+#
+# To dry-run before a real release: push a throwaway tag (e.g. v0.0.0-rc1),
+# inspect the draft/prerelease, then delete the tag + release.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'        # vX.Y.Z
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'      # vX.Y.Z-rc1 etc. → marked prerelease
+
+permissions:
+  contents: write                      # create release, upload assets
+
+jobs:
+  build:
+    name: Build & package (linux-x86_64)
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      asset: ${{ steps.meta.outputs.asset }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Resolve version from tag
+        id: meta
+        run: |
+          tag="${GITHUB_REF_NAME}"          # e.g. v0.1.0
+          version="${tag#v}"                # 0.1.0
+          asset="archcheck-${version}-linux-x86_64.tar.gz"
+          echo "tag=$tag"           >> "$GITHUB_OUTPUT"
+          echo "version=$version"   >> "$GITHUB_OUTPUT"
+          echo "asset=$asset"       >> "$GITHUB_OUTPUT"
+          # Mark rc/alpha/beta tags as prerelease.
+          if [[ "$tag" == *-* ]]; then
+            echo "prerelease=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake g++-13
+
+      - name: Configure (Release)
+        env:
+          CC: gcc-13
+          CXX: g++-13
+        # -static-libstdc++ -static-libgcc drops the libstdc++/libgcc_s version
+        # dependency, leaving only glibc — widest portability for a small CLI.
+        run: |
+          cmake -B build/release -S . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc"
+
+      - name: Build
+        run: cmake --build build/release
+
+      - name: Verify binary version matches tag
+        run: |
+          bin=./build/release/src/archcheck
+          got="$("$bin" --version)"          # "archcheck 0.1.0"
+          want="archcheck ${{ steps.meta.outputs.version }}"
+          echo "binary: $got"
+          echo "tag:    $want"
+          test "$got" = "$want"
+          echo "--- ldd (portability surface) ---"
+          ldd "$bin" || true
+
+      - name: Package asset
+        run: |
+          version="${{ steps.meta.outputs.version }}"
+          asset="${{ steps.meta.outputs.asset }}"
+          stage="$(mktemp -d)"
+          install -m 0755 build/release/src/archcheck "$stage/archcheck"
+          cp LICENSE "$stage/LICENSE"
+          cat > "$stage/README.install" <<EOF
+          archcheck ${version} — prebuilt CLI for Linux x86_64
+
+          Install:
+            sudo install -m 0755 archcheck /usr/local/bin/archcheck
+            archcheck --version
+
+          Built on ubuntu-24.04 (gcc-13, -static-libstdc++ -static-libgcc).
+          Requires glibc from a recent distro. Build from source for older
+          baselines — see docs/ci_usage.md.
+
+          Verify checksum before use:
+            sha256sum -c ${asset}.sha256
+
+          License: Apache-2.0 (see LICENSE).
+          Project: https://github.com/blurman-ai/cpparch
+          EOF
+          tar -C "$stage" -czf "$asset" archcheck LICENSE README.install
+          sha256sum "$asset" > "$asset.sha256"
+          echo "--- packaged ---"
+          ls -l "$asset" "$asset.sha256"
+          cat "$asset.sha256"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-asset
+          path: |
+            ${{ steps.meta.outputs.asset }}
+            ${{ steps.meta.outputs.asset }}.sha256
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          asset="${{ steps.meta.outputs.asset }}"
+          prerelease_flag=""
+          if [ "${{ steps.meta.outputs.prerelease }}" = "true" ]; then
+            prerelease_flag="--prerelease"
+          fi
+          notes="$(cat <<EOF
+          Prebuilt \`archcheck\` for Linux x86_64.
+
+          ## Install in CI (pinned + checksummed)
+          \`\`\`bash
+          gh release download "$tag" --repo blurman-ai/cpparch \\
+            --pattern "$asset" --output /tmp/archcheck.tar.gz
+          gh release download "$tag" --repo blurman-ai/cpparch \\
+            --pattern "$asset.sha256" --output /tmp/archcheck.tar.gz.sha256
+          cd /tmp && sha256sum -c archcheck.tar.gz.sha256
+          tar -xzf archcheck.tar.gz
+          sudo install -m 0755 archcheck /usr/local/bin/archcheck
+          archcheck --version
+          \`\`\`
+
+          Pin by tag + verify checksum. Do not use a mutable \`latest\` in CI.
+          Built on ubuntu-24.04; requires recent glibc. See docs/ci_usage.md.
+
+          Full changelog: see [CHANGELOG.md](https://github.com/blurman-ai/cpparch/blob/$tag/CHANGELOG.md).
+          EOF
+          )"
+          gh release create "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "archcheck $tag" \
+            --notes "$notes" \
+            $prerelease_flag \
+            "$asset" "$asset.sha256"
+
+  smoke:
+    name: Smoke test released asset (clean runner)
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Download + verify + run released asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          ASSET: ${{ needs.build.outputs.asset }}
+        run: |
+          cd /tmp
+          # Keep original asset filenames so the .sha256 manifest matches as-is.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET.sha256"
+          sha256sum -c "$ASSET.sha256"
+          tar -xzf "$ASSET"
+          sudo install -m 0755 archcheck /usr/local/bin/archcheck
+          archcheck --version
+          archcheck --help
+          # `archcheck .` on an empty dir: clean tree, exit 0.
+          mkdir -p /tmp/emptyproj && archcheck /tmp/emptyproj

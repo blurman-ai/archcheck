@@ -8,8 +8,9 @@
 #      the PR conversation tab, updated in-place on every push (no spam).
 #   3. Failed step → red Check automatically appears next to the PR.
 #
-# Copy into your project's `.github/workflows/` and adjust the install step
-# to use a release binary or a Docker image once those ship.
+# Copy into your project's `.github/workflows/` and pin ARCHCHECK_VERSION below
+# to the release tag you want. The happy path downloads a prebuilt, checksummed
+# binary (seconds); building from source is the commented fallback at the bottom.
 #
 # Exit codes (from `archcheck --diff`):
 #   0 — no gated regression (advisory findings — added edges, chain/NCCD
@@ -38,16 +39,31 @@ jobs:
         with:
           fetch-depth: 0  # `--diff origin/main..HEAD` needs both refs
 
-      - name: Build archcheck
-        # Replace with: download the release binary for your platform.
+      - name: Install archcheck
+        # Pinned release binary + checksum. Do not use a mutable `latest` in CI.
+        env:
+          ARCHCHECK_VERSION: v0.1.0
+          GH_TOKEN: ${{ github.token }}  # required by `gh release download`
         run: |
-          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
+          asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64.tar.gz"
+          cd /tmp
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset"
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset.sha256"
+          sha256sum -c "$asset.sha256"
+          tar -xzf "$asset"
+          sudo install -m 0755 archcheck /usr/local/bin/archcheck
+          archcheck --version
+        # Fallback — build from source (no release for your platform / pinned commit):
+        #   - name: Build archcheck
+        #     run: |
+        #       cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release
+        #       cmake --build build
+        #   then call ./build/src/archcheck instead of archcheck below.
 
       - name: Run archcheck --diff
         id: archcheck
         run: |
-          ./build/src/archcheck --diff "origin/${{ github.base_ref }}..HEAD" . \
+          archcheck --diff "origin/${{ github.base_ref }}..HEAD" . \
             | tee archcheck-diff.txt
         # exit 1 means regression found — keep going so we can post the comment
         continue-on-error: true
