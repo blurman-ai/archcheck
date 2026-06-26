@@ -2,28 +2,28 @@
 
 - **Category:** P (filesystem scan)
 - **Authority:** medium — Bloomberg BDE
-- **Source:** [BDE physical code organization](https://github.com/bloomberg/bde/wiki/physical-code-organization) — каждый компонент = пара `.h`/`.cpp`.
+- **Source:** [BDE physical code organization](https://github.com/bloomberg/bde/wiki/physical-code-organization) — each component = a `.h`/`.cpp` pair.
 
 ## Rule
 
-> "Каждому `.h` должен соответствовать `.cpp` с тем же базовым именем, кроме явно header-only файлов."
+> "Each `.h` must have a corresponding `.cpp` with the same base name, except for explicitly header-only files."
 
 ## Why for archcheck
 
-Косвенно поддерживает SF.5 (`.cpp` обязан включать свой `.h`) и SF.11 (header self-contained). Если пара `.h`/`.cpp` есть всегда — пользователь не уйдёт в дрейф «решили header-only, но потом всё равно добавили implementation в другом месте». Под флагом, не дефолт: для template-heavy / header-only библиотек правило не применимо.
+Indirectly supports SF.5 (`.cpp` must include its own `.h`) and SF.11 (header self-contained). If a `.h`/`.cpp` pair always exists, the user won't drift into "we decided on header-only, but then added the implementation somewhere else anyway." Behind a flag, not a default: the rule does not apply to template-heavy / header-only libraries.
 
 ## Detection
 
-Filesystem-scan: собрать все базовые имена в каждом каталоге. Для каждого `.h` проверить наличие парного `.cpp`. Исключения:
-- файл явно header-only — определяется через комментарий-маркер `// archcheck: header-only` в первых N строках, или через regex в имени (`*_inl.h`),
-- категории каталогов, помеченные в конфиге как `header_only: true`,
-- если в `.h` есть только `class declaration` без определений — допустимо (тогда возможно нет нужды в `.cpp`, проверяется по AST или эвристически).
+Filesystem-scan: collect all base names in each directory. For each `.h`, check for a paired `.cpp`. Exceptions:
+- a file is explicitly header-only — determined via the comment marker `// archcheck: header-only` in the first N lines, or via a regex on the name (`*_inl.h`),
+- directory categories marked in the config as `header_only: true`,
+- if a `.h` contains only a `class declaration` without definitions — allowed (then a `.cpp` may not be needed; checked via AST or heuristically).
 
-Парная проверка — для `.cpp` без `.h` (SF.5 это уже частично ловит).
+The pairing check also covers `.cpp` without `.h` (SF.5 already partially catches this).
 
 ## Fixtures
 
-- `pass/` — каждый `.h` имеет `.cpp`.
-- `pass_header_only/` — `concepts.h` с маркером `// archcheck: header-only`.
-- `fail_orphan_header/` — `foo.h` без `foo.cpp` и без маркера.
-- `fail_orphan_cpp/` — `bar.cpp` без `bar.h`.
+- `pass/` — each `.h` has a `.cpp`.
+- `pass_header_only/` — `concepts.h` with the marker `// archcheck: header-only`.
+- `fail_orphan_header/` — `foo.h` without `foo.cpp` and without a marker.
+- `fail_orphan_cpp/` — `bar.cpp` without `bar.h`.

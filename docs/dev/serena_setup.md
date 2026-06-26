@@ -1,68 +1,68 @@
-# Serena MCP setup для archcheck
+# Serena MCP setup for archcheck
 
-Serena ([oraios/serena](https://github.com/oraios/serena)) — MCP-сервер, который
-оборачивает LSP в agent-friendly tools. Для archcheck используется как
+Serena ([oraios/serena](https://github.com/oraios/serena)) is an MCP server that
+wraps an LSP in agent-friendly tools. For archcheck it is used as an
 **AST-aware refactoring backend** (rename symbol, find references, find
-implementations) поверх **clangd-19**.
+implementations) on top of **clangd-19**.
 
-Задача #020 в `backlog/`. Урок дня: `rename_symbol` через LSP корректно
-переименовывает все use-site **только после прогрева background-index у clangd**
-— см. раздел "Засады" ниже.
+Task #020 in `backlog/`. Lesson of the day: `rename_symbol` via LSP correctly
+renames all use-sites **only after clangd's background index has warmed up**
+— see the "Gotchas" section below.
 
-## Что должно быть установлено
+## What must be installed
 
-| Компонент | Источник | Версия на момент setup |
-|-----------|----------|------------------------|
-| `clangd-19` | `apt install clangd-19` (Astra / Debian репы) | 19.1.7 (1.astra2) |
-| `clangd` симлинк → `clangd-19` | `update-alternatives` | — |
-| `uvx` (uv) | пользовательский, `~/.local/bin/uvx` | 0.11.7 |
-| Serena | через `uvx --from git+...`, **не** через PyPI | git HEAD |
+| Component | Source | Version at setup time |
+|-----------|--------|------------------------|
+| `clangd-19` | `apt install clangd-19` (Astra / Debian repos) | 19.1.7 (1.astra2) |
+| `clangd` symlink → `clangd-19` | `update-alternatives` | — |
+| `uvx` (uv) | user-level, `~/.local/bin/uvx` | 0.11.7 |
+| Serena | via `uvx --from git+...`, **not** via PyPI | git HEAD |
 | Claude Code MCP entry `serena` | `~/.claude.json`, user scope | — |
-| Симлинк `compile_commands.json` → `build/debug/compile_commands.json` | в корне репо | — |
+| Symlink `compile_commands.json` → `build/debug/compile_commands.json` | in repo root | — |
 
-## Установка с нуля
+## Install from scratch
 
 ### 1. clangd-19
 
 ```bash
 sudo apt-get install -y clangd-19
 sudo update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-19 190
-clangd --version   # ожидаем "clangd version 19.x"
+clangd --version   # expect "clangd version 19.x"
 ```
 
-В Astra/Debian репах есть пакеты clangd-11, 13, 15, 19. Выбран 19 как самый
-свежий — лучше работает с C++20 templates/concepts, на которых построен archcheck.
+The Astra/Debian repos have clangd-11, 13, 15, 19 packages. 19 was chosen as the
+newest — it works better with the C++20 templates/concepts archcheck is built on.
 
-`update-alternatives` нужен потому, что пакет `clangd-19` ставит только
-`/usr/bin/clangd-19`, без unsuffixed-симлинка. Serena (через solidlsp) вызывает
-бинарь `clangd` без версии.
+`update-alternatives` is needed because the `clangd-19` package installs only
+`/usr/bin/clangd-19`, without an unsuffixed symlink. Serena (via solidlsp) invokes
+the `clangd` binary without a version suffix.
 
-### 2. compile_commands.json в корне репо
+### 2. compile_commands.json in repo root
 
-Без этого clangd видит файлы, но ничего не знает про флаги компиляции —
-references/rename работать не будут.
+Without it clangd sees the files but knows nothing about the compilation flags —
+references/rename won't work.
 
 ```bash
-# CMake уже генерирует build/debug/compile_commands.json
-# (флаг -DCMAKE_EXPORT_COMPILE_COMMANDS=ON в CMakeLists.txt).
-# clangd ищет файл в корне репо или в build/ — делаем симлинк:
+# CMake already generates build/debug/compile_commands.json
+# (the -DCMAKE_EXPORT_COMPILE_COMMANDS=ON flag in CMakeLists.txt).
+# clangd looks for the file in the repo root or in build/ — make a symlink:
 ln -sfn build/debug/compile_commands.json compile_commands.json
 ```
 
-Симлинк в `.gitignore` (строка `compile_commands.json`). `build/debug/` — это
-Debug-конфигурация, которая всегда собирается локально для разработки.
+The symlink is in `.gitignore` (the line `compile_commands.json`). `build/debug/`
+is the Debug configuration, which is always built locally for development.
 
-### 3. Serena через uvx
+### 3. Serena via uvx
 
 ```bash
 uvx --from git+https://github.com/oraios/serena serena --help
 ```
 
-Первый запуск качает зависимости в кэш `uv`. Последующие — мгновенные. PyPI-пакет
-`serena` существует, но это другой проект и не содержит executable; нужен
-именно git-source `oraios/serena`.
+The first run downloads dependencies into the `uv` cache. Subsequent runs are
+instant. The PyPI package `serena` exists, but it is a different project and
+contains no executable; you need exactly the `oraios/serena` git source.
 
-### 4. Регистрация в Claude Code (user scope)
+### 4. Registration in Claude Code (user scope)
 
 ```bash
 claude mcp add-json -s user serena '{
@@ -78,113 +78,115 @@ claude mcp add-json -s user serena '{
 }'
 ```
 
-Запись попадает в `~/.claude.json`. Ключевые флаги:
+The entry lands in `~/.claude.json`. Key flags:
 
-- `--project-from-cwd` — Serena сама находит проект из CWD текущей сессии
-  Claude Code (ищет `.serena/project.yml`, `.git`, fallback на CWD). Прямо в
-  доках Serena помечен как "Intended for CLI-based agents like Claude Code".
-  Без этого пришлось бы либо регистрировать MCP per-project (`-s project`),
-  либо в каждой сессии вручную вызывать `activate_project`.
-- `--context ide-assistant` — корректирует system-prompt Serena под CLI-агента
-  (вместо дефолтного `desktop-app`, который предполагает GUI-чат).
+- `--project-from-cwd` — Serena finds the project itself from the CWD of the
+  current Claude Code session (it looks for `.serena/project.yml`, `.git`, falling
+  back to CWD). It is flagged directly in Serena's docs as "Intended for CLI-based
+  agents like Claude Code". Without it you would have to either register the MCP
+  per-project (`-s project`), or call `activate_project` manually in every session.
+- `--context ide-assistant` — adjusts Serena's system prompt for a CLI agent
+  (instead of the default `desktop-app`, which assumes a GUI chat).
 - `--enable-web-dashboard false`, `--enable-gui-log-window false` —
-  Claude Code это CLI, GUI-окна и браузерный дашборд только мешают.
+  Claude Code is a CLI; GUI windows and the browser dashboard only get in the way.
 
-Проверка:
+Check:
 
 ```bash
 claude mcp get serena
-# ожидаем: Status: ✓ Connected
+# expect: Status: ✓ Connected
 ```
 
-### 5. Первая активация в проекте
+### 5. First activation in the project
 
-При первом запросе к Serena из cpparch (или ручном вызове `activate_project`)
-Serena создаст `.serena/` в корне проекта:
+On the first request to Serena from cpparch (or a manual `activate_project` call)
+Serena will create `.serena/` in the project root:
 
 ```
 .serena/
-├── cache/                 # внутренний кэш Serena
-├── memories/              # project-specific memories Serena (отдельно от Claude memory)
-├── project.yml            # авто-сгенерированная конфигурация
-└── project.local.yml      # template для локальных переопределений (пустой)
+├── cache/                 # Serena internal cache
+├── memories/              # Serena project-specific memories (separate from Claude memory)
+├── project.yml            # auto-generated configuration
+└── project.local.yml      # template for local overrides (empty)
 ```
 
-Вся папка `.serena/` в `.gitignore` — генерируется каждым разработчиком локально.
+The whole `.serena/` folder is in `.gitignore` — it is generated by each
+developer locally.
 
-## Засады
+## Gotchas
 
-### Засада 1 — references/rename не работают сразу после старта
+### Gotcha 1 — references/rename don't work right after startup
 
-**Симптом:** `find_referencing_symbols` возвращает `{}` для public методов,
-`rename_symbol` переименовывает только определение (1 change), а use-site
-остаются со старым именем → сборка ломается.
+**Symptom:** `find_referencing_symbols` returns `{}` for public methods,
+`rename_symbol` renames only the definition (1 change), and the use-sites
+keep the old name → the build breaks.
 
-**Причина:** clangd работает в два этапа. На AST-уровне (текущий файл) всё
-готово сразу. Cross-file references требуют **background index**, который
-clangd строит в фоне, складывая в `.cache/clangd/index/`. Для свежего
-project до завершения индексации `textDocument/references` возвращает пусто, и
-LSP-rename ограничивается локальным scope-ом.
+**Cause:** clangd works in two stages. At the AST level (current file) everything
+is ready immediately. Cross-file references require the **background index**, which
+clangd builds in the background, storing it in `.cache/clangd/index/`. For a fresh
+project, until indexing finishes `textDocument/references` returns empty, and the
+LSP rename is limited to local scope.
 
-**Что делать:**
+**What to do:**
 
-1. **Всегда валидировать rename grep-ом** до сборки. Шаблон:
+1. **Always validate the rename with grep** before building. Template:
    ```bash
-   grep -rn '<old_name>' src/ include/ tests/   # должно быть 0 совпадений
-   grep -rn '<new_name>' src/ include/ tests/   # совпадает с ожидаемым
+   grep -rn '<old_name>' src/ include/ tests/   # should be 0 matches
+   grep -rn '<new_name>' src/ include/ tests/   # matches the expected
    ```
-2. Если rename переименовал < ожидаемого числа референсов — откатить
-   (`git checkout -- <file>`) и подождать, пока clangd закончит индексацию.
-   Прогресс можно увидеть в `.cache/clangd/index/` (растёт количество
-   `.idx` файлов).
-3. Прогрев индекса переживает сессии — `.cache/clangd/` сохраняется между
-   запусками Claude Code. Холодный rename — только проблема первого старта на
-   новом checkout-е.
-4. Для критичных массовых rename (как в #019 step 3/3) — сначала прогреть
-   индекс (например, открыть пару файлов через `find_referencing_symbols` на
-   известных public-символах и дождаться непустого ответа), потом rename.
-5. **Повторные rename подряд в одной сессии** тоже триггерят этот эффект:
-   после первого `rename_symbol` файлы на диске обновились, но clangd ещё
-   не перечитал их и не знает новых location-ов. Следующий rename того же
-   символа (например, revert через переименование обратно) увидит только
-   declaration в `.h`. Workflow: после каждого `rename_symbol` валидировать
-   grep-ом; если остались недопереименованные use-site вне строк/комментов
-   — **не дожидаться переиндексации, добить через `mcp__serena__replace_content`
-   regex `\bold_name\b → new_name`** (идентификаторы в проекте уникальные,
-   `\b` безопасен). Это быстрее ждать индекс и не блокирует следующий rename.
+2. If the rename renamed fewer than the expected number of references — roll back
+   (`git checkout -- <file>`) and wait until clangd finishes indexing. Progress
+   can be seen in `.cache/clangd/index/` (the number of `.idx` files grows).
+3. The index warmup survives sessions — `.cache/clangd/` is preserved between
+   Claude Code runs. A cold rename is only a problem on the first start of a
+   new checkout.
+4. For critical mass renames (as in #019 step 3/3) — first warm up the index
+   (e.g. open a couple of files via `find_referencing_symbols` on known public
+   symbols and wait for a non-empty response), then rename.
+5. **Repeated renames back-to-back in one session** also trigger this effect:
+   after the first `rename_symbol` the files on disk are updated, but clangd
+   hasn't re-read them yet and doesn't know the new locations. A subsequent
+   rename of the same symbol (e.g. a revert via renaming back) will see only
+   the declaration in the `.h`. Workflow: after each `rename_symbol` validate
+   with grep; if there are still under-renamed use-sites outside strings/comments
+   — **do not wait for re-indexing, finish the job with `mcp__serena__replace_content`
+   regex `\bold_name\b → new_name`** (identifiers in the project are unique,
+   `\b` is safe). This is faster than waiting for the index and doesn't block
+   the next rename.
 
-### Засада 2 — анонимные namespace в tests/
+### Gotcha 2 — anonymous namespaces in tests/
 
-`find_referencing_symbols` на функциях из анонимного namespace в `.cpp`-файле
-тестов (Catch2) часто возвращает пусто, даже когда индекс прогрет. Helper-rename
-внутри тестового файла — делать через `Edit` / `replace_content` (regex), не
-через `rename_symbol`. Это ограничение clangd при работе с translation-unit-local
-символами.
+`find_referencing_symbols` on functions from an anonymous namespace in a `.cpp`
+test file (Catch2) often returns empty, even when the index is warm. A helper
+rename inside a test file — do it via `Edit` / `replace_content` (regex), not
+via `rename_symbol`. This is a clangd limitation when working with
+translation-unit-local symbols.
 
-## Использование
+## Usage
 
-После setup в любой сессии Claude Code, открытой из cpparch, доступны MCP-tools:
+After setup, in any Claude Code session opened from cpparch, these MCP tools are
+available:
 
-- `mcp__serena__rename_symbol` — AST-rename public-символа (см. засады выше)
+- `mcp__serena__rename_symbol` — AST-rename of a public symbol (see gotchas above)
 - `mcp__serena__find_symbol` / `mcp__serena__find_referencing_symbols` —
-  навигация по AST
-- `mcp__serena__find_implementations` — найти реализации виртуальных методов
-- `mcp__serena__get_symbols_overview` — иерархия символов в файле без чтения
-  всего тела
-- `mcp__serena__replace_symbol_body` — заменить тело символа
-- `mcp__serena__safe_delete_symbol` — удалить символ с проверкой ссылок
+  AST navigation
+- `mcp__serena__find_implementations` — find implementations of virtual methods
+- `mcp__serena__get_symbols_overview` — symbol hierarchy in a file without reading
+  the whole body
+- `mcp__serena__replace_symbol_body` — replace a symbol's body
+- `mcp__serena__safe_delete_symbol` — delete a symbol with a reference check
 
-Полный список — `mcp__serena__get_current_config`.
+Full list — `mcp__serena__get_current_config`.
 
-## Деинсталляция
+## Uninstall
 
 ```bash
 claude mcp remove serena -s user
 sudo apt remove clangd-19
 sudo update-alternatives --remove clangd /usr/bin/clangd-19
-rm compile_commands.json   # симлинк, не файл
+rm compile_commands.json   # a symlink, not a file
 rm -rf .serena/ .cache/clangd/
 ```
 
-Serena сама нигде в `/usr/` не лежит — кэш `uv` в `~/.cache/uv/` чистится
-обычным `uv cache clean`.
+Serena itself lives nowhere under `/usr/` — the `uv` cache in `~/.cache/uv/` is
+cleaned with the usual `uv cache clean`.

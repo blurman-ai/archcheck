@@ -10,24 +10,24 @@
 
 ## Why for archcheck
 
-Не архитектура в строгом смысле, но низко-висящее. Косвенно проверяет SF.5 (`.cpp` обязан включать свой `.h` первым → если он первым, значит он self-contained). Дёшево, проверяется препроцессорным сканом без libclang. Помогает в early adoption — пользователь видит результат на первом запуске без сложного config.
+Not architecture in the strict sense, but low-hanging fruit. Indirectly checks SF.5 (`.cpp` must include its own `.h` first → if it is first, it is self-contained). Cheap, verified by a preprocessor scan without libclang. Helps with early adoption — the user sees a result on the first run without a complex config.
 
 ## Detection
 
-Preprocessor scan: для каждого файла собрать `#include` директивы по группам:
-1. own header (только для `.cpp`, имя совпадает с базовым именем `.cpp`).
-2. `<...>` — system или 3rd party.
+Preprocessor scan: for each file, collect `#include` directives by group:
+1. own header (only for `.cpp`, name matches the base name of the `.cpp`).
+2. `<...>` — system or 3rd party.
 3. `"..."` — project headers.
 
-Подразделить группу 2 на C system (`<sys/...>`, `<unistd.h>`, и т.п.), C++ stdlib (`<vector>`, `<string>`, etc.), 3rd party — по словарю стандартных headers.
+Subdivide group 2 into C system (`<sys/...>`, `<unistd.h>`, etc.), C++ stdlib (`<vector>`, `<string>`, etc.), 3rd party — by a dictionary of standard headers.
 
-Флагать:
-- own header не первым в `.cpp`,
-- группы не разделены пустой строкой,
-- группы перепутаны (project headers до stdlib).
+Flag:
+- own header not first in the `.cpp`,
+- groups not separated by a blank line,
+- groups out of order (project headers before stdlib).
 
 ## Fixtures
 
-- `pass/` — каноничный порядок с пустыми строками.
-- `fail_own_not_first/` — `.cpp` начинается с `#include <vector>`, потом `#include "foo.h"`.
-- `fail_mixed_groups/` — `<vector>` рядом с `"foo.h"` без разделителя.
+- `pass/` — canonical order with blank lines.
+- `fail_own_not_first/` — `.cpp` starts with `#include <vector>`, then `#include "foo.h"`.
+- `fail_mixed_groups/` — `<vector>` next to `"foo.h"` without a separator.

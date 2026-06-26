@@ -27,7 +27,7 @@ std::string read(const std::filesystem::path &p)
 
 } // namespace
 
-TEST_CASE("fixture: simple — angle + quote + angle, по одному на строку", "[scan][fixtures]")
+TEST_CASE("fixture: simple — angle + quote + angle, one per line", "[scan][fixtures]")
 {
   const auto res = scanIncludes(read(fixture("simple.cpp")));
   REQUIRE(res.diagnostics.empty());
@@ -51,7 +51,7 @@ TEST_CASE("fixture: comments — //, /* */ multi-line", "[scan][fixtures]")
   REQUIRE(res.directives[1].line == 6);
 }
 
-TEST_CASE("fixture: string_literal — #include внутри строки не ловится", "[scan][fixtures]")
+TEST_CASE("fixture: string_literal — #include inside a string is not caught", "[scan][fixtures]")
 {
   const auto res = scanIncludes(read(fixture("string_literal.cpp")));
   REQUIRE(res.diagnostics.empty());
@@ -60,7 +60,7 @@ TEST_CASE("fixture: string_literal — #include внутри строки не �
   REQUIRE(res.directives[0].line == 2);
 }
 
-TEST_CASE("fixture: raw_string — содержимое R\"(...)\" игнорируется", "[scan][fixtures]")
+TEST_CASE("fixture: raw_string — R\"(...)\" contents are ignored", "[scan][fixtures]")
 {
   const auto res = scanIncludes(read(fixture("raw_string.cpp")));
   REQUIRE(res.diagnostics.empty());
@@ -69,7 +69,7 @@ TEST_CASE("fixture: raw_string — содержимое R\"(...)\" игнори�
   REQUIRE(res.directives[0].line == 4);
 }
 
-TEST_CASE("fixture: continuation — \\-EOL внутри #include склеивается", "[scan][fixtures]")
+TEST_CASE("fixture: continuation — \\-EOL inside #include is joined", "[scan][fixtures]")
 {
   const auto res = scanIncludes(read(fixture("continuation.cpp")));
   REQUIRE(res.diagnostics.empty());

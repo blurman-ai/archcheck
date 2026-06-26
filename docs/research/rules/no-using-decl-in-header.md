@@ -10,17 +10,17 @@
 
 ## Why for archcheck
 
-Дополняет SF.7 (`using namespace`). SF.7 ловит «directive» (`using namespace std;`), это правило ловит «declaration» (`using std::vector;`) — она тоже инжектит имя в namespace заголовка, тоже протекает во все TU, которые `#include` этот заголовок. Каждый кейс по отдельности кажется безобидным, в сумме создаёт name pollution.
+Complements SF.7 (`using namespace`). SF.7 catches the "directive" (`using namespace std;`); this rule catches the "declaration" (`using std::vector;`) — it too injects a name into the header's namespace, and too leaks into every TU that `#include`s that header. Each case seems harmless on its own, but in aggregate they create name pollution.
 
 ## Detection
 
-AST: `UsingDecl` в namespace scope в файле, который входит в include-граф (т.е. в header или в файле, на который кто-то `#include`-ает). Допустимо:
-- внутри class body (это alias для наследования),
-- внутри function body,
-- в `namespace detail { ... }` если конфиг проекта разрешает (под флагом).
+AST: a `UsingDecl` at namespace scope in a file that is part of the include graph (i.e. a header or a file someone `#include`s). Allowed:
+- inside a class body (this is an alias for inheritance),
+- inside a function body,
+- in `namespace detail { ... }` if the project config permits (behind a flag).
 
 ## Fixtures
 
 - `pass_class_using/` — `class Derived : Base { using Base::method; };`.
 - `pass_function_local/` — `void f() { using std::vector; ... }`.
-- `fail_namespace_scope/` — в `foo.h`: `using std::vector;` на уровне namespace.
+- `fail_namespace_scope/` — in `foo.h`: `using std::vector;` at namespace level.

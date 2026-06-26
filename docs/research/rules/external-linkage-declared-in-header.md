@@ -10,20 +10,20 @@
 
 ## Why for archcheck
 
-Ловит «теневой API»: функция/переменная определена в `.cpp` без `static`/`anonymous namespace`, не объявлена в `.h`, но имеет external linkage — её можно слинковать из чужого TU через `extern`-declaration. Это обход header-как-единственной-точки-входа, прямая дыра в архитектурном контракте: модуль обещает интерфейс через `.h`, а реально пускает через бэк-вход.
+Catches the "shadow API": a function/variable defined in a `.cpp` without `static`/`anonymous namespace`, not declared in the `.h`, but with external linkage — it can be linked from a foreign TU via an `extern` declaration. This bypasses the header-as-the-only-entry-point, a direct hole in the architectural contract: the module promises an interface through the `.h`, but actually lets you in through the back door.
 
 ## Detection
 
-Для каждого `.cpp`:
-1. Найти все `FunctionDecl` и `VarDecl` с external linkage (не `static`, не в `anonymous namespace`, не `inline`).
-2. Прочитать парный `.h` (по правилу SF.5) и собрать declared names.
-3. Если что-то из `.cpp` не объявлено в `.h` — флагать.
+For each `.cpp`:
+1. Find all `FunctionDecl`s and `VarDecl`s with external linkage (not `static`, not in an `anonymous namespace`, not `inline`).
+2. Read the paired `.h` (per the SF.5 rule) and collect the declared names.
+3. If something in the `.cpp` is not declared in the `.h` — flag.
 
-Игнорировать: implicit instantiation шаблонов, `extern "C"` API внутри своего слоя.
+Ignore: implicit template instantiation, `extern "C"` API within its own layer.
 
 ## Fixtures
 
-- `pass/` — все функции `.cpp` имеют объявление в `.h`.
-- `fail_undeclared_function/` — `.cpp` содержит `void Helper() { ... }` (external linkage), `.h` его не знает.
-- `pass_static/` — та же функция помечена `static` — допустимо.
-- `pass_anonymous_namespace/` — функция в `namespace { ... }` — допустимо.
+- `pass/` — all `.cpp` functions have a declaration in the `.h`.
+- `fail_undeclared_function/` — `.cpp` contains `void Helper() { ... }` (external linkage), the `.h` does not know about it.
+- `pass_static/` — the same function marked `static` — allowed.
+- `pass_anonymous_namespace/` — a function in `namespace { ... }` — allowed.

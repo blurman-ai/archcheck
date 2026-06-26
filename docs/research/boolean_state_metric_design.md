@@ -1,64 +1,64 @@
-# Design: `boolean_state_accumulation` — drift-метрика (вариант 2)
+# Design: `boolean_state_accumulation` — drift metric (variant 2)
 
-**Дата:** 2026-06-07 · **Задача:** #089 → кандидат на #090/v0.3
-**Статус:** дизайн, НЕ реализовано в `src/`. Прототип — `experiments/boolean_state/perstruct_drift.py`.
+**Date:** 2026-06-07 · **Task:** #089 → candidate for #090/v0.3
+**Status:** design, NOT implemented in `src/`. Prototype — `experiments/boolean_state/perstruct_drift.py`.
 
-> Это не статический линтер (он провалился: имена бесполезны, счётчик — 78% шум). Это **drift-метрика во времени** — в одном ряду с cycle-growth (#086) и bidirectional-coupling drift (#087): мерит ИЗМЕНЕНИЕ структуры между ревизиями, а не один срез.
+> This is not a static linter (that failed: names are useless, the counter is 78% noise). This is a **drift metric over time** — in the same family as cycle-growth (#086) and bidirectional-coupling drift (#087): it measures the CHANGE in a structure between revisions, not a single snapshot.
 
-## Что метрика утверждает
+## What the metric asserts
 
-«Структура S набрала bool-поля через ≥K разных коммитов за ≥D дней, при этом её поля взаимозависимы → растущая неявная машина состояний / constraint decay».
+"Structure S accumulated bool fields across ≥K distinct commits over ≥D days, and its fields are interdependent → a growing implicit state machine / constraint decay."
 
-Эмпирическая база: per-struct + git-blame дал 0% грубых FP и 57% подтверждённого реального дрейфа на верификации (см. [perstruct](boolean_state_perstruct_drift.md), [eyecheck](boolean_state_drift_eyecheck.md)).
+Empirical basis: per-struct + git-blame yielded 0% gross FP and 57% confirmed real drift on verification (see [perstruct](boolean_state_perstruct_drift.md), [eyecheck](boolean_state_drift_eyecheck.md)).
 
-## Алгоритм (3 гейта, выведены из research)
+## Algorithm (3 gates, derived from research)
 
 ```
-для каждого заголовка в diff/истории:
-  1. ПАРСИНГ: найти struct/class → bool-поля ТОЛЬКО как прямые члены
-     (depth-0; исключить bool в сигнатурах методов и локальные в телах).      [гейт FP]
-  2. АТРИБУЦИЯ: привязать каждое поле к КОНКРЕТНОЙ структуре (не к файлу);
-     git blame поля → коммит+дата появления.                                  [гейт «один struct»]
-  3. ИСТОРИЯ: сгруппировать по структуре. drift_commits = число РАЗНЫХ
-     коммитов, добавивших её bool-поля.
-     Требовать ПОЛНУЮ историю (не shallow); иначе помечать «lower-bound».      [гейт shallow]
-  4. ВЗАИМОЗАВИСИМОСТЬ (опц., усиливает): на ТЕКУЩЕМ срезе структуры проверить,
-     ограничены ли комбинации — дешёвым regex-прокси по групповому присваиванию
-     (`a=true; b=false; c=false` рядом) в .cpp. Если поля ортогональны → это
-     bloat, НЕ illegal-state-риск (понизить severity).                        [гейт config-vs-state]
+for each header in diff/history:
+  1. PARSE: find struct/class → bool fields ONLY as direct members
+     (depth-0; exclude bool in method signatures and locals in bodies).        [FP gate]
+  2. ATTRIBUTION: bind each field to the SPECIFIC structure (not the file);
+     git blame the field → commit + date of appearance.                       [single-struct gate]
+  3. HISTORY: group by structure. drift_commits = number of DISTINCT
+     commits that added its bool fields.
+     Require FULL history (not shallow); otherwise mark "lower-bound".         [shallow gate]
+  4. INTERDEPENDENCE (opt., reinforces): on the CURRENT snapshot of the structure, check
+     whether combinations are constrained — via a cheap regex proxy over group assignment
+     (`a=true; b=false; c=false` together) in .cpp. If fields are orthogonal → it's
+     bloat, NOT an illegal-state risk (lower severity).                       [config-vs-state gate]
 
-флаг, если: nfields >= 5  И  drift_commits >= 4  И  взаимозависимость != ортогональная
+flag if: nfields >= 5  AND  drift_commits >= 4  AND  interdependence != orthogonal
 ```
 
-## ⚠️ #042 для диффа НЕ нужен
+## ⚠️ #042 is NOT needed for the diff
 
-Важно (поправка): метрика идёт по **истории** (диффы между коммитами), а #042 (libclang) — это AST на ОДНОМ срезе. Гонять AST по каждому историческому коммиту нереально (×1350 медленнее regex + старые коммиты не собираются). Поэтому:
+Important (correction): the metric runs over **history** (diffs between commits), whereas #042 (libclang) is AST on a SINGLE snapshot. Running AST on every historical commit is infeasible (×1350 slower than regex + old commits don't build). Therefore:
 
-- **Гейты 1-3 (сам дифф)** = `git blame` + depth-0 regex. **AST не нужен, #042 не задействован.**
-- **Гейт 4 (взаимозависимость)** проверяется ТОЛЬКО на текущем срезе уже-флагнутой структуры (не по истории!) и закрывается **дешёвым regex-прокси по групповому присваиванию** — тем, что без AST нашёл ZuluSCSI audio / ncnn winograd (`experiments/boolean_state/transition_scan.py`).
-- **#042 — лишь опциональный буст точности гейта 4** (семантическое mutual-exclusion вместо regex-прокси), а НЕ блокер. Метрика целиком строится на **fast-бэкенде**.
+- **Gates 1-3 (the diff itself)** = `git blame` + depth-0 regex. **No AST needed, #042 not involved.**
+- **Gate 4 (interdependence)** is checked ONLY on the current snapshot of an already-flagged structure (not over history!) and is covered by a **cheap regex proxy over group assignment** — the same one that, without AST, found ZuluSCSI audio / ncnn winograd (`experiments/boolean_state/transition_scan.py`).
+- **#042 is merely an optional precision boost for gate 4** (semantic mutual-exclusion instead of the regex proxy), NOT a blocker. The metric is built entirely on the **fast backend**.
 
-## Пороги (из корпус-данных)
+## Thresholds (from corpus data)
 
-| Параметр | Значение | Обоснование |
+| Parameter | Value | Rationale |
 |---|---|---|
-| min_bool_fields | 5 | ниже — почти всегда не машина |
-| min_drift_commits | 4 | «накопление по чуть-чуть», а не один feature-дамп |
-| shallow → | severity↓ / «lower-bound» | 54% кандидатов на shallow недостоверны |
-| ортогональные поля → | severity↓ (bloat, не illegal-state) | Channel/MethodState: ~все 2^N легальны |
+| min_bool_fields | 5 | below this — almost never a machine |
+| min_drift_commits | 4 | "accumulation a bit at a time", not a single feature dump |
+| shallow → | severity↓ / "lower-bound" | 54% of shallow candidates are unreliable |
+| orthogonal fields → | severity↓ (bloat, not illegal-state) | Channel/MethodState: ~all 2^N are legal |
 
-## Сложность и где живёт
+## Complexity and where it lives
 
-- Гейты 1-3 = diff-парсинг + `git blame` (как уже в прототипе). Ложится на git-историю — то есть на **diff-режим archcheck** (`--diff`, #015/#018), а не на single-shot scan. **Fast-бэкенд, без #042.**
-- Гейт 4 = regex-прокси по групповому присваиванию на текущем срезе (есть в `transient_scan.py`). Тоже fast-бэкенд. #042 — опциональный буст, не зависимость.
-- Реализация — НЕ в `src/rules/` как обычное правило, а как history-метрика рядом с drift-семейством (#086/#087). **Не заблокирована #042** — строится на fast-бэкенде хоть сейчас.
+- Gates 1-3 = diff parsing + `git blame` (as already in the prototype). It rides on git history — i.e. on **archcheck's diff mode** (`--diff`, #015/#018), not on a single-shot scan. **Fast backend, no #042.**
+- Gate 4 = regex proxy over group assignment on the current snapshot (present in `transient_scan.py`). Also fast backend. #042 is an optional boost, not a dependency.
+- Implementation — NOT in `src/rules/` as an ordinary rule, but as a history metric alongside the drift family (#086/#087). **Not blocked by #042** — buildable on the fast backend right now.
 
-## Известные ограничения (эмпирические, не теоретические)
+## Known limitations (empirical, not theoretical)
 
-1. **Shallow-клоны** → 54% дрейфа невидимо. На реальных репо пользователя (полная история) это не проблема; на корпусе — да.
-2. **config-bag vs state** без гейта 4 неразделимы по имени (43% остаточной путаницы). Нужна семантика поля.
-3. **Ортогональные мешки** — высокий счётчик булей без роста illegal-state-риска; гейт 4 их разжалует.
+1. **Shallow clones** → 54% of the drift is invisible. On the user's real repos (full history) this is not a problem; on the corpus — yes.
+2. **config-bag vs state** are inseparable by name without gate 4 (43% residual confusion). Field semantics are needed.
+3. **Orthogonal bags** — high bool count without a rise in illegal-state risk; gate 4 demotes them.
 
-## Вывод о целесообразности
+## Conclusion on feasibility
 
-Метрика **технически осуществима на fast-бэкенде хоть сейчас** (git blame + regex; #042 НЕ нужен для диффа, только опциональный буст гейта 4), и на верифицированной выборке точна (0% грубых FP). По позиционированию archcheck это пограничный кандидат: ближе к drift-семейству (#086/#087), чем к линтеру. Главный блокер — **не технический, а спросовый**: никто из пользователей не просил (YAGNI). Решение о реализации — отложить до явного запроса, но НЕ за #042.
+The metric is **technically feasible on the fast backend right now** (git blame + regex; #042 is NOT needed for the diff, only an optional boost for gate 4), and on the verified sample it is accurate (0% gross FP). By archcheck's positioning it is a borderline candidate: closer to the drift family (#086/#087) than to a linter. The main blocker is **not technical but demand-driven**: no user has asked for it (YAGNI). The decision to implement — defer until explicitly requested, but NOT behind #042.

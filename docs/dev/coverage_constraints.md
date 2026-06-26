@@ -1,129 +1,129 @@
 # Coverage constraints — archcheck
 
-## Текущие пороги
+## Current thresholds
 
-`scripts/check_coverage.sh` проверяет три метрики только по `src/`:
+`scripts/check_coverage.sh` checks three metrics over `src/` only:
 
-| Метрика   | Порог | Реальное (2026-05) |
-|-----------|-------|--------------------|
-| Lines     | 90%   | ~96%               |
-| Functions | 90%   | ~95%               |
-| Branches  | 40%   | ~63%               |
+| Metric    | Threshold | Actual (2026-05) |
+|-----------|-----------|------------------|
+| Lines     | 90%       | ~96%             |
+| Functions | 90%       | ~95%             |
+| Branches  | 40%       | ~63%             |
 
-## Почему branches застрял на 63%, и что с этим делать нельзя
+## Why branches is stuck at 63%, and what you must not do about it
 
-### Причина: gcov + C++ exceptions + lcov 1.13
+### Cause: gcov + C++ exceptions + lcov 1.13
 
-Astra Linux 1.7 поставляет **lcov 1.13** (Debian Buster).
+Astra Linux 1.7 ships **lcov 1.13** (Debian Buster).
 
-В C++ каждый вызов функции, которая потенциально бросает исключение, порождает два пути в CFG:
-- нормальный возврат → ветвь «covered»
-- throw arc → ветвь «uncovered»
+In C++ every call to a function that might throw produces two paths in the CFG:
+- normal return → "covered" branch
+- throw arc → "uncovered" branch
 
-Это касается `std::string::push_back`, `operator<<`, `vector::reserve` и т.п.
-Физически добраться до этих ветвей в тестах невозможно — OOM не симулируется.
+This affects `std::string::push_back`, `operator<<`, `vector::reserve`, etc.
+Physically reaching these branches in tests is impossible — OOM cannot be simulated.
 
-**lcov ≥ 1.15** имеет флаг `--exclude-unreachable-branches`, который убирает этот шум.  
-**lcov 2.x** (текущий апстрим, v2.4) имеет `--filter exception`.  
-Обе версии требуют Perl-зависимостей (`DateTime`, `Capture::Tiny`), которых нет в
-стандартном репозитории Astra Linux 1.7.
+**lcov ≥ 1.15** has the `--exclude-unreachable-branches` flag, which removes this noise.  
+**lcov 2.x** (current upstream, v2.4) has `--filter exception`.  
+Both versions require Perl dependencies (`DateTime`, `Capture::Tiny`) that are not in the
+standard Astra Linux 1.7 repository.
 
-### Альтернатива: gcovr
+### Alternative: gcovr
 
-`gcovr` (Python, `pip3 install gcovr`) имеет `--exclude-throw-branches`.
-Подходит для CI на Ubuntu 22.04+ / Debian Bookworm, но требует переписывания
-`check_coverage.sh` под gcovr-формат.
+`gcovr` (Python, `pip3 install gcovr`) has `--exclude-throw-branches`.
+Suitable for CI on Ubuntu 22.04+ / Debian Bookworm, but requires rewriting
+`check_coverage.sh` for the gcovr format.
 
-### Что было проверено
+### What was checked
 
-- Скачан lcov 2.4 (Perl-скрипты с GitHub), установлены `libcapture-tiny-perl`,
-  `libdatetime-perl`. Запущен с `--filter exception` — флаг существует, но
-  на данных от GCC 8.3 эффекта не оказал: branches остались на 61–62%
-  (gcov 8.x не размечает throw-arcs так, чтобы lcov 2.4 их распознал).
-- Итог: без обновления toolchain (gcc ≥ 10, lcov ≥ 1.15 или gcovr)
-  преодолеть ~65% branches не выйдет механически.
+- lcov 2.4 was downloaded (Perl scripts from GitHub), `libcapture-tiny-perl` and
+  `libdatetime-perl` were installed. Run with `--filter exception` — the flag exists, but
+  on data from GCC 8.3 it had no effect: branches stayed at 61–62%
+  (gcov 8.x does not mark throw-arcs in a way that lcov 2.4 recognizes).
+- Conclusion: without a toolchain upgrade (gcc ≥ 10, lcov ≥ 1.15 or gcovr)
+  getting past ~65% branches is not mechanically achievable.
 
-## Что поднять можно уже сейчас
+## What can already be raised now
 
-`MIN_LINES=90` и `MIN_FUNCTIONS=90` — уже проходят, подняты.  
-`MIN_BRANCHES` остаётся на `40` до смены окружения.
+`MIN_LINES=90` and `MIN_FUNCTIONS=90` — already pass, raised.  
+`MIN_BRANCHES` stays at `40` until the environment changes.
 
-## Где гоняется
+## Where it runs
 
-| Окружение | Тулза | Запуск |
-|-----------|-------|--------|
-| Локально (Astra, lcov 1.13) | lcov | `scripts/check_coverage.sh`, шаг 6 в `/commit` и `/autocommit` |
-| CI (Ubuntu 24.04, gcc-13) | gcovr | job `coverage` в `.github/workflows/ci.yml` (жёсткий гейт) |
+| Environment | Tool  | Invocation |
+|-------------|-------|------------|
+| Local (Astra, lcov 1.13) | lcov | `scripts/check_coverage.sh`, step 6 in `/commit` and `/autocommit` |
+| CI (Ubuntu 24.04, gcc-13) | gcovr | job `coverage` in `.github/workflows/ci.yml` (hard gate) |
 
-CI намеренно НЕ зовёт `check_coverage.sh`: тот написан под lcov 1.13, а apt
-Ubuntu 24.04 ставит lcov 2.x, который валится на throw-arc'ах и несовпавших
-`--remove` паттернах. gcovr — единый pip-пакет с нативным `--fail-under-*` и
-`--exclude-throw-branches`. **Пороги в обоих местах держать одинаковыми (90/90/40);
-эта таблица — источник правды.** Branches на gcovr выше lcov-овых ~63% (throw-arc'и
-вырезаны `--exclude-throw-branches`), так что порог 40% с большим запасом.
+CI deliberately does NOT call `check_coverage.sh`: it is written for lcov 1.13, while apt on
+Ubuntu 24.04 installs lcov 2.x, which fails on throw-arcs and mismatched
+`--remove` patterns. gcovr is a single pip package with native `--fail-under-*` and
+`--exclude-throw-branches`. **Keep the thresholds in both places identical (90/90/40);
+this table is the source of truth.** Branches on gcovr are higher than lcov's ~63% (throw-arcs
+cut out by `--exclude-throw-branches`), so the 40% threshold has a wide margin.
 
-## Когда lcov-ветку станет решаемым поднять
+## When raising the lcov branch becomes feasible
 
-При переходе локального окружения на:
-- Ubuntu 22.04+ / Debian Bookworm (lcov 1.16+) — добавить `--exclude-unreachable-branches`
-- или `pip3 install gcovr` + переписать `check_coverage.sh` под gcovr (унифицировать с CI)
+When the local environment moves to:
+- Ubuntu 22.04+ / Debian Bookworm (lcov 1.16+) — add `--exclude-unreachable-branches`
+- or `pip3 install gcovr` + rewrite `check_coverage.sh` for gcovr (unify with CI)
 
 ## GCC 8 / C++20 stdlib gaps (Astra Linux 1.7)
 
-### Суть проблемы
+### The gist of the problem
 
-Astra Linux 1.7 поставляет **GCC 8.3**. Проект объявлен как C++20 (`-std=c++20`),
-и GCC 8 принимает этот флаг — но реализует далеко не весь стандарт. Часть C++20
-stdlib-фич появилась только в GCC 10 (libstdc++ 10).
+Astra Linux 1.7 ships **GCC 8.3**. The project is declared as C++20 (`-std=c++20`),
+and GCC 8 accepts this flag — but implements far from the whole standard. Some C++20
+stdlib features only appeared in GCC 10 (libstdc++ 10).
 
-В CI (Ubuntu 24.04, GCC 13) и на любом современном Linux эти фичи работают нормально.
-Проблема возникает только при локальной сборке на Astra.
+In CI (Ubuntu 24.04, GCC 13) and on any modern Linux these features work fine.
+The problem only arises during a local build on Astra.
 
-### Известные недостающие фичи
+### Known missing features
 
-| Фича | Доступна с | Обходной путь |
-|------|-----------|---------------|
+| Feature | Available since | Workaround |
+|---------|-----------------|------------|
 | `std::string_view::starts_with(x)` | GCC 10 | `s.find(x) == 0` |
 | `std::string_view::ends_with(x)` | GCC 10 | `s.rfind(x) == s.size() - x.size()` |
-| `std::string::starts_with(x)` | GCC 10 | то же |
-| `std::string::ends_with(x)` | GCC 10 | то же |
+| `std::string::starts_with(x)` | GCC 10 | same |
+| `std::string::ends_with(x)` | GCC 10 | same |
 
-Полный список C++20 library features по компиляторам:
+Full list of C++20 library features by compiler:
 https://en.cppreference.com/w/cpp/compiler_support/20
 
-### Маркер для быстрого поиска при обновлении Astra
+### Marker for fast lookup when Astra is upgraded
 
-**Правило:** каждый обходной путь сопровождается комментарием-тегом `// GCC8-COMPAT:`.
+**Rule:** every workaround is accompanied by a tag comment `// GCC8-COMPAT:`.
 
 ```cpp
 // GCC8-COMPAT: starts_with() requires GCC 10; replace when Astra upgrades
 if (path.find(prefix) == 0) // cppcheck-suppress stlIfStrFind
 ```
 
-При переходе на новую Astra (или когда Astra обновит toolchain до GCC 10+):
+When moving to a new Astra (or when Astra upgrades the toolchain to GCC 10+):
 
 ```bash
 grep -rn "GCC8-COMPAT" src/ include/ tests/
 ```
 
-Найдёт все места, которые нужно привести в порядок.
+Will find all the places that need to be cleaned up.
 
-### Текущие экземпляры
+### Current instances
 
-| Файл | Строка | Обходной путь | Целевой код |
-|------|--------|---------------|-------------|
-| `src/scan/include_resolver.cpp` | строка с `path.find(prefix) == 0` | `find()==0` + cppcheck-suppress | `path.starts_with(prefix)` |
+| File | Line | Workaround | Target code |
+|------|------|------------|-------------|
+| `src/scan/include_resolver.cpp` | line with `path.find(prefix) == 0` | `find()==0` + cppcheck-suppress | `path.starts_with(prefix)` |
 
-### Отдельный случай: `(void)::read()` на GCC 13
+### Special case: `(void)::read()` on GCC 13
 
-Это **не** GCC 8 проблема — обратная: в CI (GCC 13, Ubuntu 24.04)
-`(void)`-cast не подавляет `-Werror=unused-result` для `read()`.
-Решение — `[[maybe_unused]] auto n = ::read(...)`.
-Метка `GCC8-COMPAT:` не используется, это CI-специфика.
+This is **not** a GCC 8 problem — the reverse: in CI (GCC 13, Ubuntu 24.04)
+the `(void)` cast does not suppress `-Werror=unused-result` for `read()`.
+The fix is `[[maybe_unused]] auto n = ::read(...)`.
+The `GCC8-COMPAT:` tag is not used, this is CI-specific.
 
-## LCOV_EXCL_* маркеры уже в коде
+## LCOV_EXCL_* markers already in the code
 
-В `src/git/git_state.cpp` и `src/git/git_object_file_source.cpp` расставлены
-`// LCOV_EXCL_START` / `// LCOV_EXCL_STOP` вокруг post-fork child-process кода —
-это единственное законное место для таких аннотаций (код физически не виден gcov
-в родительском процессе). Остальные throw-ветви аннотировать смысла нет до смены lcov.
+In `src/git/git_state.cpp` and `src/git/git_object_file_source.cpp`,
+`// LCOV_EXCL_START` / `// LCOV_EXCL_STOP` are placed around post-fork child-process code —
+this is the only legitimate place for such annotations (the code is physically invisible to gcov
+in the parent process). Annotating the other throw branches makes no sense until lcov changes.

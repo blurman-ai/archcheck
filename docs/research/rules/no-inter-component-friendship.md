@@ -10,15 +10,15 @@
 
 ## Why for archcheck
 
-`friend` обходит всю инкапсуляцию и не виден в include-графе как обычная зависимость. Если модуль A объявляет `friend class B::Bar;` — A неявно знает приватные детали B, любое изменение в B может сломать A, но archcheck без этой проверки этого не увидит. Это классическая дыра в архитектурном контракте.
+`friend` bypasses all encapsulation and is not visible in the include graph as an ordinary dependency. If module A declares `friend class B::Bar;` — A implicitly knows B's private details, any change in B may break A, but without this check archcheck won't see it. A classic hole in the architectural contract.
 
 ## Detection
 
-AST: `FriendDecl` внутри `CXXRecordDecl`. Определить компонент-владелец класса (по path/module mapping) и компонент-владелец `friend` target. Если разные — флагать.
+AST: a `FriendDecl` inside a `CXXRecordDecl`. Determine the component that owns the class (via path/module mapping) and the component that owns the `friend` target. If they differ — flag.
 
-Допустимо: friend между классами одного компонента (`.h`/`.cpp` пара) или внутри одного namespace, если они в одном файле.
+Allowed: friendship between classes of the same component (a `.h`/`.cpp` pair) or within the same namespace if they are in the same file.
 
 ## Fixtures
 
-- `pass_same_component/` — `foo.h` объявляет class `Foo` с `friend class FooImpl;`, `FooImpl` в `foo.cpp`.
-- `fail_cross_module/` — `domain/Order.h` объявляет `friend class infrastructure::SqlRepo;`.
+- `pass_same_component/` — `foo.h` declares class `Foo` with `friend class FooImpl;`, `FooImpl` in `foo.cpp`.
+- `fail_cross_module/` — `domain/Order.h` declares `friend class infrastructure::SqlRepo;`.

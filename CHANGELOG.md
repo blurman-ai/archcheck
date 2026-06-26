@@ -173,7 +173,7 @@ via GitHub Releases for pinned, checksummed CI install. (#142)
   - Default-analysis section: SF rules now have a Phase column (v0.1 / v0.2); SF.4 dropped from defaults with rationale.
   - Config section reoriented: `modules` + `forbidden_deps` are the headline, defaults section secondary; "minimal config" example for legacy projects added.
   - Risks audited: license risk removed (resolved); libclang/`compile_commands.json` risks marked v0.2+; Martin's-A risk marked v0.4; templates risk clarified by phase.
-  - "Следующие шаги" trimmed of items already done.
+  - "Next steps" trimmed of items already done.
 
 ### Fixed
 

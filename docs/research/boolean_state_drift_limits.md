@@ -1,48 +1,48 @@
-# Boolean-State Drift — ограничения метода и уточнения (вариант 3)
+# Boolean-State Drift — limitations of the method and clarifications (variant 3)
 
-**Дата:** 2026-06-07 · **Задача:** #089
-Доводка research после критики «результаты хлипкие» и «почему не любая комбинация возможна». Три уточнения, каждое снимает одно моё завышение.
+**Date:** 2026-06-07 · **Task:** #089
+Refining the research after the critique "the results are flimsy" and "why is not every combination possible". Three clarifications, each one removing one of my overstatements.
 
-## 1. Все клоны корпуса — shallow → история неполная
+## 1. All corpus clones are shallow → history is incomplete
 
-**73/73 агентских клона — shallow** (`.git/shallow` присутствует у всех). Следствие: коммиты до горизонта клона отсутствуют, и git показывает все до-горизонтные строки как «добавленные» в первом видимом коммите.
+**73/73 agent clones are shallow** (`.git/shallow` is present in all of them). Consequence: commits before the clone horizon are absent, and git shows every pre-horizon line as "added" in the first visible commit.
 
-Что это делает с дрейф-детектом:
-- **Молодые файлы** (созданы после горизонта) — история ПОЛНАЯ, хроника достоверна (пример: EditorShell, 5→24 за 6 недель — виден целиком).
-- **Старые файлы** (до горизонта) — история ОБРЕЗАНА: накопление булей за годы «схлопывается» в горизонтный коммит, `git blame` относит их к нему → структура выглядит как «1 коммит», дрейф **исчезает из виду** (пример: ATS `HttpTransact::State` — 39 булей дампнуты в горизонт 2024-06-03, хотя в апстриме копились годами).
+What this does to drift detection:
+- **Young files** (created after the horizon) — history is COMPLETE, the chronicle is reliable (example: EditorShell, 5→24 over 6 weeks — visible in full).
+- **Old files** (predating the horizon) — history is TRUNCATED: the accumulation of bools over years "collapses" into the horizon commit, `git blame` attributes them to it → the structure looks like "1 commit", and the drift **disappears from view** (example: ATS `HttpTransact::State` — 39 bools dumped into the horizon 2024-06-03, even though upstream they accumulated over years).
 
-**Количественно (per-struct кандидаты, 65 шт.):**
+**Quantitatively (per-struct candidates, 65 of them):**
 
-| | Кол-во | Доля |
+| | Count | Share |
 |---|---|---|
-| YOUNG — полная история, дрейф достоверен | 30 | 46% |
-| OLD — обрезано, дрейф недооценён/невидим | 35 | 54% |
+| YOUNG — full history, drift reliable | 30 | 46% |
+| OLD — truncated, drift underestimated/invisible | 35 | 54% |
 
-→ **history-детект на shallow-корпусе систематически НЕДООЦЕНИВАЕТ дрейф** (консервативное смещение). Достоверны только ~46% кандидатов; по остальным мы видим лишь хвост. Реальная распространённость, скорее всего, **выше** измеренной ~21%, но точно сказать нельзя без полных клонов.
+→ **history-detection on a shallow corpus systematically UNDERESTIMATES drift** (conservative bias). Only ~46% of candidates are reliable; for the rest we see only the tail. The real prevalence is most likely **higher** than the measured ~21%, but we cannot say for sure without full clones.
 
-## 2. «Не любая комбинация возможна» — НЕ универсально (ответ на вопрос)
+## 2. "Not every combination is possible" — NOT universal (answer to the question)
 
-Проверил взаимозависимость bool-полей по usage у 6 подтверждённых дрейф-структур (взаимоисключение / групповое присваивание / capability-гейты / инварианты). Тезис «2^N представимо, легальны единицы» держится **только при взаимозависимости** и её надо доказывать, а не постулировать:
+I checked the interdependence of bool fields by usage across 6 confirmed drift structures (mutual exclusion / group assignment / capability gates / invariants). The thesis "2^N is representable, only a few are legal" holds **only under interdependence**, and it must be proven, not postulated:
 
-| Структура | Вердикт | Достижимо ≈ из 2^N | Почему |
+| Structure | Verdict | Reachable ≈ out of 2^N | Why |
 |---|---|---|---|
-| Engine (chess) | 🔗 взаимозависимы | **~6-10 из 256** | конечный автомат pondering/search, групповой set/clear |
-| EditorShell (donner) | 🧩 смесь (сильная) | ~2^16-18 из 2^24 | групповой set/clear layerPanel, инварианты «B только при A» |
-| ToolboxUIElement (GWToolbox) | 🧩 смесь | ~2^15-17 из 2^23 | capability-флаги `is_*`/`has_*`/`can_*` гейтят кластеры |
-| Graph (hhds) | 🧩 смесь | ~17 из 32 | `deleted_` режет половину; cache-пара свободна |
-| MethodState (MOLA) | ⚙️ независимы | **~448 из 512** | мешок ортогональных флагов состояния |
-| Channel (FluidNC) | ⚙️ независимы | **~512 из 512** | ортогональные «грязные»/режимные флаги, связей нет |
+| Engine (chess) | 🔗 interdependent | **~6-10 out of 256** | pondering/search state machine, group set/clear |
+| EditorShell (donner) | 🧩 mixed (strong) | ~2^16-18 out of 2^24 | group set/clear of layerPanel, invariants "B only when A" |
+| ToolboxUIElement (GWToolbox) | 🧩 mixed | ~2^15-17 out of 2^23 | capability flags `is_*`/`has_*`/`can_*` gate clusters |
+| Graph (hhds) | 🧩 mixed | ~17 out of 32 | `deleted_` cuts off half; cache pair is free |
+| MethodState (MOLA) | ⚙️ independent | **~448 out of 512** | a bag of orthogonal state flags |
+| Channel (FluidNC) | ⚙️ independent | **~512 out of 512** | orthogonal "dirty"/mode flags, no links |
 
-**Вывод:** «невозможные состояния» — реальный риск там, где есть автомат или capability-гейты (Engine, EditorShell, ToolboxUIElement), и **его нет** там, где флаги ортогональны (Channel, MethodState — там это просто bloat, а не illegal-state). Моё прежнее «2²³ ≈ 8 млн мусора» для ToolboxUIElement завышено: capability-гейты режут пространство, но и не до «десятков» — порядка 2^15-17. Для Channel тезис прямо опровергнут.
+**Conclusion:** "impossible states" are a real risk where there is a state machine or capability gates (Engine, EditorShell, ToolboxUIElement), and **there is none** where the flags are orthogonal (Channel, MethodState — there it is simply bloat, not illegal-state). My earlier "2²³ ≈ 8 million garbage" for ToolboxUIElement is overstated: capability gates cut the space, but not down to "dozens" either — on the order of 2^15-17. For Channel the thesis is directly refuted.
 
-Итого: **2/6** даже реальных дрейф-структур — ортогональные (тезис не применим), **1/6** — строгий автомат (применим жёстко), **3/6** — частично.
+In total: **2/6** of even the real drift structures are orthogonal (the thesis does not apply), **1/6** is a strict state machine (applies rigidly), **3/6** are partial.
 
-## 3. Сводное следствие для детектора
+## 3. Combined implication for the detector
 
-Чтобы метрика была не хлипкой, нужны ТРИ независимых условия, и каждое мы проверили эмпирически:
+For the metric to not be flimsy, THREE independent conditions are needed, and we checked each one empirically:
 
-1. **Полная история** (не shallow) — иначе 54% дрейфа невидимо.
-2. **Per-struct атрибуция + только поля** (depth-0) — даёт 0% грубых FP (доказано в [eyecheck](boolean_state_drift_eyecheck.md): file-level 45% FP → per-struct 0%).
-3. **Проверка взаимозависимости** по usage — иначе «дрейф» включает ортогональные мешки (Channel/MethodState), где роста риска illegal-state нет.
+1. **Full history** (not shallow) — otherwise 54% of the drift is invisible.
+2. **Per-struct attribution + fields only** (depth-0) — gives 0% gross FP (proven in [eyecheck](boolean_state_drift_eyecheck.md): file-level 45% FP → per-struct 0%).
+3. **Interdependence check** by usage — otherwise "drift" includes orthogonal bags (Channel/MethodState), where there is no increase in illegal-state risk.
 
-Условия 1 и 3 — нетривиальные: (1) требует полных клонов, (3) требует usage/AST-анализа (≈ #042). Без них любой счётчик-по-истории остаётся приблизительным.
+Conditions 1 and 3 are nontrivial: (1) requires full clones, (3) requires usage/AST analysis (≈ #042). Without them, any history-based counter remains approximate.

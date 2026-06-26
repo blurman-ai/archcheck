@@ -1,12 +1,13 @@
-# Ревью скорера local_complexity_drift: где он меряет не сложность
+# Review of the local_complexity_drift scorer: where it measures something other than complexity
 
-_2026-06-11. Объект: `experiments/local_complexity_drift/scan_commit.py` (прототип #102,
-кандидат в #101). Каждый дефект воспроизведён живым прогоном `--old-file/--new-file`;
-команды внизу. Вердикт: направление верное (per-function, diff-based, author-фильтры),
-но текущая формула меряет «строки с control-словами × отступ», а не сложность понимания —
-и систематически наказывает самые читаемые конструкции C++._
+_2026-06-11. Subject: `experiments/local_complexity_drift/scan_commit.py` (prototype #102,
+candidate for #101). Each defect is reproduced by a live `--old-file/--new-file` run;
+commands at the bottom. Verdict: the direction is right (per-function, diff-based, author
+filters), but the current formula measures "lines with control words × indentation", not
+the complexity of understanding — and systematically penalizes the most readable C++
+constructs._
 
-## Формула сейчас
+## The formula right now
 
 ```
 score = branch_score + deep_lines + floor(indent_sum / 20)
@@ -14,150 +15,159 @@ branch_score(line) = |if,for,while,switch,catch,do,case,default| × (1 + active_
                    + |break,continue,goto,co_await| + |&&| + |‖| + |?|
 ```
 
-Референс, с которым сравниваю: Sonar Cognitive Complexity (Campbell 2018) — публичная
-спецификация, реализуемая на токенах без AST; именно её использует CMU-исследование
-(arXiv 2511.04427), на которое опирается мотивация задачи.
+The reference I compare against: Sonar Cognitive Complexity (Campbell 2018) — a public
+specification, implementable on tokens without an AST; it's exactly what the CMU study
+(arXiv 2511.04427) uses, which the task's motivation rests on.
 
-## Подтверждённые дефекты (по убыванию вреда)
+## Confirmed defects (in descending order of harm)
 
-### D1. Плоский switch взрывается: 0 → 19 там, где cognitive complexity даёт 1
+### D1. A flat switch explodes: 0 → 19 where cognitive complexity gives 1
 
-8-case диспетчер (`case N: return fN();`) — **скорер: 19 и финдинг `zero_to_complex`;
-Sonar: +1** (switch считается одной структурой, case — бесплатно; в этом вся идея
-cognitive complexity: switch читабельнее эквивалентной if-else лестницы).
-Здесь же каждый `case` — control-hit × (1 + depth), а внутри switch depth ≥ 1,
-т.е. каждый case стоит ≥2. Следствие для корпуса: топ-находки
+An 8-case dispatcher (`case N: return fN();`) — **scorer: 19 and a `zero_to_complex`
+finding; Sonar: +1** (a switch counts as one structure, cases are free; that's the whole
+idea of cognitive complexity: a switch is more readable than the equivalent if-else
+ladder). Here, instead, every `case` is a control-hit × (1 + depth), and inside a switch
+depth ≥ 1, i.e. each case costs ≥2. Consequence for the corpus: the top findings
 (`process_connection` 2184→2486, `decodeOSC`, `translateToPlainText`, `afp_over_dsi`) —
-это протокольные/парсерные switch-машины; они доминируют не потому, что стали менее
-понятными, а потому что у них много case-строк. **Скорер меряет размер диспетчеризации,
-не сложность.**
+are protocol/parser switch machines; they dominate not because they became less
+understandable, but because they have many case lines. **The scorer measures the size of
+the dispatch, not complexity.**
 
-Зеркальный перекос: `else` не считается вовсе (Sonar: +1), поэтому if/else-if-лестница
-дешевле switch — метрика поощряет переписывание switch в else-if, что обратно здравому
-смыслу и I-этой-же-метрике.
+A mirror-image skew: `else` isn't counted at all (Sonar: +1), so an if/else-if ladder is
+cheaper than a switch — the metric encourages rewriting a switch as else-if, which is
+contrary to common sense and to this-very-metric.
 
-### D2. `&&` rvalue-ссылок считается ветвлением
+### D2. The `&&` of rvalue references is counted as branching
 
-`Item&& item`, `auto&& slot` — +1 к branch_score за каждое (репро: 0→1 на функции без
-единого ветвления). На modern-C++ коде (perfect forwarding, `if constexpr`-трейты,
-move-перегрузки) это систематический положительный сдвиг, коррелирующий со стилем,
-а не со сложностью. Sonar к тому же считает **серию** одинаковых операторов за +1,
-а не каждый оператор (`a && b && c && d` = +1, у нас +3).
+`Item&& item`, `auto&& slot` — +1 to branch_score for each (repro: 0→1 on a function
+without a single branch). On modern-C++ code (perfect forwarding, `if constexpr` traits,
+move overloads) this is a systematic positive shift, correlated with style, not with
+complexity. Sonar, moreover, counts a **series** of identical operators as +1, not each
+operator (`a && b && c && d` = +1, ours = +3).
 
-### D3. Выравнивание продолжений строк = фальшивая глубина
+### D3. Aligning line continuations = fake depth
 
-`indent_level = ведущие_пробелы // 4`, и `max(indent_level, active_depth)` идёт в
-deep_lines/indent_sum. Два плоских вызова с выровненными по скобке аргументами
-(clang-format `AlignAfterOpenBracket`) дают 0→4 на коде **без единого ветвления и
-вложенности** (репро ниже): продолжения `registry.bind(...)` на 16 пробелах — это
-indent_level 4 → «deep lines». Обратная сторона: **табы не снимаются** (`lstrip(" ")`),
-у tab-indented проектов indent-компонента всегда 0. Итог: вклад отступов зависит от
-форматнего стиля репозитория → межрепные сравнения (а это цель корпусного прогона)
-несопоставимы. Жёсткое `// 4` дополнительно неверно для 2-пробельных проектов
-(включая сам archcheck).
+`indent_level = leading_spaces // 4`, and `max(indent_level, active_depth)` goes into
+deep_lines/indent_sum. Two flat calls with arguments aligned at the bracket
+(clang-format `AlignAfterOpenBracket`) give 0→4 on code **without a single branch or
+nesting** (repro below): the continuations of `registry.bind(...)` at 16 spaces — that's
+indent_level 4 → "deep lines". The flip side: **tabs aren't stripped** (`lstrip(" ")`),
+so for tab-indented projects the indent component is always 0. Result: the contribution of
+indentation depends on the repository's formatting style → cross-repo comparisons (which is
+the goal of the corpus run) are incomparable. The hard `// 4` is additionally wrong for
+2-space projects (including archcheck itself).
 
-### D4. do-while стоит 2–3 балла за один цикл
+### D4. do-while costs 2–3 points for one loop
 
-`do` и его `while` матчатся CONTROL_RE независимо (репро: 0→3 на тривиальном
+`do` and its `while` are matched by CONTROL_RE independently (repro: 0→3 on a trivial
 do-while). Sonar: +1.
 
-### D5. Абсолютные пороги на метрике, пропорциональной размеру
+### D5. Absolute thresholds on a metric proportional to size
 
-`finding_reason`: `delta >= 5` — абсолют. На функции со score 2184 любой косметический
-патч даёт финдинг; 477 из 524 корпусных находок — именно `complexity_delta`. Сама шкала —
-сумма трёх разных единиц (взвешенные control-хиты + счётчик строк + площадь отступов/20),
-поэтому ни один порог не имеет смысла одновременно для score-10 и score-2000 функций.
-Нужна нормализация: относительный рост при минимальном абсолюте (как уже сделано в
-`relative_complexity_delta`, но он сейчас почти не срабатывает — 12/524), либо
-score/meaningful_loc, либо логарифм (CMU использует log-transform + project aggregation;
-Sonar — per-function порог 15).
+`finding_reason`: `delta >= 5` — absolute. On a function with score 2184 any cosmetic
+patch yields a finding; 477 of 524 corpus findings are exactly `complexity_delta`. The
+scale itself is a sum of three different units (weighted control-hits + a line counter +
+indentation area/20), so no single threshold makes sense simultaneously for score-10 and
+score-2000 functions. Normalization is needed: relative growth with a minimal absolute (as
+already done in `relative_complexity_delta`, but it almost never fires now — 12/524), or
+score/meaningful_loc, or a logarithm (CMU uses a log-transform + project aggregation; Sonar
+— a per-function threshold of 15).
 
-### D6. Тестовый код просачивается, а TEST_F-матчинг сравнивает чужие тела
+### D6. Test code leaks through, and TEST_F matching compares unrelated bodies
 
-Фильтр режет только каталоги `{test,tests,unittest,unittests}` и стемы `*_test/_tests/_spec`:
-`source/EngineTests/ConstructorTests.cpp` проходит (нормализованный сегмент `enginetests`
-не равен `tests`) — в топ-20 корпусного отчёта два финдинга `TEST_F`. Хуже: у всех
-`TEST_F(Suite, Name)` символ — `TEST_F`, матчинг перегрузок берёт «ближайшую по строке» →
-сравниваются тела **разных** тестов (часть из 43 low-confidence матчей). Лечится дёшево:
-суффикс-матч сегментов (`*tests`), блэклист символов `TEST/TEST_F/TEST_P/TYPED_TEST/BENCHMARK`,
-и включение арности параметров в ключ символа.
+The filter cuts only the `{test,tests,unittest,unittests}` directories and the
+`*_test/_tests/_spec` stems: `source/EngineTests/ConstructorTests.cpp` passes (the
+normalized segment `enginetests` doesn't equal `tests`) — in the top-20 of the corpus
+report there are two `TEST_F` findings. Worse: for all `TEST_F(Suite, Name)` the symbol is
+`TEST_F`, and overload matching takes the "nearest by line" → the bodies of **different**
+tests get compared (part of the 43 low-confidence matches). It's cheaply fixable: a
+suffix-match of segments (`*tests`), a blacklist of symbols
+`TEST/TEST_F/TEST_P/TYPED_TEST/BENCHMARK`, and including the parameter arity in the symbol
+key.
 
-### D7. Перегрузки матчатся «по ближайшей строке»
+### D7. Overloads are matched "by the nearest line"
 
-Для C++ перегрузки одного имени — норма; nearest-start-line после большого редактирования
-спаривает не те пары и рождает фантомные дельты (low-confidence, но финдинги из них
-не исключаются). Минимальный фикс — учесть число параметров верхнего уровня в ключе.
+For C++, overloads of one name are the norm; nearest-start-line after a big edit pairs up
+the wrong pairs and gives birth to phantom deltas (low-confidence, but findings aren't
+excluded from them). The minimal fix — account for the number of top-level parameters in
+the key.
 
-## Что в скорере хорошо (проверено и стоит сохранить)
+## What's good in the scorer (verified and worth keeping)
 
-- `strip_comments_and_literals` корректен, включая raw strings; **чистый рефорсат
-  (перенос длинного условия на 5 строк) не меняет score** (4→4) — это сильное свойство.
-- Таблица данных (многострочный aggregate-init) **не** генерирует ложную сложность (0→0).
-- Author-фильтры (vendored dirs/стемы/лицензионные шапки) — разумная первая линия.
-- Сам дизайн «функция × diff двух ревизий × git show» — правильный и дешёвый.
+- `strip_comments_and_literals` is correct, including raw strings; **a pure reformat
+  (wrapping a long condition over 5 lines) doesn't change the score** (4→4) — that's a strong
+  property.
+- A data table (a multi-line aggregate-init) does **not** generate false complexity (0→0).
+- Author filters (vendored dirs/stems/license headers) — a reasonable first line.
+- The design itself — "function × diff of two revisions × git show" — is right and cheap.
 
-## Рекомендация для #101/#102
+## Recommendation for #101/#102
 
-Не изобретать шкалу — взять **спецификацию Sonar Cognitive Complexity** (она токен-реализуема,
-есть публичный white paper и она же у CMU, т.е. результаты будут сопоставимы с литературой):
+Don't invent a scale — take the **Sonar Cognitive Complexity specification** (it's
+token-implementable, there's a public white paper and it's also what CMU uses, i.e. results
+will be comparable with the literature):
 
-1. +1 за структуру: `if`, `else`/`else if`, `?:`, `switch` (не per-case!), `for`, `while`,
-   `do-while` (один раз), `catch`, `goto`; `co_await` оставить как наш +1 — спорно, но дёшево.
-2. Nesting increment (+глубина) — только от **control-структур и лямбд**, считая стеком
-   этих структур, а не скобочной/отступной глубиной. Отступы из формулы убрать совсем
-   (они остаются в #099 как отдельный file-level fallback — задачи тогда не пересекаются).
-3. Серия одинаковых `&&`/`||` = +1; `&&` сразу после идентификатора/`>` в декларационном
-   контексте — отфильтровать эвристикой (или честно принять малую погрешность, но тогда
-   хотя бы серию, не каждый оператор).
-4. Финдинг: `delta_percent >= X` при `delta >= Y` и `new_score >= Z` (относительный рост
-   с минимальным абсолютом и полом), плюс отдельный `zero_to_complex` с порогом по
-   cognitive-шкале (25 — default Sonar C-family и clang-tidy). Полный дизайн сигналов —
-   [cognitive_complexity_delta_design.md](cognitive_complexity_delta_design.md).
-5. D6/D7 фиксы фильтра тестов и ключа символа.
-6. Перевалидировать на тех же 1614 коммитах: ожидание — топ перестанет состоять из
-   switch-парсеров и TEST_F, а 6/6 TP ручной разметки (examples-док) сохранятся —
-   они все про реальный рост ветвления/вложенности, который cognitive-шкала тоже видит.
+1. +1 per structure: `if`, `else`/`else if`, `?:`, `switch` (not per-case!), `for`, `while`,
+   `do-while` (once), `catch`, `goto`; keep `co_await` as our +1 — debatable, but cheap.
+2. Nesting increment (+depth) — only from **control structures and lambdas**, counted as a
+   stack of those structures, not bracket/indent depth. Remove indentation from the formula
+   entirely (it remains in #099 as a separate file-level fallback — then the tasks don't
+   overlap).
+3. A series of identical `&&`/`||` = +1; `&&` immediately after an identifier/`>` in a
+   declaration context — filter out with a heuristic (or honestly accept a small error, but
+   then at least the series, not each operator).
+4. Finding: `delta_percent >= X` with `delta >= Y` and `new_score >= Z` (relative growth
+   with a minimal absolute and a floor), plus a separate `zero_to_complex` with a threshold
+   on the cognitive scale (25 — the default for Sonar's C-family and clang-tidy). The full
+   signal design — [cognitive_complexity_delta_design.md](cognitive_complexity_delta_design.md).
+5. D6/D7 fixes for the test filter and the symbol key.
+6. Re-validate on the same 1614 commits: expectation — the top stops consisting of
+   switch parsers and TEST_F, and the 6/6 TP of the manual labeling (examples doc) are
+   preserved — they're all about real growth of branching/nesting, which the cognitive scale
+   also sees.
 
-## Репро
+## Repro
 
-Файлы пар сохранены в репо: `experiments/local_complexity_drift/review_repros/`
-(`/tmp/lcd_test/` — volatile, команды ниже работают и с in-repo копиями).
+The pair files are saved in the repo: `experiments/local_complexity_drift/review_repros/`
+(`/tmp/lcd_test/` — volatile, the commands below work with the in-repo copies too).
 
 ```bash
 P=experiments/local_complexity_drift/scan_commit.py
-# D1: плоский 8-case switch: 0 -> 19, FINDING zero_to_complex (Sonar: 1)
-# D2: rvalue &&: 0 -> 1 без ветвления
-# D3: выровненные аргументы: 0 -> 4 на плоском коде
-# D4: do-while: 0 -> 3 за один цикл
+# D1: flat 8-case switch: 0 -> 19, FINDING zero_to_complex (Sonar: 1)
+# D2: rvalue &&: 0 -> 1 without branching
+# D3: aligned arguments: 0 -> 4 on flat code
+# D4: do-while: 0 -> 3 for one loop
 python3 $P --old-file /tmp/lcd_test/a_old.cpp --new-file /tmp/lcd_test/a_new.cpp
 python3 $P --old-file /tmp/lcd_test/b_old.cpp --new-file /tmp/lcd_test/b_new.cpp
 python3 $P --old-file /tmp/lcd_test/d_old.cpp --new-file /tmp/lcd_test/d_new.cpp
 python3 $P --old-file /tmp/lcd_test/e_old.cpp --new-file /tmp/lcd_test/e_new.cpp
-# контроль (поведение сохранить): рефорсат 4 -> 4; data-table 0 -> 0
+# control (preserve behavior): reformat 4 -> 4; data-table 0 -> 0
 python3 $P --old-file /tmp/lcd_test/f_old.cpp --new-file /tmp/lcd_test/f_new.cpp
 python3 $P --old-file /tmp/lcd_test/c_old.cpp --new-file /tmp/lcd_test/c_new.cpp
 ```
 
-Связанное: corpus-отчёт прототипа (`local_complexity_drift_corpus_report.md`) уже рекомендует
-`revise` — это ревью конкретизирует, **что именно** ревизить; примеры ручной разметки
-(`local_complexity_drift_examples.md`, 6/6 TP) останутся TP и на cognitive-шкале.
+Related: the prototype's corpus report (`local_complexity_drift_corpus_report.md`) already
+recommends `revise` — this review makes concrete **what exactly** to revise; the manual
+labeling examples (`local_complexity_drift_examples.md`, 6/6 TP) will remain TP on the
+cognitive scale too.
 
-## Resolution (2026-06-11, v2-скорер)
+## Resolution (2026-06-11, v2 scorer)
 
-Все семь дефектов закрыты переписыванием `scan_commit.py` на токенный сканер Sonar
-Cognitive Complexity (дизайн — [cognitive_complexity_delta_design.md](cognitive_complexity_delta_design.md) §4/§6).
-Проверено на репро-парах `review_repros/`:
+All seven defects are closed by rewriting `scan_commit.py` to a Sonar Cognitive Complexity
+token scanner (design — [cognitive_complexity_delta_design.md](cognitive_complexity_delta_design.md) §4/§6).
+Verified on the repro pairs `review_repros/`:
 
-- **D1** (плоский switch): `a` теперь 0→1, finding нет (был 0→19).
-- **D2** (rvalue-`&&`): `b` дельта 0 — `&&`, приклеенный к токену (`Item&&`, `auto&&`), не логический.
-- **D3** (выровненные продолжения): `d` дельта 0 — отступы убраны из score целиком.
-- **D4** (do-while): `e` 0→1 (был 3) — хвостовой `while` не считается.
-- **D5** (абсолютный порог на size-метрике): score теперь cognitive — линейный код = 0 by
-  construction; пороги — иерархия LCX.1 `crossed_25` / LCX.2 `grew_when_already_above` / LCX.3 `Δ>=5`.
-- **D6** (TEST_F): блэклист символов `TEST*/BENCHMARK` + суффикс-фильтр `*tests`-каталогов →
-  0 TEST-находок в корпусе (было 2 в топ-20).
-- **D7** (перегрузки): арность верхнего уровня в ключе матчинга → low-confidence упал 43→21.
+- **D1** (flat switch): `a` is now 0→1, no finding (was 0→19).
+- **D2** (rvalue `&&`): `b` delta 0 — a `&&` glued to a token (`Item&&`, `auto&&`) isn't logical.
+- **D3** (aligned continuations): `d` delta 0 — indentation removed from score entirely.
+- **D4** (do-while): `e` 0→1 (was 3) — the trailing `while` isn't counted.
+- **D5** (absolute threshold on a size metric): the score is now cognitive — linear code = 0 by
+  construction; thresholds are the hierarchy LCX.1 `crossed_25` / LCX.2 `grew_when_already_above` / LCX.3 `Δ>=5`.
+- **D6** (TEST_F): a blacklist of symbols `TEST*/BENCHMARK` + a suffix filter for `*tests` directories →
+  0 TEST findings in the corpus (was 2 in the top-20).
+- **D7** (overloads): top-level arity in the matching key → low-confidence dropped 43→21.
 
-Контроль: `f` (рефорсат условия) 2→2, дельта 0 — многострочная серия `&&` теперь считается
-один раз (lastOp-стек по глубине скобок). Synthetic suite 13/13, 6/6 ручных TP сохранились
-после корпусного перепрогона (`local_complexity_drift_corpus_report.md`).
+Control: `f` (condition reformat) 2→2, delta 0 — a multi-line series of `&&` is now counted
+once (a lastOp stack by bracket depth). Synthetic suite 13/13, the 6/6 manual TP are
+preserved after the corpus re-run (`local_complexity_drift_corpus_report.md`).
+</content>

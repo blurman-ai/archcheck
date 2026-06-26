@@ -3,7 +3,7 @@
 **Candidates found:** 59 structs with 5+ boolean fields
 **Repos with findings:** 22
 
-> **Анализ использования каждого кандидата** (можно ли в `enum`, как реально используется, что предлагается) — см. [boolean_state_enum_analysis.md](boolean_state_enum_analysis.md). Кратко: 0 чистых машин состояний, 11 частичных (есть извлекаемое state-подмножество), 46 «оставить bool», 2 FP экстрактора.
+> **Usage analysis of each candidate** (can it become an `enum`, how it's actually used, what is proposed) — see [boolean_state_enum_analysis.md](boolean_state_enum_analysis.md). In brief: 0 pure state machines, 11 partial (with an extractable state subset), 46 "keep bool", 2 extractor FP.
 
 ## Top Candidates (sorted by bool count)
 

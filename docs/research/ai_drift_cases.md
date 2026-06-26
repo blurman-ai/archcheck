@@ -1,30 +1,30 @@
 # AI-assisted commits as DRIFT-rule test cases
 
-Дата прогона: 2026-05-29
-Бинарь: `build/debug/src/archcheck` (DRIFT.1 + DRIFT.2)
-Метод: `--save-graph-baseline` на before-SHA → `--drift-baseline` на after-SHA.
+Run date: 2026-05-29
+Binary: `build/debug/src/archcheck` (DRIFT.1 + DRIFT.2)
+Method: `--save-graph-baseline` on the before-SHA → `--drift-baseline` on the after-SHA.
 
-Связано с задачей [backlog/future/033_maj_ai_drift_dataset.md](../../backlog/future/033_maj_ai_drift_dataset.md).
-Реализация DRIFT.1/DRIFT.2 — [backlog/completed/009_maj_ai_drift_regression_rules.md](../../backlog/completed/009_maj_ai_drift_regression_rules.md).
+Related to the task [backlog/future/033_maj_ai_drift_dataset.md](../../backlog/future/033_maj_ai_drift_dataset.md).
+DRIFT.1/DRIFT.2 implementation — [backlog/completed/009_maj_ai_drift_regression_rules.md](../../backlog/completed/009_maj_ai_drift_regression_rules.md).
 
-## Сводка
+## Summary
 
-| Repo | PR | Before SHA | After SHA | DRIFT.1 | DRIFT.2 | Вердикт |
+| Repo | PR | Before SHA | After SHA | DRIFT.1 | DRIFT.2 | Verdict |
 |------|----|------------|-----------|---------|---------|---------|
-| LibreSprite/LibreSprite | #581 macOS / menu search / toolbar badges | `60eed0f` | `276fdbd` | **1** | 0 | hit — shortcut edge через границу `ui → pref` |
-| proximafusion/vmecpp | #360 asymmetric infra | `df63271` | `5eabd51` | 0 | 0 | clean — крупный рефактор без дрейфа |
-| proximafusion/vmecpp | #340 consolidate constants | `b44fb7f` | `a7797dc` | 0 | 0 | clean — рефакторинг сделан корректно |
-| bambulab/BambuStudio | #10794 color cutting / dovetail / sculpting | `2263815` | `a206a95` | **2 real + 1 fp** | 0 | hit — два UI→Widgets shortcut'а + найден баг в сканере |
+| LibreSprite/LibreSprite | #581 macOS / menu search / toolbar badges | `60eed0f` | `276fdbd` | **1** | 0 | hit — shortcut edge across the `ui → pref` boundary |
+| proximafusion/vmecpp | #360 asymmetric infra | `df63271` | `5eabd51` | 0 | 0 | clean — a large refactor without drift |
+| proximafusion/vmecpp | #340 consolidate constants | `b44fb7f` | `a7797dc` | 0 | 0 | clean — refactoring done correctly |
+| bambulab/BambuStudio | #10794 color cutting / dovetail / sculpting | `2263815` | `a206a95` | **2 real + 1 fp** | 0 | hit — two UI→Widgets shortcuts + a bug found in the scanner |
 
-DRIFT-правила сработали только там, где это оправдано. На вмecpp PR'ах — clean. На BambuStudio найдены два реальных нарушения **и один баг в нашем сканере** (UTF-8 BOM).
+The DRIFT rules fired only where it was warranted. On the vmecpp PRs — clean. On BambuStudio, two real violations were found **and one bug in our scanner** (UTF-8 BOM).
 
-## LibreSprite PR #581 — найденное нарушение
+## LibreSprite PR #581 — the found violation
 
 ```
 app/ui/toolbar.cpp: [DRIFT.1] shortcut edge: app/ui/toolbar.cpp -> app/pref/preferences.h
 ```
 
-Источник: коммит `0aa57ad` "Add keyboard shortcut badges to toolbar icons"
+Source: commit `0aa57ad` "Add keyboard shortcut badges to toolbar icons"
 (Co-Authored-By: Claude Opus 4.5).
 
 Diff:
@@ -33,29 +33,29 @@ Diff:
 +#include "app/pref/preferences.h"
 ```
 
-Что произошло: агент добавил визуальные бейджи с горячими клавишами на иконки тулбара
-и завёл новую preference `show_tool_shortcuts`. Чтобы прочитать её, он добавил прямой
-include `app/pref/preferences.h` из `toolbar.cpp` — модуля, который раньше с
-preferences-слоем напрямую не общался.
+What happened: the agent added visual hotkey badges to the toolbar icons
+and introduced a new preference `show_tool_shortcuts`. To read it, it added a direct
+include of `app/pref/preferences.h` from `toolbar.cpp` — a module that previously
+did not talk to the preferences layer directly.
 
-Почему это именно тот класс находки, под который DRIFT.1 проектировался:
-- локально удобно (один include, и preference доступен)
-- глобально размывает архитектуру (UI-виджет начинает зависеть от слоя
-  preferences без явного посредника)
-- не ловится обычными линтерами — синтаксически и семантически код валиден
+Why this is exactly the class of finding DRIFT.1 was designed for:
+- locally convenient (one include, and the preference is available)
+- globally it blurs the architecture (a UI widget begins to depend on the
+  preferences layer without an explicit intermediary)
+- not caught by ordinary linters — the code is syntactically and semantically valid
 
-Это эталонный shortcut edge в формулировке `docs/research/constraint_decay.md`:
-правдоподобный AI-шаг через границу модуля, не создающий очевидного мусора, но
-накапливающий структурный дрейф.
+This is the textbook shortcut edge in the formulation of `docs/research/constraint_decay.md`:
+a plausible AI step across a module boundary that creates no obvious junk but
+accumulates structural drift.
 
-### Верификация (skeptic pre-empt, 2026-05-29)
+### Verification (skeptic pre-empt, 2026-05-29)
 
-LibreSprite — форк Aseprite. Upstream `aseprite/aseprite`
-`src/app/ui/toolbar.cpp` уже включает `app/pref/preferences.h`, поэтому
-естественный skeptic-вопрос: «это не AI-drift, а просто re-convergence к
-upstream, где edge всегда был». Аргумент слабый по сути (DRIFT.1 считает дельту
-графа **этого** репо, а не upstream), но он способен унести punch из публичного
-демо. Закрыто тремя командами `git` против sandbox-клона LibreSprite:
+LibreSprite is a fork of Aseprite. Upstream `aseprite/aseprite`
+`src/app/ui/toolbar.cpp` already includes `app/pref/preferences.h`, so the
+natural skeptic question is: "this isn't AI drift but just re-convergence to
+upstream, where the edge always was." The argument is weak in substance (DRIFT.1 counts the
+graph delta of **this** repo, not upstream), but it could take the punch out of a public
+demo. Closed with three `git` commands against a sandbox clone of LibreSprite:
 
 ```
 $ git show 60eed0f:src/app/ui/toolbar.cpp | grep -n 'app/pref/preferences.h'
@@ -69,35 +69,35 @@ $ git log --oneline 60eed0f..pr-581 -- src/app/ui/toolbar.cpp
 ```
 
 `git log -p -S 'app/pref/preferences.h' 60eed0f..pr-581 -- src/app/ui/toolbar.cpp`
-подтвердил единственное `+#include "app/pref/preferences.h"` в этом коммите,
-отката внутри PR нет.
+confirmed the single `+#include "app/pref/preferences.h"` in this commit,
+with no reversal within the PR.
 
-**Вердикт: CONFIRMED.** Форк LibreSprite на 60eed0f действительно не нёс ребра;
-AI-коммит 0aa57ad его (re)introduced. Фрейминг для демо: «edge присутствует в
-upstream Aseprite; LibreSprite по своей истории его терял; AI-коммит вернул его
-именно в той ситуации, которую DRIFT.1 и должен ловить».
+**Verdict: CONFIRMED.** The LibreSprite fork at 60eed0f indeed did not carry the edge;
+the AI commit 0aa57ad (re)introduced it. The framing for the demo: "the edge is present in
+upstream Aseprite; LibreSprite lost it over its own history; the AI commit brought it back
+in exactly the situation DRIFT.1 is supposed to catch."
 
-## Обновление 2026-05-29 (вторая сессия)
+## Update 2026-05-29 (second session)
 
-Корпус расширен до **33 PR'ов на 10 репозиториях**. Полная таблица —
-[ai_drift_runlog.md](ai_drift_runlog.md). Дополнительные find'ы:
+The corpus was expanded to **33 PRs across 10 repositories**. The full table —
+[ai_drift_runlog.md](ai_drift_runlog.md). Additional finds:
 
-| Repo | PR | DRIFT.1 | Архетип |
+| Repo | PR | DRIFT.1 | Archetype |
 |------|----|---------|---------|
 | jakildev/IrredenEngine | #727 render LOD Phase 1 | 2 | system→component_lod, system→lod_utils |
 | EtherAura/Kartend | #27 promote uiconstants | 5 | data/settings → ui/uiconstants ×4 + data→utils/view |
 | community-shaders/skyrim | #2326 fix singleton ptr | 1 | State.cpp → Features/InteriorSun |
 | community-shaders/skyrim | #2207 refactor common Util | 1 | VRStereoOpt → Utils/UI |
 
-В ходе прогона найден **методологический баг** (#048): partial git checkout
-без `git clean -fdx` оставляет файлы из других ревизий → массовые
-false-positive в DRIFT. Все цифры выше пересчитаны через `scripts/drift_run.sh`
-с full clean checkout.
+During the run a **methodological bug** was found (#048): a partial git checkout
+without `git clean -fdx` leaves files from other revisions behind → mass
+false-positives in DRIFT. All the numbers above were recomputed via `scripts/drift_run.sh`
+with a full clean checkout.
 
-Итого: 12 подтверждённых DRIFT.1 hit'ов на 7 PR'ах из 33 (21%).
-Архетипы: UI→widgets, generic→features, system→component, ui-config→core-data.
+Total: 12 confirmed DRIFT.1 hits across 7 of the 33 PRs (21%).
+Archetypes: UI→widgets, generic→features, system→component, ui-config→core-data.
 
-## BambuStudio PR #10794 — два UI→Widgets shortcut + один false-positive (баг)
+## BambuStudio PR #10794 — two UI→Widgets shortcuts + one false-positive (bug)
 
 ```
 slic3r/GUI/FilamentMapDialog.hpp: [DRIFT.1] shortcut edge: ... -> slic3r/GUI/Widgets/CheckBox.hpp
@@ -105,33 +105,33 @@ slic3r/GUI/FilamentMapPanel.hpp:  [DRIFT.1] shortcut edge: ... -> slic3r/GUI/Wid
 slic3r/GUI/MsgDialog.cpp:         [DRIFT.1] shortcut edge: ... -> slic3r/GUI/MsgDialog.hpp   ← FALSE POSITIVE
 ```
 
-Источник изменений: коммит `126aa51` "Integrate AG changes into root source tree" (author: adamgasoft).
-Этот PR явно не помечен Co-Authored-By: Claude, но в задаче #033 он включён в Tier 2 — PR
-содержит инструкцию AI workflow всегда добавлять Claude attribution. Берём как кейс
-крупного архитектурного изменения с возможным AI-присутствием.
+Source of the changes: commit `126aa51` "Integrate AG changes into root source tree" (author: adamgasoft).
+This PR is not explicitly marked Co-Authored-By: Claude, but in task #033 it is included in Tier 2 — the PR
+contains an AI workflow instruction to always add Claude attribution. We take it as a case of
+a large architectural change with possible AI involvement.
 
-**Реальные находки (2):**
-- `FilamentMapDialog.hpp -> Widgets/CheckBox.hpp` — диалог-уровень тащит include
-  низкоуровневого виджета напрямую. Классический shortcut UI-слоя.
-- `FilamentMapPanel.hpp -> Widgets/SwitchButton.hpp` — то же самое для panel.
+**Real findings (2):**
+- `FilamentMapDialog.hpp -> Widgets/CheckBox.hpp` — a dialog-level component pulls an include
+  of a low-level widget directly. A classic UI-layer shortcut.
+- `FilamentMapPanel.hpp -> Widgets/SwitchButton.hpp` — the same thing for the panel.
 
-**False-positive (1) — баг в сканере, заведена задача [#047](../../backlog/completed/047_crt_scan_utf8_bom.md):**
-- `MsgDialog.cpp -> MsgDialog.hpp` — `MsgDialog.cpp` ВСЕГДА начинался с `#include "MsgDialog.hpp"`.
-  В before-ревизии первая строка имеет UTF-8 BOM (`EF BB BF`), наш `include_scanner`
-  не зачищает BOM → первая строка не матчит regex → в graph-baseline ребра нет →
-  в after-ревизии (без BOM) ребро видится как новое → DRIFT.1.
+**False-positive (1) — a bug in the scanner, task filed [#047](../../backlog/completed/047_crt_scan_utf8_bom.md):**
+- `MsgDialog.cpp -> MsgDialog.hpp` — `MsgDialog.cpp` ALWAYS began with `#include "MsgDialog.hpp"`.
+  In the before-revision the first line has a UTF-8 BOM (`EF BB BF`), and our `include_scanner`
+  doesn't strip the BOM → the first line doesn't match the regex → the edge is absent from the graph baseline →
+  in the after-revision (without the BOM) the edge looks new → DRIFT.1.
 
-Этот false-positive — реально важная находка прогона: блокер для надёжности DRIFT.1
-на любых wxWidgets / Windows-проектах. Зафиксирован в #047.
+This false-positive is a genuinely important finding of the run: a blocker for the reliability of DRIFT.1
+on any wxWidgets / Windows project. Recorded in #047.
 
-## vmecpp PR #360 и #340 — clean
+## vmecpp PR #360 and #340 — clean
 
-Оба merged PR с явным Claude-attribution. Тысячи строк изменений (PR #360 — infrastructure
-для asymmetric VMEC, PR #340 — консолидация констант в `vmec_constants.h`). DRIFT-правила
-не сработали ни разу — это полезный сигнал, что DRIFT.1/DRIFT.2 не превращаются в
-шумогенератор на нормальном рефакторинге.
+Both merged PRs with explicit Claude attribution. Thousands of lines of changes (PR #360 — infrastructure
+for asymmetric VMEC, PR #340 — consolidation of constants in `vmec_constants.h`). The DRIFT rules
+did not fire even once — a useful signal that DRIFT.1/DRIFT.2 do not turn into a
+noise generator on normal refactoring.
 
-Lakos.GodHeader флагирует 3 заголовка — это pre-existing состояние, не дрейф.
+Lakos.GodHeader flags 3 headers — that is a pre-existing state, not drift.
 
 ## Reproduction
 
@@ -146,14 +146,14 @@ archcheck --drift-baseline /tmp/libresprite_before.graph.json src
 # → 1 DRIFT.1 violation
 ```
 
-## Следующие шаги
+## Next steps
 
-1. Превратить LibreSprite-кейс в integration fixture `fixtures/drift_real_world/libresprite_pr581/`
-   — минимальный воспроизводимый срез графа (без полного клона репо).
-   Заведена задача [#048](../../backlog/completed/048_maj_fixture_libresprite_pr581.md);
-   skeptic-проверка (включая «PR целиком, а не только merge-range») закрыта
-   секцией «Верификация» выше — CONFIRMED.
-2. Добавить ещё 2-3 кейса из Tier 2 (nodos-dev/sys-device, ...) для
-   расширения корпуса.
-4. Когда корпус >= 5 PR с подтверждёнными hit'ами — обновить README демонстрацией
-   на реальных данных (см. `backlog/future/033` §"Целевой вид демонстрации").
+1. Turn the LibreSprite case into an integration fixture `fixtures/drift_real_world/libresprite_pr581/`
+   — a minimal reproducible graph slice (without a full repo clone).
+   Task filed [#048](../../backlog/completed/048_maj_fixture_libresprite_pr581.md);
+   the skeptic check (including "the whole PR, not just the merge-range") is closed
+   by the "Verification" section above — CONFIRMED.
+2. Add another 2-3 cases from Tier 2 (nodos-dev/sys-device, ...) to
+   expand the corpus.
+4. Once the corpus has >= 5 PRs with confirmed hits — update the README with a demonstration
+   on real data (see `backlog/future/033` §"Target form of the demonstration").

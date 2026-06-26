@@ -1,6 +1,6 @@
 # Code Quality Rules
 
-Источник: адаптировано из gm (`docs/ai/code_quality.md`). Что делать, когда видишь проблемы. SOLID/DRY/YAGNI ты знаешь — здесь о том, **когда и как** их применять.
+Source: adapted from gm (`docs/ai/code_quality.md`). What to do when you see problems. You already know SOLID/DRY/YAGNI — this is about **when and how** to apply them.
 
 ## Fix Immediately (no asking)
 
@@ -82,21 +82,21 @@ Result doThing() { return actuallyDoThing(); }
 
 ### Class Design Rules
 
-**NVI (Non-Virtual Interface) — публичные методы не вызывают другие публичные:**
+**NVI (Non-Virtual Interface) — public methods don't call other public methods:**
 
 ```cpp
-// ❌ Плохо — public вызывает public
+// ❌ Bad — public calls public
 class Player {
 public:
     void Start() {
-        Initialize();   // опасно при наследовании
+        Initialize();   // dangerous under inheritance
         Run();
     }
     virtual void Initialize() { }
     virtual void Run() { }
 };
 
-// ✅ Хорошо — public вызывает private
+// ✅ Good — public calls private
 class Player {
 public:
     void Start() {
@@ -109,12 +109,12 @@ private:
 };
 ```
 
-**Зачем:**
-- Безопасность при наследовании — переопределённый метод не сломает логику базового класса.
-- Ясный контракт: public — точки входа, private — детали реализации.
-- Внешний код не может вызвать метод в неправильный момент.
+**Why:**
+- Safety under inheritance — an overridden method won't break the base class's logic.
+- Clear contract: public = entry points, private = implementation details.
+- External code cannot call a method at the wrong moment.
 
-**Связано с:** Liskov Substitution Principle, Template Method Pattern.
+**Related to:** Liskov Substitution Principle, Template Method Pattern.
 
 ### When Modifying Existing Code
 
@@ -131,9 +131,9 @@ private:
 - [ ] Is every new line necessary for the task?
 - [ ] Would a junior dev understand this without the comments?
 
-## archcheck-специфика
+## archcheck specifics
 
-- **Каждое правило = один файл = один класс**, реализующий `IRule`. Добавление правила не должно править существующие файлы (OCP).
-- **Каждое правило обязано иметь fixtures** — `fixtures/<rule>/pass/` и `fixtures/<rule>/fail_*/`. Без fixtures правило не существует.
-- **Каждое дефолтное правило — с атрибуцией** (Core Guidelines / Lakos / Martin). Если ссылку не приложил — это не дефолт, это опция.
-- **Archcheck проверяет сам себя** в CI. Любой merge ломающий собственные SF.7/8/9/21/cycles на archcheck — недопустим.
+- **Each rule = one file = one class** implementing `IRule`. Adding a rule must not modify existing files (OCP).
+- **Every rule must have fixtures** — `fixtures/<rule>/pass/` and `fixtures/<rule>/fail_*/`. Without fixtures, the rule does not exist.
+- **Every default rule has attribution** (Core Guidelines / Lakos / Martin). If you didn't attach a reference — it's not a default, it's an option.
+- **Archcheck checks itself** in CI. Any merge breaking archcheck's own SF.7/8/9/21/cycles is unacceptable.

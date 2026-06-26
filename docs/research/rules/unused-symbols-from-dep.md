@@ -10,21 +10,21 @@
 
 ## Why for archcheck
 
-Если модуль X включает заголовок из модуля Y, но реально использует <20% объявленных там символов — X слишком крупно-гранулярно зависит от Y. Любое изменение в неиспользуемой части Y всё равно перезапустит ребилд X. Это снижает реальную transitive cohesion и расходится с тем, на что согласился пользователь.
+If module X includes a header from module Y but actually uses <20% of the symbols declared there, X depends on Y at too coarse a granularity. Any change in the unused part of Y still triggers a rebuild of X. This lowers the real transitive cohesion and diverges from what the user agreed to.
 
-Граничит с IWYU, но не дублирует его: IWYU минимизирует includes на уровне TU, CRP смотрит на module-level granularity.
+Borders on IWYU but does not duplicate it: IWYU minimizes includes at the TU level, CRP looks at module-level granularity.
 
 ## Detection
 
-Для каждого include `X → Y`:
-1. Собрать публичные символы Y (по public `.h`).
-2. Собрать использованные в X символы из Y (через clang `MatchFinder` или USR cross-reference).
-3. Если `used / declared < threshold` (по умолчанию 0.2) — флагать.
+For each include `X → Y`:
+1. Collect the public symbols of Y (from the public `.h`).
+2. Collect the symbols from Y used in X (via clang `MatchFinder` or USR cross-reference).
+3. If `used / declared < threshold` (default 0.2) — flag.
 
-Дорогостоящая проверка (AST + symbol resolution). Опциональна, не дефолт MVP.
+An expensive check (AST + symbol resolution). Optional, not an MVP default.
 
 ## Fixtures
 
-- `pass/` — X использует ≥ половину публичных символов Y.
-- `fail_overbroad/` — Y объявляет 20 классов, X использует 1.
-- `pass_typed_facade/` — Y — фасад с одной функцией, X использует её. Ничего лишнего, низкий used/declared не флагается потому что declared мало.
+- `pass/` — X uses ≥ half of Y's public symbols.
+- `fail_overbroad/` — Y declares 20 classes, X uses 1.
+- `pass_typed_facade/` — Y is a facade with a single function, X uses it. Nothing extra; the low used/declared is not flagged because declared is small.

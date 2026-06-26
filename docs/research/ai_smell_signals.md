@@ -1,97 +1,97 @@
-# AI smell signals — наблюдаемые признаки AI-assisted accretion
+# AI smell signals — observable markers of AI-assisted accretion
 
-_Справочник по признакам некачественного AI-assisted кода и документации.
-Назначение файла — не «детектить авторство», а дать рабочую таксономию
-наблюдаемых smell-сигналов, которые можно потом переводить в проверки,
-review-чеклисты и backlog-задачи._
+_Reference on the markers of low-quality AI-assisted code and documentation.
+The purpose of this file is not to "detect authorship" but to provide a working
+taxonomy of observable smell signals that can later be translated into checks,
+review checklists and backlog tasks._
 
-Связано с:
+Related to:
 
-- [constraint_decay.md](constraint_decay.md) — почему проблема вообще существует;
-- [ai_code_detection_landscape.md](ai_code_detection_landscape.md) — что измерили внешние работы;
-- [ai_drift_cases.md](ai_drift_cases.md) — наши реальные drift-case'ы;
-- [code_clones.md](code_clones.md) — дублирование как отдельный класс сигнала.
-
----
-
-## 1. Что считается AI smell
-
-Под **AI smell** в этом документе понимается не «код точно написан ИИ», а:
-
-> наблюдаемый артефакт AI-assisted accretion — такой паттерн в коде, тестах,
-> CLI, конфиге или документации, который статистически часто появляется при
-> агентной/LLM-разработке и повышает риск structural drift, технического долга
-> или ложного product-contract.
-
-Ключевая мысль: **мы не атрибутируем авторство, мы оцениваем риск.**
-
-Один и тот же smell может появиться:
-
-- у человека без всякого ИИ;
-- у джуна;
-- у опытного разработчика, который торопился;
-- у агента, который оптимизировал локальную задачу и не удержал глобальные
-  инварианты.
-
-Поэтому правильный вопрос не «это AI-код?», а:
-
-> есть ли здесь smell, который делает систему менее честной, менее понятной
-> или более связной, чем должна быть?
+- [constraint_decay.md](constraint_decay.md) — why the problem exists at all;
+- [ai_code_detection_landscape.md](ai_code_detection_landscape.md) — what external work has measured;
+- [ai_drift_cases.md](ai_drift_cases.md) — our real-world drift cases;
+- [code_clones.md](code_clones.md) — duplication as a separate signal class.
 
 ---
 
-## 2. Что этот документ НЕ делает
+## 1. What counts as an AI smell
 
-### 2.1. Не определяет авторство
+By **AI smell**, this document does not mean "the code was definitely written by an AI", but rather:
 
-Признак smell-а не доказывает, что код написан ИИ.
+> an observable artifact of AI-assisted accretion — a pattern in code, tests,
+> CLI, config or documentation that statistically appears often in
+> agentic/LLM development and increases the risk of structural drift, technical debt
+> or a false product contract.
 
-Сильный сигнал AI-assistance для репозитория — это:
+The key idea: **we are not attributing authorship, we are assessing risk.**
 
-- явные git-маркеры;
+The same smell can appear:
+
+- in a human with no AI involved at all;
+- in a junior;
+- in an experienced developer who was rushing;
+- in an agent that optimized for a local task and failed to hold the global
+  invariants.
+
+So the right question is not "is this AI code?", but:
+
+> is there a smell here that makes the system less honest, less understandable
+> or more coupled than it should be?
+
+---
+
+## 2. What this document does NOT do
+
+### 2.1. It does not determine authorship
+
+The presence of a smell does not prove that the code was written by an AI.
+
+A strong AI-assistance signal for a repository is:
+
+- explicit git markers;
 - agent config files;
 - self-declared attribution.
 
-Это отдельно разобрано в [ai_code_detection_landscape.md](ai_code_detection_landscape.md).
+This is discussed separately in [ai_code_detection_landscape.md](ai_code_detection_landscape.md).
 
-### 2.2. Не превращает archcheck в общий style-linter
+### 2.2. It does not turn archcheck into a general style linter
 
-Многие smell-ы можно увидеть глазами, но не все из них нужно автоматически
-проверять в `archcheck`.
+Many smells can be seen by eye, but not all of them need to be checked
+automatically in `archcheck`.
 
-Для `archcheck` интересны прежде всего smell-ы, которые:
+For `archcheck`, the smells of interest are primarily those that:
 
-- выражаются как архитектурный инвариант;
-- имеют явный авторитетный источник;
-- статически проверяемы;
-- помогают держать CI-границы, а не просто стиль.
+- can be expressed as an architectural invariant;
+- have an explicit authoritative source;
+- are statically checkable;
+- help hold CI boundaries rather than just style.
 
-### 2.3. Не считает prose-сигналы достаточными
+### 2.3. It does not treat prose signals as sufficient
 
-Подозрительная документация, overly-generic wording, одинаковые фразы в
-комментариях и прочие «текстовые вайбы» сами по себе слишком слабы.
+Suspicious documentation, overly-generic wording, identical phrases in
+comments and other "textual vibes" are by themselves too weak.
 
-Сильный сигнал — это **код + контракт + структура**.
+A strong signal is **code + contract + structure**.
 
 ---
 
-## 3. Откуда взята таксономия
+## 3. Where the taxonomy comes from
 
-Файл синтезирует четыре типа источников:
+The file synthesizes four kinds of sources:
 
-1. **Empirical papers про AI-код**
-   - EURECOM `Constraint Decay` — structural constraints деградируют сильнее
-     чисто функциональных задач.
-   - `AI-Generated Smells` (arXiv:2605.02741) — у AI-кода есть различимые
-     code-level, structural и architectural smell-ы.
-   - `Debt Behind the AI Boom` (arXiv:2603.28592) — основная масса найденных
-     AI-introduced issues относится к maintainability/code smells.
+1. **Empirical papers on AI code**
+   - EURECOM `Constraint Decay` — structural constraints degrade more
+     than purely functional tasks.
+   - `AI-Generated Smells` (arXiv:2605.02741) — AI code has distinguishable
+     code-level, structural and architectural smells.
+   - `Debt Behind the AI Boom` (arXiv:2603.28592) — the bulk of the
+     AI-introduced issues found relate to maintainability/code smells.
 2. **Vendor/industry measurements**
-   - GitClear — рост дублирования и падение moved/refactored code.
+   - GitClear — growth in duplication and a drop in moved/refactored code.
 3. **Review guidance**
-   - GitHub Docs советуют ревьюить AI-код через intent, integration,
-     edge-cases, tests и maintainability, а не через попытку угадать автора.
-4. **Наши наблюдения по репозиторию и drift-прогонам**
+   - GitHub Docs advise reviewing AI code through intent, integration,
+     edge cases, tests and maintainability, rather than through an attempt to guess the author.
+4. **Our own observations from the repository and drift runs**
    - shortcut edges;
    - preview/research leakage;
    - contract drift;
@@ -99,23 +99,23 @@ review-чеклисты и backlog-задачи._
 
 ---
 
-## 4. Уровни уверенности
+## 4. Confidence levels
 
-Полезно разделять признаки по силе сигнала.
+It is useful to separate markers by signal strength.
 
-| Уровень | Что это значит | Пример |
+| Level | What it means | Example |
 |---|---|---|
-| **H1 strong structural** | smell прямо виден как нарушение структуры или контракта | новый shortcut edge, fan-out spike, parse-but-don't-enforce config |
-| **H2 medium local** | smell виден локально, но возможны нормальные объяснения | near-clone, wrapper without value, giant orchestration file |
-| **H3 weak prose/process** | smell заметен в нарративе/тестах/доках, но без кода сигнал слабее | stale docs, review-theater tests, generic TODO framing |
+| **H1 strong structural** | the smell is directly visible as a structural or contract violation | new shortcut edge, fan-out spike, parse-but-don't-enforce config |
+| **H2 medium local** | the smell is visible locally, but normal explanations are possible | near-clone, wrapper without value, giant orchestration file |
+| **H3 weak prose/process** | the smell is noticeable in the narrative/tests/docs, but without code the signal is weaker | stale docs, review-theater tests, generic TODO framing |
 
-Для автоматизации в `archcheck` приоритетны **H1**, затем часть **H2**.
+For automation in `archcheck`, **H1** is the priority, then part of **H2**.
 
 ---
 
-## 5. Карта smell-ов и применимость к archcheck
+## 5. Map of smells and their applicability to archcheck
 
-| ID | Smell | Тип | Уверенность | Проверяемость |
+| ID | Smell | Type | Confidence | Checkability |
 |---|---|---|---|---|
 | **AIS.1** | Promise > implementation | contract drift | H1 | review / repo-internal |
 | **AIS.2** | Parse-but-don't-enforce | fake-config support | H1 | repo-internal |
@@ -133,364 +133,364 @@ review-чеклисты и backlog-задачи._
 | **AIS.14** | Source-of-truth fragmentation | doc-code drift | H2 | docs/review |
 | **AIS.15** | Test theater / scaffolding tests | false confidence | H2 | review |
 
-`Проверяемость` в таблице означает:
+`Checkability` in the table means:
 
-- **graph/rules/drift** — хороший кандидат на продуктовую проверку `archcheck`;
-- **duplication backend** — кандидат в duplication/research слой;
-- **repo-internal/review** — smell важный, но скорее для dogfood-аудита, чем
-  для user-facing default rule.
+- **graph/rules/drift** — a good candidate for an `archcheck` product check;
+- **duplication backend** — a candidate for the duplication/research layer;
+- **repo-internal/review** — an important smell, but more for dogfood audit than
+  for a user-facing default rule.
 
 ---
 
-## 6. Подробные признаки
+## 6. Detailed markers
 
 ### AIS.1. Promise > implementation
 
-**Суть.** Публичный surface обещает capability, которой нет в runtime.
+**Essence.** The public surface promises a capability that does not exist at runtime.
 
-**Как выглядит:**
+**What it looks like:**
 
-- help обещает режим работы, который код не выполняет;
-- spec или README обещают поле/семантику, которой нет в модели данных;
-- changelog пишет "added", хотя по факту это partial scaffold.
+- help promises an operating mode that the code does not perform;
+- spec or README promise a field/semantics that does not exist in the data model;
+- the changelog writes "added" even though in fact it is a partial scaffold.
 
-**Почему типично для AI-assisted работы:**
+**Why it is typical of AI-assisted work:**
 
-- модель очень хорошо строит внешний contract first;
-- внешняя форма часто появляется раньше честной semantics;
-- человек видит красивый CLI/docs слой и недооценивает глубину незавершённости.
+- the model is very good at building the external contract first;
+- the external form often appears earlier than honest semantics;
+- a person sees a nice CLI/docs layer and underestimates the depth of incompleteness.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- пользователь доверяет несуществующей функции;
-- тесты могут проходить на superficial path;
-- debt растёт не как TODO, а как ложное обещание.
+- the user trusts a non-existent function;
+- tests may pass on a superficial path;
+- debt grows not as a TODO but as a false promise.
 
 **False positives:**
 
-- обычная незавершённая фича человека;
-- миграционный период между двумя контрактами.
+- an ordinary unfinished feature by a human;
+- a migration period between two contracts.
 
-**Для archcheck:** smell важный, но в основном для dogfood и repo-audit.
-Это не хорошее дефолтное правило для чужих репозиториев.
+**For archcheck:** an important smell, but mainly for dogfood and repo audit.
+It is not a good default rule for other people's repositories.
 
 ### AIS.2. Parse-but-don't-enforce
 
-**Суть.** Конфиг, флаг или схема парсятся и валидируются, но не влияют на
-реальное поведение.
+**Essence.** A config, flag or schema is parsed and validated, but does not affect
+real behavior.
 
-**Как выглядит:**
+**What it looks like:**
 
-- loader знает структуру YAML/JSON;
-- тесты проверяют parsing/validation;
-- runtime использует только малую часть данных или не использует вовсе.
+- the loader knows the YAML/JSON structure;
+- tests check parsing/validation;
+- the runtime uses only a small part of the data or none at all.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агенту легко "дотянуть" парсер и тесты на синтаксис;
-- доведение до semantic enforcement требует глобального понимания pipeline.
+- it is easy for an agent to "finish off" the parser and the syntax tests;
+- bringing it up to semantic enforcement requires a global understanding of the pipeline.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- это самая коварная форма feature-theater;
-- формально "поддержка есть", фактически её нет.
+- this is the most insidious form of feature theater;
+- formally "support exists", in fact it does not.
 
-**Для archcheck:** очень сильный внутренний smell. В пользовательский rule set
-обычно не выносится, но должен регулярно ловиться dogfood-аудитом.
+**For archcheck:** a very strong internal smell. It is usually not exported into the user
+rule set, but should be regularly caught by dogfood audit.
 
-### AIS.3. Placeholder / no-op в shipped path
+### AIS.3. Placeholder / no-op in a shipped path
 
-**Суть.** В production path лежит заглушка, которая выглядит как feature.
+**Essence.** In the production path there is a stub that looks like a feature.
 
-**Как выглядит:**
+**What it looks like:**
 
-- функция всегда возвращает default/empty result;
-- phase hook существует, но ничего не делает;
-- внутри shipped pipeline есть комментарий уровня "temporary / assume / stub".
+- the function always returns a default/empty result;
+- a phase hook exists but does nothing;
+- inside the shipped pipeline there is a comment of the "temporary / assume / stub" kind.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент охотно достраивает scaffold до "компилируется и выглядит завершённо";
-- semantic finishing step откладывается.
+- the agent readily builds out a scaffold to "compiles and looks complete";
+- the semantic finishing step is deferred.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- ревьюер недооценивает незавершённость;
-- команда начинает строить поверх заглушки новые ожидания.
+- the reviewer underestimates the incompleteness;
+- the team starts building new expectations on top of the stub.
 
-**Для archcheck:** частично проверяемо текстово, но чаще это review-smell.
+**For archcheck:** partially checkable textually, but more often a review smell.
 
 ### AIS.4. Dead surface
 
-**Суть.** Surface расширен, но реальной поведенческой мощности не прибавилось.
+**Essence.** The surface is extended, but no real behavioral power has been added.
 
-**Как выглядит:**
+**What it looks like:**
 
-- флаг принимается, но не влияет на результат;
-- schema/output mode объявлен, но не заполняется;
-- public option есть, но downstream path не подключён.
+- a flag is accepted but does not affect the result;
+- a schema/output mode is declared but not populated;
+- a public option exists but the downstream path is not connected.
 
-**Отличие от AIS.3:** здесь основной smell не в заглушке функции, а в ложном
-расширении интерфейса.
+**Difference from AIS.3:** here the main smell is not in a function stub, but in a false
+extension of the interface.
 
-**Для archcheck:** полезно для внутренних аудитов CLI и format contracts.
+**For archcheck:** useful for internal audits of the CLI and format contracts.
 
 ### AIS.5. Near-clone families
 
-**Суть.** Появляются локальные семейства почти одинаковых кусков кода, которые
-отличаются 1-2 идентификаторами, литералами или условием.
+**Essence.** Local families of almost identical pieces of code appear, differing
+by 1-2 identifiers, literals or a condition.
 
-**Как выглядит:**
+**What it looks like:**
 
-- повторяющиеся блоки 5+ строк;
-- одинаковая структура ветвей;
-- те же вызовы в другом порядке или с другими именами.
+- repeated blocks of 5+ lines;
+- identical branch structure;
+- the same calls in a different order or with different names.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент оптимизирует "получить working code fast";
-- abstraction-after-the-fact почти не происходит автоматически;
-- GitClear как раз фиксирует рост copy/paste и падение moved/refactored code.
+- the agent optimizes for "get working code fast";
+- abstraction-after-the-fact almost never happens automatically;
+- GitClear precisely records the growth of copy/paste and the drop in moved/refactored code.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- размножаются места изменений;
-- потом agent продолжает копировать уже испорченный паттерн.
+- the places that need changing multiply;
+- later the agent keeps copying the already-spoiled pattern.
 
-**Для archcheck:** хороший кандидат для duplication/research слоя, но не для
-trusted mandatory gate без точной калибровки FP.
+**For archcheck:** a good candidate for the duplication/research layer, but not for
+a trusted mandatory gate without precise FP calibration.
 
 ### AIS.6. Parallel branch explosion
 
-**Суть.** Один и тот же шаблон размножен по `if/else`, `switch`, табличным
-инициализациям и похожим блокам.
+**Essence.** The same template is multiplied across `if/else`, `switch`, table
+initializers and similar blocks.
 
-**Как выглядит:**
+**What it looks like:**
 
-- 4+ sibling-ветки с почти идентичным телом;
-- изменяется только литерал, enum, field name или один вызов.
+- 4+ sibling branches with almost identical bodies;
+- only the literal, enum, field name or one call changes.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент предпочитает локально понятную развертку вместо новой абстракции;
-- особенно часто в UI bindings, config-fill code, per-sensor/per-field logic.
+- the agent prefers a locally understandable expansion instead of a new abstraction;
+- especially common in UI bindings, config-fill code, per-sensor/per-field logic.
 
-**Для archcheck:** скорее duplication-normalization / smell-classifier, не
-базовый архитектурный rule.
+**For archcheck:** more of a duplication-normalization / smell-classifier than
+a basic architectural rule.
 
 ### AIS.7. Shortcut edge across layers
 
-**Суть.** Для быстрой локальной задачи добавляется прямое ребро через
-архитектурную границу: слой начинает зависеть от того, от чего раньше не зависел.
+**Essence.** For a quick local task, a direct edge is added across an
+architectural boundary: a layer begins to depend on something it did not depend on before.
 
-**Как выглядит:**
+**What it looks like:**
 
-- новый `#include` через слой;
-- UI напрямую тянет preferences/widgets/data-access;
-- generic/util начинает зависеть от feature namespace.
+- a new `#include` across a layer;
+- the UI directly pulls in preferences/widgets/data-access;
+- generic/util begins to depend on a feature namespace.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент выбирает кратчайший путь к нужному символу;
-- без внешнего guardrail-а architectural route почти всегда проигрывает local convenience.
+- the agent chooses the shortest path to the symbol it needs;
+- without an external guardrail, the architectural route almost always loses to local convenience.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- это канонический structural drift;
-- такие рёбра быстро становятся нормой и начинают самовоспроизводиться.
+- this is the canonical structural drift;
+- such edges quickly become the norm and begin to self-replicate.
 
-**Для archcheck:** один из лучших кандидатов. Уже хорошо ложится на graph rules,
-module constraints и DRIFT-rules.
+**For archcheck:** one of the best candidates. It already maps well onto graph rules,
+module constraints and DRIFT rules.
 
 ### AIS.8. Fan-out explosion / god consumer
 
-**Суть.** Компонент начинает напрямую зависеть от слишком многих соседей.
+**Essence.** A component begins to depend directly on too many neighbors.
 
-**Как выглядит:**
+**What it looks like:**
 
-- `.cpp` или header тянет десятки project includes;
-- orchestration unit превращается в сборщик всех подсистем сразу;
-- один модуль «знает про всё».
+- a `.cpp` or header pulls in dozens of project includes;
+- an orchestration unit turns into a collector of all subsystems at once;
+- one module "knows about everything".
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент добавляет очередной include/dep без cost model для coupling;
-- refactoring к промежуточному abstraction layer чаще не происходит.
+- the agent adds yet another include/dep without a cost model for coupling;
+- refactoring toward an intermediate abstraction layer more often does not happen.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- растёт coupling even without cycles;
-- компонент становится дорогим для изменений и тестирования.
+- coupling grows even without cycles;
+- the component becomes expensive to change and test.
 
-**Для archcheck:** отличный кандидат на простую graph-проверку:
+**For archcheck:** an excellent candidate for a simple graph check:
 `Lakos.GodComponentFanOut`.
 
 ### AIS.9. Fan-in hub / god header/file
 
-**Суть.** Слишком много кода начинает зависеть от одного узла.
+**Essence.** Too much code begins to depend on a single node.
 
-**Как выглядит:**
+**What it looks like:**
 
-- header с очень высоким fan-in;
-- utility header постепенно становится dumping ground.
+- a header with very high fan-in;
+- a utility header gradually becomes a dumping ground.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент любит "положить рядом с похожим";
-- как только файл стал удобной точкой, он начинает притягивать новые обязанности.
+- the agent likes to "put it next to something similar";
+- once a file has become a convenient point, it begins to attract new responsibilities.
 
-**Для archcheck:** уже существует как `Lakos.GodHeader`. Это не AI-specific
-правило, но очень полезный guardrail против AI-driven accretion.
+**For archcheck:** already exists as `Lakos.GodHeader`. It is not an AI-specific
+rule, but a very useful guardrail against AI-driven accretion.
 
 ### AIS.10. Chain-length / blast-radius growth
 
-**Суть.** Даже без циклов и явных violation-ов растёт глубина и радиус влияния.
+**Essence.** Even without cycles and explicit violations, depth and radius of influence grow.
 
-**Как выглядит:**
+**What it looks like:**
 
-- include chains становятся длиннее;
-- изменение одного компонента потенциально касается всё большего числа узлов;
-- связность `edges/nodes` растёт быстрее, чем это можно оправдать новой архитектурой.
+- include chains become longer;
+- a change in one component potentially touches an ever-larger number of nodes;
+- the `edges/nodes` connectivity grows faster than can be justified by new architecture.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент успешно добавляет рабочие связи, но не платит стоимость за глобальную
+- the agent successfully adds working dependencies, but does not pay the cost for global
   propagation complexity;
-- это "тихий дрейф", который не заметен по одному PR.
+- this is "silent drift", which is not visible from a single PR.
 
-**Для archcheck:** очень хороший кандидат для report-only метрик и drift-gates.
+**For archcheck:** a very good candidate for report-only metrics and drift gates.
 
 ### AIS.11. Duplicate plumbing / zero-value wrappers
 
-**Суть.** В репозитории размножаются локальные pipework/helpers/обёртки,
-которые добавляют мало или ноль новой semantics.
+**Essence.** Local pipework/helpers/wrappers that add little or zero new semantics
+multiply across the repository.
 
-**Как выглядит:**
+**What it looks like:**
 
-- две почти одинаковые функции запуска subprocess/file IO/path normalization;
-- thin wrapper просто прокидывает вызов ниже;
-- одинаковый lifecycle code повторяется в нескольких TUs.
+- two almost identical functions for launching a subprocess/file IO/path normalization;
+- a thin wrapper just forwards the call downward;
+- the same lifecycle code is repeated in several TUs.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент чаще копирует существующий локальный шаблон, чем ищет точку объединения;
-- "сделать ещё один helper" дешевле по локальной задаче, чем переразложить модуль.
+- the agent more often copies an existing local template than searches for a point of consolidation;
+- "make one more helper" is cheaper for the local task than re-decomposing the module.
 
-**Чем опасно:**
+**Why it is dangerous:**
 
-- policy drift между копиями;
-- мелкие расхождения начинают вести себя как bugs.
+- policy drift between copies;
+- small divergences start behaving like bugs.
 
-**Для archcheck:** чаще review/audit smell, чем user-facing default rule.
+**For archcheck:** more often a review/audit smell than a user-facing default rule.
 
 ### AIS.12. Giant orchestration / context sink
 
-**Суть.** Один файл или класс становится местом, куда agent продолжает
-складывать новые ветки управления.
+**Essence.** One file or class becomes the place where the agent keeps
+piling up new control branches.
 
-**Как выглядит:**
+**What it looks like:**
 
-- `main.cpp`, `dispatcher.cpp`, `pipeline.cpp`, `manager.cpp` быстро разрастаются;
-- phase-style нумерация (`phase7`, `phase12`, `step9`) живёт слишком долго;
-- файл знает и про CLI, и про policy, и про reporting, и про file-system.
+- `main.cpp`, `dispatcher.cpp`, `pipeline.cpp`, `manager.cpp` grow quickly;
+- phase-style numbering (`phase7`, `phase12`, `step9`) lives too long;
+- the file knows about the CLI, and policy, and reporting, and the file system.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агенту выгодно продолжать писать туда, где уже есть контекст;
-- локально это дешёвый путь, глобально — future maintenance sink.
+- it pays off for the agent to keep writing where context already exists;
+- locally this is the cheap path, globally a future maintenance sink.
 
-**Для archcheck:** можно мерить size/degree вспомогательно, но как дефолтное
-правило — осторожно, чтобы не превратить продукт в length-linter.
+**For archcheck:** one can measure size/degree as an aid, but as a default
+rule — carefully, so as not to turn the product into a length linter.
 
 ### AIS.13. Research leakage into product path
 
-**Суть.** Экспериментальный или noisy слой попадает в shipped CLI/build/docs
-раньше, чем достигнут trust bar.
+**Essence.** An experimental or noisy layer enters the shipped CLI/build/docs
+before the trust bar has been reached.
 
-**Как выглядит:**
+**What it looks like:**
 
-- preview/research capability рекламируется как обычная feature;
-- internal harness лежит рядом с обычными тестами;
-- placeholder evaluator попадает в core build.
+- a preview/research capability is advertised as an ordinary feature;
+- an internal harness sits next to the ordinary tests;
+- a placeholder evaluator gets into the core build.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агент и человек легко "доводят до работоспособности", но не ставят явную
-  границу зрелости;
-- внешняя форма фичи появляется раньше policy о её статусе.
+- both agent and human easily "bring it to a working state" but do not set an explicit
+  maturity boundary;
+- the external form of the feature appears earlier than a policy about its status.
 
-**Для archcheck:** это скорее repo-governance smell, но для самого archcheck
-он критичен.
+**For archcheck:** this is more of a repo-governance smell, but for archcheck itself
+it is critical.
 
 ### AIS.14. Source-of-truth fragmentation
 
-**Суть.** В репозитории одновременно живут несколько разных правд про продукт.
+**Essence.** Several different truths about the product live in the repository at once.
 
-**Как выглядит:**
+**What it looks like:**
 
-- `AGENTS.md`, spec, roadmap и README описывают разные состояния;
-- naming/style rules расходятся;
-- backlog и docs ссылаются на удалённые ветки как на текущие.
+- `AGENTS.md`, spec, roadmap and README describe different states;
+- naming/style rules diverge;
+- backlog and docs reference deleted branches as if they were current.
 
-**Почему типично:**
+**Why it is typical:**
 
-- agent-assisted работа ускоряет производство артефактов;
-- разные слои обновляются с разной скоростью;
-- никто не платит цену за выравнивание narrative сразу.
+- agent-assisted work accelerates the production of artifacts;
+- different layers are updated at different speeds;
+- nobody pays the cost of aligning the narrative right away.
 
-**Для archcheck:** не rule для пользователя, а важнейший smell для dogfood-а.
+**For archcheck:** not a rule for the user, but a most important smell for dogfooding.
 
 ### AIS.15. Test theater / scaffolding tests
 
-**Суть.** Тесты создают ощущение надёжности, но проверяют не то, что реально
-важно для пользовательского контракта.
+**Essence.** Tests create a sense of reliability, but check things that are not what is really
+important for the user contract.
 
-**Как выглядит:**
+**What it looks like:**
 
-- тестируется parsing/creation, а не enforcement/behavior;
-- тест подтверждает наличие объекта/флага, а не effect;
-- integration path без fixtures заменён локальной синтетикой, которая не ловит
-  реальную семантическую дыру.
+- parsing/creation is tested, not enforcement/behavior;
+- the test confirms the presence of an object/flag, not the effect;
+- an integration path without fixtures is replaced by local synthetics that do not catch
+  the real semantic hole.
 
-**Почему типично:**
+**Why it is typical:**
 
-- агенту проще быстро добрать coverage на shallow checks;
-- superficial green tests маскируют контрактные дыры.
+- it is easier for the agent to quickly top up coverage on shallow checks;
+- superficial green tests mask contractual holes.
 
-**Для archcheck:** это review-smell; частично лечится обязательными fixtures и
-dogfood-политикой.
+**For archcheck:** this is a review smell; partially cured by mandatory fixtures and
+dogfood policy.
 
 ---
 
-## 7. Что особенно важно для archcheck
+## 7. What is especially important for archcheck
 
-Не все smell-ы одинаково полезны для нашего продукта. Для `archcheck` высокий
-приоритет имеют сигналы, которые:
+Not all smells are equally useful for our product. For `archcheck`, high
+priority goes to signals that:
 
-- выражаются графом зависимостей;
-- связаны с structural drift;
-- не требуют гадать про намерение автора;
-- дают мало ложных срабатываний;
-- объяснимы пользователю через Lakos / Core Guidelines / drift story.
+- are expressed by the dependency graph;
+- are related to structural drift;
+- do not require guessing at the author's intent;
+- produce few false positives;
+- are explainable to the user through Lakos / Core Guidelines / a drift story.
 
-### Приоритет P1 — можно и нужно переводить в проверки
+### Priority P1 — can and should be translated into checks
 
 - **AIS.7 Shortcut edge**
 - **AIS.8 Fan-out explosion**
 - **AIS.9 Fan-in hub**
 - **AIS.10 Chain-length / blast-radius growth**
 
-Это хорошие кандидаты для `graph/rules/drift` слоя.
+These are good candidates for the `graph/rules/drift` layer.
 
-### Приоритет P2 — можно переводить, но осторожно
+### Priority P2 — can be translated, but carefully
 
 - **AIS.5 Near-clone families**
 - **AIS.6 Parallel branch explosion**
 - **AIS.12 Giant orchestration**
 
-Здесь уже выше риск FP или размывания продуктового scope.
+Here the risk of FP or blurring the product scope is already higher.
 
-### Приоритет P3 — важно для dogfood и репо-аудита, но не для user rules
+### Priority P3 — important for dogfood and repo audit, but not for user rules
 
 - **AIS.1 Promise > implementation**
 - **AIS.2 Parse-but-don't-enforce**
@@ -502,65 +502,65 @@ dogfood-политикой.
 
 ---
 
-## 8. Что НЕ стоит объявлять AI smell-ом
+## 8. What should NOT be declared an AI smell
 
-Нельзя делать smell-ом то, что слишком слабо связано с архитектурным риском.
+You must not make a smell out of something that is too weakly tied to architectural risk.
 
-Плохие кандидаты:
+Bad candidates:
 
-- просто длинный комментарий;
-- просто английские generic названия;
-- просто большой PR;
-- просто много созданных файлов;
-- просто "код выглядит слишком аккуратно";
-- просто наличие `AGENTS.md` или `CLAUDE.md`;
-- просто следы атрибуции в git.
+- just a long comment;
+- just generic English names;
+- just a large PR;
+- just many created files;
+- just "the code looks too tidy";
+- just the presence of `AGENTS.md` or `CLAUDE.md`;
+- just traces of attribution in git.
 
-Это может говорить об AI-assistance, но почти ничего не говорит о качестве.
-
----
-
-## 9. Практический вывод
-
-Если задача — удерживать архитектуру в эпоху агентной разработки, то бороться
-нужно не с «авторством ИИ», а с **машинно-типичными траекториями деградации**:
-
-- локально удобное ребро через слой;
-- незаметный рост связности;
-- копипаст вместо консолидации;
-- поверхностный feature surface без настоящего enforcement;
-- утечка эксперимента в продуктовую поверхность.
-
-Именно поэтому для `archcheck` самые полезные AI-smell checks — это не
-стилометрия и не authorship detection, а **graph/drift/coupling guardrails**.
+This may indicate AI-assistance, but says almost nothing about quality.
 
 ---
 
-## 10. Что из этого можно превратить в простые проверки первым
+## 9. Practical conclusion
 
-Если выбирать дешёвые и честные проверки с минимальным scope creep, порядок
-такой:
+If the goal is to hold the architecture in the era of agentic development, then what we need
+to fight is not "AI authorship" but **machine-typical trajectories of degradation**:
+
+- a locally convenient edge across a layer;
+- imperceptible growth of coupling;
+- copy-paste instead of consolidation;
+- a superficial feature surface without real enforcement;
+- leakage of an experiment into the product surface.
+
+This is exactly why, for `archcheck`, the most useful AI-smell checks are not
+stylometry and not authorship detection, but **graph/drift/coupling guardrails**.
+
+---
+
+## 10. What of this can be turned into simple checks first
+
+If we pick cheap and honest checks with minimal scope creep, the order is
+as follows:
 
 1. **`Lakos.GodComponentFanOut`**
-   - простой graph-rule;
-   - уже зафиксирован в спеке как planned;
-   - очень хорошо ловит AI-типичный "consumer knows too much".
-2. **Report-only метрики `edges/nodes` и `max blast radius`**
-   - хороший ранний сигнал тихого дрейфа;
-   - можно показать пользователю без жёсткого gate.
-3. **Drift-gate на рост blast radius**
-   - сильный regression signal, когда появится уверенность в порогах.
-4. **Дальше уже duplication-кандидаты**
-   - только после отдельной стабилизации FP.
+   - a simple graph rule;
+   - already recorded in the spec as planned;
+   - catches the AI-typical "consumer knows too much" very well.
+2. **Report-only metrics `edges/nodes` and `max blast radius`**
+   - a good early signal of silent drift;
+   - can be shown to the user without a hard gate.
+3. **A drift gate on blast-radius growth**
+   - a strong regression signal, once there is confidence in the thresholds.
+4. **After that, the duplication candidates**
+   - only after separate FP stabilization.
 
 ---
 
-## Источники
+## Sources
 
 - GitHub Docs: [Review AI-generated code](https://docs.github.com/en/enterprise-cloud%40latest/copilot/tutorials/review-ai-generated-code)
 - EURECOM / Dente, Satriani, Papotti: [Constraint Decay](https://arxiv.org/abs/2605.06445)
 - Zhu, Tsantalis, Rigby: [AI-Generated Smells](https://arxiv.org/abs/2605.02741)
 - Aymen et al.: [Debt Behind the AI Boom](https://arxiv.org/abs/2603.28592)
 - GitClear: [AI Code Quality 2025](https://www.gitclear.com/ai_assistant_code_quality_2025_research)
-- Практическое обзорное поле по детекции и датасетам:
+- A practical survey field on detection and datasets:
   [ai_code_detection_landscape.md](ai_code_detection_landscape.md)

@@ -1,14 +1,14 @@
-# boolean_state per-struct accretion — полный корпус (#134, из нативных событий #090)
+# boolean_state per-struct accretion — full corpus (#134, from native events #090)
 
-**Дата:** 2026-06-25. **Метод:** агрегат struct-уровневых событий `DRIFT.BOOL_FIELD_ACCRETION` (#090) по 10735 bool-коммитам корпуса (не leaky-Python `perstruct_drift.py` — нативный фильтр vendored/test/generated). Метрика: структура, накопившая були в **≥4 разных коммитах** (in-window).
+**Date:** 2026-06-25. **Method:** aggregate of struct-level `DRIFT.BOOL_FIELD_ACCRETION` events (#090) over 10735 bool commits of the corpus (not the leaky-Python `perstruct_drift.py` — a native filter for vendored/test/generated). Metric: a struct that accreted bools in **≥4 different commits** (in-window).
 
-**Сводка:** 8280 (repo,struct) накопили хоть один буль; **499** прошли ≥4 коммитов (**335** content-drift + **163** config-bag + **1** churn) в **240** репах. Всего событий накопления: 13315. Дедуп по (repo,struct) — переезды файлов смёрджены.
+**Summary:** 8280 (repo,struct) accreted at least one bool; **499** passed ≥4 commits (**335** content-drift + **163** config-bag + **1** churn) in **240** repos. Total accretion events: 13315. Dedup by (repo,struct) — file moves merged.
 
-> Метрика — НЕ #134-буква (`perstruct_drift.py` blame, MIN_FIELDS=4): тут считается число РАЗНЫХ коммитов, доливших були в структуру, в окне корпус-прогона; нативный фильтр строже Python-VEND. Greenfield (первое появление структуры) не считается — правило #090 фаярит только если структура была в родителе.
+> The metric is NOT the #134 letter (`perstruct_drift.py` blame, MIN_FIELDS=4): here we count the number of DIFFERENT commits that topped up bools in a struct, within the corpus-run window; the native filter is stricter than Python-VEND. Greenfield (a struct's first appearance) is not counted — rule #090 only fires if the struct was present in the parent.
 
-## Content-структуры — кандидаты на boolean-state drift (config/churn вынесены) (топ-40)
+## Content structs — candidates for boolean-state drift (config/churn excluded) (top 40)
 
-| # | repo | struct | файл | коммитов | полей | поля |
+| # | repo | struct | file | commits | fields | fields |
 |---|---|---|---|---|---|---|
 | 1 | Exoridus_exosnap | `MainWindow` | app/MainWindow.h; apps/exosnap/MainWindow.h | 7 | 14 | recording_active_, runtime_window_icon_bound_, resizable_style_appl... |
 | 2 | djeada_Lightpad | `Terminal` | App/ui/panels/terminal.h | 6 | 14 | m_processRunning, m_autoRestartEnabled, m_linkDetectionEnabled, m_r... |
@@ -51,9 +51,9 @@
 | 39 | MOLAorg_mola_lidar_odometry | `Visualization` | module/include/mola_lidar_odometry/LidarOdometry.h | 7 | 10 | camera_follows_vehicle, camera_rotates_with_vehicle, show_ground_gr... |
 | 40 | brooksthemaker_ProtoHUD | `SystemHealth` | src/app_state.h | 7 | 10 | mpu9250_ok, cam_usb1_overlay, cam_usb2_overlay, wifi_ok, ssh_active... |
 
-## Config/flag-bag (вынесены — легитимное накопление, не смелл) (топ-20)
+## Config/flag-bag (excluded — legitimate accretion, not a smell) (top 20)
 
-| # | repo | struct | файл | коммитов | полей | поля |
+| # | repo | struct | file | commits | fields | fields |
 |---|---|---|---|---|---|---|
 | 1 | alexandrosk0_Smatchet | `UiDrawSession` | Source/Core/include/Ui/SmatchetUiSession.h; Source_Core/include/SmatchetUiSession.h | 37 | 99 | showBlameAnalysis, inFlightCommitStarted, cachedSortValid, pendingV... |
 | 2 | mod-playerbots_mod-playerbots | `PlayerbotAIConfig` | src/PlayerbotAIConfig.h | 34 | 42 | disableDeathKnightLogin, randomBotFixedLevel, sayWhenCollectingItem... |
@@ -76,66 +76,66 @@
 | 19 | ErenAri_Aegis-BPF | `BpfState` | src/bpf_ops.hpp; src/main.cpp | 19 | 40 | inode_reused, cgroup_reused, block_stats_reused, deny_cgroup_stats_... |
 | 20 | Barbarisch_phyxel | `Application` | editor/include/Application.h; include/Application.h | 19 | 37 | showPerformanceOverlay, projectionMatrixNeedsUpdate, hasHoveredCube... |
 
-## Churn-suspect (commits ≫ 2×fields — поля переписывались, не накапливались) (топ-1)
+## Churn-suspect (commits ≫ 2×fields — fields were rewritten, not accreted) (top 1)
 
-| # | repo | struct | файл | коммитов | полей | поля |
+| # | repo | struct | file | commits | fields | fields |
 |---|---|---|---|---|---|---|
 | 1 | thewriterben_WildCAM_ESP32 | `SystemState` | firmware/main.cpp | 10 | 3 | ota_available, in_lockdown, power_save_mode |
 
 
-## Eye-check топ-15 content (обязательно, CLAUDE.md «Самопроверка»)
+## Eye-check top 15 content (mandatory, CLAUDE.md "Self-check")
 
-Классификация по именам полей + проверка кода (вердикт по каждому):
+Classification by field names + code inspection (verdict for each):
 
-| # | struct (repo) | вердикт | основание |
+| # | struct (repo) | verdict | basis |
 |---|---|---|---|
 | 1 | MainWindow (exosnap) | **TP** | view-state: `recording_active_/win32_maximized_/resizable_style_applied_` |
-| 2 | Terminal (Lightpad) | **TP** | `m_processRunning/m_runInputIndicatorActive` (+ часть config) |
-| 3 | TrackContentPanel (magda-core) | **TP сильный** | interaction-машина `isCreatingSelection/isMarqueeActive/isMovingSelection` |
-| 4 | RtlirVariable (deltahdl) | **TP (boolean-blindness)** | `is_real/is_string/is_event/is_queue` — взаимоисключающие type-kinds → enum |
-| 5 | BrainView (mne-cpp) | TP, но **example** | `src/examples/`; view-state визуализации |
-| 6 | PQCExtensionInfo (photoqt) | borderline **config** | `allow*/let*` permission-флаги |
+| 2 | Terminal (Lightpad) | **TP** | `m_processRunning/m_runInputIndicatorActive` (+ part config) |
+| 3 | TrackContentPanel (magda-core) | **strong TP** | interaction machine `isCreatingSelection/isMarqueeActive/isMovingSelection` |
+| 4 | RtlirVariable (deltahdl) | **TP (boolean-blindness)** | `is_real/is_string/is_event/is_queue` — mutually exclusive type-kinds → enum |
+| 5 | BrainView (mne-cpp) | TP, but **example** | `src/examples/`; visualization view-state |
+| 6 | PQCExtensionInfo (photoqt) | borderline **config** | `allow*/let*` permission flags |
 | 7 | GFNFF (curcuma) | **TP** | cache-validity: `m_static_topology_valid/m_hbxb_fresh/m_static_state_captured` |
 | 8 | MatrixTimelineItem (komai) | **TP** | message-state `isEdited/cachedIs*/mediaIsEncrypted` |
 | 9 | View (pulp) | **TP** | layout-state, `border_*_set_`×4 |
 | 10 | MainComponent (DirectPipe) | **TP** | audio-routing state `loadingSlot_/cached*Muted_/preMute*` |
-| 11 | Sandbox3D (OloEngineBase) | **demo** | `m_Show*Test/m_UsePBRMaterials` — debug-тогглы в сэндбоксе |
+| 11 | Sandbox3D (OloEngineBase) | **demo** | `m_Show*Test/m_UsePBRMaterials` — debug toggles in the sandbox |
 | 12 | UniformBufferRegistry (OloEngineBase) | borderline | `m_IsTemplate/m_IsClone` state + config |
-| 13 | GameGridView (GBAStation) | TP (механич.) | `m_prev*`×8 — per-button input → должен быть массив/битмаск |
-| 14 | MainView (magda-core) | **TP сильный** | interaction `isDragging/isResizingHeaders/isUpdatingFromZoom` |
-| 15 | Menu (skyrim-shaders) | TP | UI `pending*Reload` state (+ часть hotkey-config) |
+| 13 | GameGridView (GBAStation) | TP (mechanical) | `m_prev*`×8 — per-button input → should be an array/bitmask |
+| 14 | MainView (magda-core) | **strong TP** | interaction `isDragging/isResizingHeaders/isUpdatingFromZoom` |
+| 15 | Menu (skyrim-shaders) | TP | UI `pending*Reload` state (+ part hotkey-config) |
 
-**Итог eye-check:** ~11/15 чистый TP, ~2 demo/example, ~2 borderline-config. Доминирующий
-паттерн реального дрейфа — **UI controller/view god-объекты** (MainWindow/Terminal/TrackContentPanel/
-View/MainComponent/MainView/Menu), копящие взаимозависимые interaction/view-state флаги; плюс
-computation-state кэши (GFNFF) и эталонная **boolean-blindness** (RtlirVariable: `is_real/is_string/
-is_event` как N булей вместо tagged-union). Остаточные FP-классы: config-bag мимо name-фильтра
-(вынесены в отдельную таблицу + эвристика по полям), churn-инфляция n_commits (поля переписывались —
-1 структура, SystemState), demo/example-код, file-move split (снят дедупом по `(repo,struct)`).
+**Eye-check conclusion:** ~11/15 clean TP, ~2 demo/example, ~2 borderline-config. The dominant
+pattern of real drift is **UI controller/view god-objects** (MainWindow/Terminal/TrackContentPanel/
+View/MainComponent/MainView/Menu), accreting interdependent interaction/view-state flags; plus
+computation-state caches (GFNFF) and the canonical **boolean-blindness** (RtlirVariable: `is_real/is_string/
+is_event` as N bools instead of a tagged-union). Residual FP classes: config-bag slipping past the name filter
+(moved to a separate table + a field heuristic), churn inflation of n_commits (fields rewritten —
+1 struct, SystemState), demo/example code, file-move split (removed by dedup over `(repo,struct)`).
 
-## Сверка с эталонами #089
+## Cross-check against the #089 anchors
 
-| якорь #089 | репа в корпусе? | в наших drift-результатах? |
+| #089 anchor | in corpus? | in our drift results? |
 |---|---|---|
-| MethodState (MOLA) | ✓ MOLAorg_mola | **✓ c=5 f=5** — воспроизведён |
-| Channel (FluidNC) | ✓ bdring_FluidNC | **✓ c=5 f=5** — воспроизведён |
-| EditorShell (donner) | ✓ jwmcglynn_donner | ✗ накопление ДО окна корпус-прогона |
-| HttpTransact::State (trafficserver) | ✓ apache_trafficserver | ✗ накопление ДО окна |
-| Terminal (microsoft) | ≠ (у нас contour/Lightpad) | Terminal-тип воспроизведён в др. репах |
+| MethodState (MOLA) | ✓ MOLAorg_mola | **✓ c=5 f=5** — reproduced |
+| Channel (FluidNC) | ✓ bdring_FluidNC | **✓ c=5 f=5** — reproduced |
+| EditorShell (donner) | ✓ jwmcglynn_donner | ✗ accretion BEFORE the corpus-run window |
+| HttpTransact::State (trafficserver) | ✓ apache_trafficserver | ✗ accretion BEFORE the window |
+| Terminal (microsoft) | ≠ (we have contour/Lightpad) | Terminal type reproduced in other repos |
 
-2 из 5 якорей воспроизвелись нашим **независимым** методом (нативные per-commit события vs
-Python-blame по всей истории) — кросс-валидация. Отсутствие EditorShell/HttpTransact — это разница
-**линз**: #089 блеймил всю историю, мы считаем накопление в окне корпус-прогона (2024-2025);
-структуры, дорастившие були раньше, в окно не попадают (lower-bound на накопление, не противоречие).
+2 of 5 anchors reproduced by our **independent** method (native per-commit events vs
+Python-blame over the whole history) — cross-validation. The absence of EditorShell/HttpTransact is a difference of
+**lens**: #089 blamed the entire history, we count accretion within the corpus-run window (2024-2025);
+structs that grew their bools earlier do not fall into the window (a lower bound on accretion, not a contradiction).
 
-## Вывод
+## Conclusion
 
-- **Prevalence ≈ 20.2%** (240 из 1188 реп имеют структуру, дорастившую були в ≥4 коммитах в окне) —
-  **независимо подтверждает ~21% из #089** на корпусе ×16 больше и другим методом.
-- **Дрейф концентрируется в UI/view god-объектах** — это, а не «config-структуры», главный носитель
-  boolean-state накопления; согласуется с central-finding'ом #119 (bool↔complexity: флаг→ветвление).
-- Метрика остаётся **нейтральной** (accretion ≠ дефект): часть — boolean-blindness (RtlirVariable),
-  часть — легитимная per-button/per-attribute механика (GameGridView), часть — config; разделяет
-  только eye-check, не raw-счёт ([[project_bool_accretion_neutral_not_defect]]).
-- **Граница метода:** окно = корпус-прогон, не вся история; нативный фильтр строже Python-VEND
-  (#134-прототип не запускался — путь выбран ради фильтра, см. шапку).
+- **Prevalence ≈ 20.2%** (240 of 1188 repos have a struct that grew bools across ≥4 commits in the window) —
+  **independently confirms the ~21% from #089** on a corpus ×16 larger and by a different method.
+- **Drift concentrates in UI/view god-objects** — this, not "config structs", is the main carrier of
+  boolean-state accretion; consistent with the central finding of #119 (bool↔complexity: flag→branching).
+- The metric remains **neutral** (accretion ≠ defect): part is boolean-blindness (RtlirVariable),
+  part is legitimate per-button/per-attribute mechanics (GameGridView), part is config; only the
+  eye-check separates them, not the raw count ([[project_bool_accretion_neutral_not_defect]]).
+- **Method boundary:** the window = corpus-run, not the whole history; the native filter is stricter than Python-VEND
+  (the #134 prototype was not run — the path was chosen for the sake of the filter, see the header).

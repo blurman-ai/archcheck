@@ -10,19 +10,19 @@
 
 ## Why for archcheck
 
-Прямой путь к static initialization order fiasco. Это не баг логики — это архитектурный пах: глобал зависит от другого глобала из соседнего модуля, и порядок инициализации непредсказуем между TU. Часто проявляется как «то работает, то падает на старте» и почти всегда хорошо ложится в межмодульные баги.
+A direct path to the static initialization order fiasco. This is not a logic bug — it's an architectural flaw: a global depends on another global from a neighboring module, and the initialization order is unpredictable across TUs. Often manifests as "sometimes it works, sometimes it crashes at startup" and almost always falls neatly into the category of inter-module bugs.
 
 ## Detection
 
-AST-проход: глобал с инициализатором, который:
-- вызывает не-`constexpr` функцию, или
-- читает другой глобал, или
-- выделяет память (`new`, контейнерные операции).
+AST pass: a global with an initializer that:
+- calls a non-`constexpr` function, or
+- reads another global, or
+- allocates memory (`new`, container operations).
 
-Допустимы: literal init, `constexpr` constructor, `{}`-агрегатная инициализация POD.
+Allowed: literal init, a `constexpr` constructor, `{}`-aggregate initialization of a POD.
 
 ## Fixtures
 
 - `pass/` — `inline constexpr int kMax = 42;`, `inline const std::string_view kName = "x";`.
 - `fail_function_call/` — `inline std::vector<int> g_data = ComputeData();`.
-- `fail_cross_global/` — `inline int g_b = g_a + 1;` где `g_a` объявлен в другом TU.
+- `fail_cross_global/` — `inline int g_b = g_a + 1;` where `g_a` is declared in another TU.

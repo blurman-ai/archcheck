@@ -10,20 +10,20 @@
 
 ## Why for archcheck
 
-«Зона боли»: модуль низко-`I` (стабильный) + низко-`A` (конкретный). Стабильный модуль уже трудно менять, а если он ещё и конкретный (полно implementation classes, мало pure abstract) — он буквально цементирует реализацию, от которой все зависят. Это самая дорогая ошибка из всех Martin metrics.
+The "zone of pain": a module with low `I` (stable) + low `A` (concrete). A stable module is already hard to change, and if it is also concrete (lots of implementation classes, little pure abstract) — it literally cements the implementation that everyone depends on. This is the most expensive mistake of all the Martin metrics.
 
-Не требует новых данных: `I` и `A` уже считаются.
+Requires no new data: `I` and `A` are already computed.
 
 ## Detection
 
-Для каждого модуля:
+For each module:
 - `pain = (1 - I) * (1 - A)`.
-- Если `pain > 0.6` (настраиваемо) — флагать «SAP violation: stable + concrete (zone of pain)».
+- If `pain > 0.6` (configurable) — flag "SAP violation: stable + concrete (zone of pain)".
 
-Дополнительно: рассчитывать `D = |A + I - 1|` (distance from main sequence) и репортить топ-N модулей с худшим D — это уже стандартная Martin-метрика, но stable-but-concrete даёт более понятную в репорте формулировку причины.
+Additionally: compute `D = |A + I - 1|` (distance from the main sequence) and report the top-N modules with the worst D — this is already a standard Martin metric, but stable-but-concrete gives a more understandable phrasing of the cause in the report.
 
 ## Fixtures
 
-- `pass_main_sequence/` — модули с `D < 0.3`.
-- `fail_zone_of_pain/` — модуль `I=0.1`, `A=0.1` — стабильный и конкретный.
-- `pass_zone_of_uselessness/` — модуль `I=0.9`, `A=0.9` — нестабильный и абстрактный. Тоже не идеал, но другая боль; репортится отдельным сообщением, без `fail`.
+- `pass_main_sequence/` — modules with `D < 0.3`.
+- `fail_zone_of_pain/` — a module with `I=0.1`, `A=0.1` — stable and concrete.
+- `pass_zone_of_uselessness/` — a module with `I=0.9`, `A=0.9` — unstable and abstract. Also not ideal, but a different pain; reported as a separate message, without `fail`.

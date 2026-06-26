@@ -15,7 +15,7 @@ jobs:
   format-check:
     name: clang-format-18 (--dry-run --Werror)
     runs-on: ubuntu-24.04
-    # Параллельно с build / static-analysis. Падаем быстро если код не отформатирован.
+    # Runs in parallel with build / static-analysis. Fail fast if the code is not formatted.
 
     steps:
       - name: Checkout
@@ -135,7 +135,7 @@ jobs:
           CXX: g++-13
         run: cmake -B build/debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug
 
-      # cppcheck: gate. Падаем при warning / performance / portability находках.
+      # cppcheck: gate. Fail on warning / performance / portability findings.
       - name: cppcheck
         run: |
           cppcheck \
@@ -147,10 +147,10 @@ jobs:
             -I include \
             src/ include/
 
-      # lizard: gate. Пороги из docs/code_quality.md
-      # (function ≤ 30 строк "исключая скобки" → NLOC, CCN ≤ 15, args ≤ 4 — округлено до 5).
-      # NLOC, а не физическая длина: иначе плотно документированный код штрафуется за
-      # комментарии. Tests/fixtures исключены из бюджета (code_quality.md), поэтому только src/ include/.
+      # lizard: gate. Thresholds from docs/code_quality.md
+      # (function ≤ 30 lines "excluding braces" → NLOC, CCN ≤ 15, args ≤ 4 — rounded up to 5).
+      # NLOC, not physical length: otherwise densely documented code is penalized for its
+      # comments. Tests/fixtures are excluded from the budget (code_quality.md), so only src/ include/.
       - name: lizard (cyclomatic complexity + function length)
         run: |
           lizard \
@@ -166,18 +166,18 @@ jobs:
             exit 1
           fi
 
-      # clang-tidy strict pass — WARNING-ONLY, не валит сборку. Артефакт сохраняется.
+      # clang-tidy strict pass — WARNING-ONLY, does not fail the build. The artifact is kept.
       - name: clang-tidy strict (warning-only baseline)
         continue-on-error: true
         run: |
-          # Collect .cpp from src/, тестовый код пока пропускаем.
+          # Collect .cpp from src/, skip the test code for now.
           mapfile -t SRC < <(find src/ -name '*.cpp')
           clang-tidy-18 \
             --config-file=.clang-tidy-strict \
             -p build/debug \
             "${SRC[@]}" \
             > clang-tidy-strict-report.txt 2>&1 || true
-          # Печатаем report в лог для видимости и сохраняем в артефакт.
+          # Print the report to the log for visibility and save it as an artifact.
           echo "::group::clang-tidy strict report"
           cat clang-tidy-strict-report.txt
           echo "::endgroup::"
@@ -196,12 +196,12 @@ jobs:
   coverage:
     name: Coverage gate (gcovr, lines≥90 functions≥90 branches≥40)
     runs-on: ubuntu-24.04
-    # Параллельно с build / static-analysis. Покрытие считаем на gcc-13 + gcovr,
-    # НЕ через scripts/check_coverage.sh: тот скрипт написан под lcov 1.13 (Astra),
-    # а Ubuntu 24.04 ставит lcov 2.x, который валит сборку на throw-arc'ах и
-    # несовпавших --remove паттернах. gcovr — единый pip-пакет с нативным
-    # --fail-under-* гейтом и --exclude-throw-branches (снимает C++ throw-шум).
-    # Пороги синхронизированы с локальным гейтом: docs/dev/coverage_constraints.md.
+    # Runs in parallel with build / static-analysis. Coverage is computed on gcc-13 + gcovr,
+    # NOT via scripts/check_coverage.sh: that script targets lcov 1.13 (Astra),
+    # while Ubuntu 24.04 ships lcov 2.x, which breaks the build on throw-arcs and
+    # mismatched --remove patterns. gcovr is a single pip package with a native
+    # --fail-under-* gate and --exclude-throw-branches (removes C++ throw noise).
+    # Thresholds synced with the local gate: docs/dev/coverage_constraints.md.
     env:
       CC: gcc-13
       CXX: g++-13
@@ -235,14 +235,14 @@ jobs:
         working-directory: build/coverage
         run: ctest --output-on-failure
 
-      # gcovr-гейт по src/ только. Путь поиска сужен до build/coverage/src —
-      # объектов самого archcheck: иначе gcovr парсит и инструментированные .gcno
-      # зависимостей (_deps/catch2 без .gcda для невыполненного benchmark-кода) и
-      # падает с no_working_dir_found. --filter 'src/' оставлен на отчётный слой.
-      # --gcov-ignore-errors no_working_dir_found — страховка на невыполненный src-TU.
-      # --exclude-throw-branches убирает throw-arc'и (на lcov из-за них branches
-      # застревали на ~63%). Пороги из docs/dev/coverage_constraints.md;
-      # любой fail-under → ненулевой exit → red.
+      # gcovr gate over src/ only. The search path is narrowed to build/coverage/src —
+      # archcheck's own objects: otherwise gcovr parses the instrumented .gcno of
+      # dependencies (_deps/catch2, no .gcda for unexecuted benchmark code) and
+      # fails with no_working_dir_found. --filter 'src/' is kept on the reporting layer.
+      # --gcov-ignore-errors no_working_dir_found — a safeguard for an unexecuted src-TU.
+      # --exclude-throw-branches removes throw-arcs (on lcov they kept branches
+      # stuck at ~63%). Thresholds from docs/dev/coverage_constraints.md;
+      # any fail-under → non-zero exit → red.
       - name: Coverage gate
         run: |
           gcovr \

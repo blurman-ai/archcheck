@@ -1,82 +1,82 @@
-# Руководство по стилю C++20 — archcheck
+# C++20 style guide — archcheck
 
-База — **LLVM coding standards**. Два осознанных отступления:
-**Allman braces** вместо attach и **`name_`** (Google C++ Style trailing
-underscore) для нестатических полей. Любые другие отличия от LLVM-style —
-это баг этого документа или `.clang-format`, поправьте PR-ом.
+The base is the **LLVM coding standards**. Two deliberate departures:
+**Allman braces** instead of attach, and **`name_`** (Google C++ Style trailing
+underscore) for non-static fields. Any other difference from LLVM-style is
+a bug in this document or in `.clang-format` — fix it with a PR.
 
-`.clang-format` в корне репо авторитативен для machine-checkable правил;
-этот документ — для смысловых решений, которые форматтер не выразит.
+The `.clang-format` at the repo root is authoritative for machine-checkable rules;
+this document is for the meaningful decisions the formatter can't express.
 
-## Почему Allman
+## Why Allman
 
-Allman braces — одно из двух осознанных отступлений от LLVM-style в этом
-репозитории. Причины: (а) более чёткое визуальное разделение объявления и
-тела функции/класса; (б) исторически сложившееся локальное предпочтение
-мейнтейнеров. Это stylistic-выбор, не технический — пожалуйста, не
-открывайте PR на перевод в Attach.
+Allman braces are one of the two deliberate departures from LLVM-style in this
+repository. The reasons: (a) a clearer visual separation of the declaration and the
+body of a function/class; (b) a historically established local preference of the
+maintainers. This is a stylistic choice, not a technical one — please don't
+open a PR to convert to Attach.
 
-## Почему `name_` на полях
+## Why `name_` on fields
 
-Мы маркируем нестатические поля класса trailing underscore (`name_`, не
-`_name`, не `m_name`, не bare). Причины: (а) ускоряет чтение тела функции —
-отличить поле от локальной переменной или параметра можно глазом, без
-перечитывания сигнатуры или скролла к объявлению класса; (б) это Google C++
-Style — mainstream-конвенция в C++ OSS, не авторская придумка; (в)
-технически безопаснее leading underscore (`_name`), который зарезервирован
-стандартом в ряде контекстов. Это второе и последнее осознанное отступление
-от чистого LLVM-style в этом репозитории.
+We mark non-static class fields with a trailing underscore (`name_`, not
+`_name`, not `m_name`, not bare). The reasons: (a) it speeds up reading a function body —
+you can tell a field from a local variable or a parameter at a glance, without
+rereading the signature or scrolling to the class declaration; (b) it's Google C++
+Style — a mainstream convention in C++ OSS, not an author's invention; (c) it's
+technically safer than a leading underscore (`_name`), which is reserved by the
+standard in a number of contexts. This is the second and last deliberate departure
+from pure LLVM-style in this repository.
 
-## Базовые параметры форматирования
+## Basic formatting parameters
 
-- Кодировка — UTF-8 без BOM, перевод строки Unix (`\n`).
-- `IndentWidth: 2` (LLVM default, не 3 и не 4).
-- `ColumnLimit: 120` (более терпимо чем LLVM-default 80; узкие колонки в современных IDE-ах не нужны).
-- `BreakBeforeBraces: Allman` (наша девиация — см. выше).
-- Один публичный тип на файл; вспомогательные детали — в анонимном namespace или `namespace detail`.
-- Не оставляем закомментированный код — у нас есть git history.
+- Encoding — UTF-8 without BOM, Unix line ending (`\n`).
+- `IndentWidth: 2` (LLVM default, not 3 and not 4).
+- `ColumnLimit: 120` (more tolerant than the LLVM default of 80; narrow columns aren't needed in modern IDEs).
+- `BreakBeforeBraces: Allman` (our deviation — see above).
+- One public type per file; helper details — in an anonymous namespace or `namespace detail`.
+- We don't leave commented-out code — we have git history.
 
-## Именование
+## Naming
 
-| Категория | Конвенция | Пример |
+| Category | Convention | Example |
 |-----------|-----------|--------|
 | Namespaces | `lower_snake_case` | `archcheck::scan` |
-| Types (`class`, `struct`, `enum class`, `enum`, `using`-aliases типов) | `PascalCase` | `DependencyGraph`, `IncludeKind`, `ProjectFile` |
+| Types (`class`, `struct`, `enum class`, `enum`, type `using`-aliases) | `PascalCase` | `DependencyGraph`, `IncludeKind`, `ProjectFile` |
 | Methods + free functions | `lowerCamelCase` | `scanIncludes`, `addNode`, `computeScc` |
 | Local variables + parameters | `lowerCamelCase` | `lineNo`, `sourceFile` |
-| Fields (нестатические поля класса) | `lowerCamelCase` с **trailing underscore** (Google C++ Style) | `graph_`, `lineCount_` |
+| Fields (non-static class fields) | `lowerCamelCase` with a **trailing underscore** (Google C++ Style) | `graph_`, `lineCount_` |
 | Compile-time constants (`constexpr`, `consteval`) | `kPascalCase` | `kMaxIncludeDepth` |
-| Preprocessor macros и `#define` | `UPPER_SNAKE_CASE` | `ARCHCHECK_FIXTURES_DIR` |
-| Template parameters | `PascalCase` (без префикса `T`) | `Allocator`, `Predicate` |
+| Preprocessor macros and `#define` | `UPPER_SNAKE_CASE` | `ARCHCHECK_FIXTURES_DIR` |
+| Template parameters | `PascalCase` (no `T` prefix) | `Allocator`, `Predicate` |
 
-**Что мы НЕ делаем:**
-- Не префиксуем интерфейсы `I` (`IRule`). В C++ это C#/MFC-патрон, не наша школа. Используйте просто `Rule`.
-- Не префиксуем поля `_` (leading underscore). Префикс с маленькой буквой формально легален, но `_Uppercase` и `__anything` зарезервированы стандартом, и многие линтеры по умолчанию ругаются на `_name`. **Используем trailing underscore `name_`** — см. «Почему `name_` на полях» выше.
-- Не различаем `struct` и `class` именованием. Используйте `struct` для passive data carrier-ов (все поля public, нет инвариантов), `class` — для всего остального.
+**What we do NOT do:**
+- We don't prefix interfaces with `I` (`IRule`). In C++ that's a C#/MFC pattern, not our school. Just use `Rule`.
+- We don't prefix fields with `_` (leading underscore). A prefix with a lowercase letter is formally legal, but `_Uppercase` and `__anything` are reserved by the standard, and many linters complain about `_name` by default. **We use a trailing underscore `name_`** — see "Why `name_` on fields" above.
+- We don't distinguish `struct` and `class` by naming. Use `struct` for passive data carriers (all fields public, no invariants), `class` — for everything else.
 
-### Совместимость с реальной LLVM-кодовой базой
+### Compatibility with the real LLVM codebase
 
-Канонический LLVM coding standard говорит `lowerCamelCase` для функций; в
-реальной кодовой базе (LLDB, исторические части Clang) встречается и
-`snake_case`. Для нового кода LLVM-комьюнити фактически дрейфует в
-`lowerCamelCase` — мы фиксируем этот target и не оглядываемся на исторические
-куски LLVM.
+The canonical LLVM coding standard says `lowerCamelCase` for functions; in the
+real codebase (LLDB, historical parts of Clang) `snake_case` also occurs.
+For new code the LLVM community is in fact drifting toward `lowerCamelCase` —
+we fix this as the target and don't look back at the historical
+pieces of LLVM.
 
-## Порядок содержимого файла
+## File content order
 
-1. `#pragma once` (заголовок) / включения (cpp).
-2. `#include`/`import` в порядке: стандартная библиотека → сторонние → внутренние (`"archcheck/..."`).
-3. `using` объявления, не более одного-двух, в анонимном namespace в .cpp.
-4. Объявления типов и функций.
+1. `#pragma once` (header) / includes (cpp).
+2. `#include`/`import` in the order: standard library → third-party → internal (`"archcheck/..."`).
+3. `using` declarations, no more than one or two, in an anonymous namespace in the .cpp.
+4. Type and function declarations.
 
-`#include`-блоки разделены пустыми строками; clang-format с
-`IncludeBlocks: Regroup` делает это автоматически.
+`#include` blocks are separated by blank lines; clang-format with
+`IncludeBlocks: Regroup` does this automatically.
 
-## Препроцессор и константы
+## Preprocessor and constants
 
-Макросы — только для условной компиляции, платформенных атрибутов или
-прокидывания путей через build-систему (см. `ARCHCHECK_FIXTURES_DIR`).
-Числовые константы — `constexpr` / `consteval`.
+Macros — only for conditional compilation, platform attributes, or
+threading paths through the build system (see `ARCHCHECK_FIXTURES_DIR`).
+Numeric constants — `constexpr` / `consteval`.
 
 ```cpp
 #pragma once
@@ -92,10 +92,10 @@ inline constexpr std::size_t kGodHeaderFanIn = 30;
 }  // namespace archcheck::config
 ```
 
-## Перечисления
+## Enumerations
 
-`enum class` с явным базовым типом, когда это релевантно. Старые `enum` —
-только для C-API.
+`enum class` with an explicit underlying type, when relevant. Plain `enum` —
+only for C-APIs.
 
 ```cpp
 enum class Severity : std::uint8_t
@@ -106,12 +106,12 @@ enum class Severity : std::uint8_t
 };
 ```
 
-## Структуры
+## Structs
 
-`struct` — для passive data carrier-ов. Все поля public, инициализированы
-по месту, без инвариантов. **Поля struct — без trailing underscore**: они
-часть публичного data-интерфейса, не internal state класса (это совпадает
-с Google C++ Style).
+`struct` — for passive data carriers. All fields public, initialized
+in place, no invariants. **Struct fields — without a trailing underscore**: they're
+part of the public data interface, not the internal state of a class (this coincides
+with Google C++ Style).
 
 ```cpp
 struct SourceLocation
@@ -122,10 +122,10 @@ struct SourceLocation
 };
 ```
 
-## Классы и интерфейсы
+## Classes and interfaces
 
-Чисто-виртуальные базы — обычный `class` (никакого `I`-префикса).
-Виртуальный деструктор обязателен. Контракты — через атрибуты
+Pure-virtual bases — a plain `class` (no `I` prefix).
+A virtual destructor is mandatory. Contracts — through attributes
 (`[[nodiscard]]`, `noexcept`).
 
 ```cpp
@@ -139,13 +139,13 @@ public:
 };
 ```
 
-Для конкретных классов:
+For concrete classes:
 
-- Конструкторы — `explicit`, если не copy/move.
-- Список инициализации построчно, в порядке объявления полей.
-- Правило пятёрки — явно `= default` или `= delete`.
-- Ресурсы — RAII через стандартную библиотеку.
-- Нестатические поля — с trailing underscore (`name_`).
+- Constructors — `explicit`, unless copy/move.
+- The initializer list line by line, in field declaration order.
+- The rule of five — explicitly `= default` or `= delete`.
+- Resources — RAII through the standard library.
+- Non-static fields — with a trailing underscore (`name_`).
 
 ```cpp
 class FileScanner
@@ -162,21 +162,21 @@ private:
 };
 ```
 
-## Функции и методы
+## Functions and methods
 
-- `[[nodiscard]]` на любой возврат, который имеет смысл проверять.
-- `noexcept` по умолчанию, если функция не бросает.
-- Возврат вместо output-параметров: `std::optional`, `std::pair`, `std::tuple`, `std::expected` (в v0.2+).
-- Сложные возвращаемые типы — `auto` + trailing return type.
+- `[[nodiscard]]` on any return that's worth checking.
+- `noexcept` by default, if the function doesn't throw.
+- Return instead of output parameters: `std::optional`, `std::pair`, `std::tuple`, `std::expected` (in v0.2+).
+- Complex return types — `auto` + trailing return type.
 
-## Управляющие конструкции
+## Control constructs
 
-`if constexpr` для шаблонного выбора, range-based `for` для коллекций,
-`std::ranges` для композиции.
+`if constexpr` for template selection, range-based `for` for collections,
+`std::ranges` for composition.
 
 ### Braceless conditionals
 
-Тело из одной строки — фигурные скобки не обязательны:
+A single-line body — braces aren't required:
 
 ```cpp
 if (value < 0)
@@ -186,17 +186,17 @@ for (auto& item : items)
   item.update();
 ```
 
-**Symmetric bracing**: если одна ветка `if/else` многострочная — скобки
-нужны **везде**:
+**Symmetric bracing**: if one branch of an `if/else` is multi-line — braces are
+needed **everywhere**:
 
 ```cpp
-// OK — обе ветки однострочные
+// OK — both branches single-line
 if (ready)
   process();
 else
   wait();
 
-// OK — else многострочная → скобки везде
+// OK — else is multi-line → braces everywhere
 if (ready)
 {
   process();
@@ -207,7 +207,7 @@ else
   wait();
 }
 
-// НЕЛЬЗЯ — асимметрия
+// NOT ALLOWED — asymmetry
 if (ready)
   process();
 else
@@ -217,9 +217,9 @@ else
 }
 ```
 
-### Компактный switch
+### Compact switch
 
-Однострочные действия — выравниваем по столбцам:
+Single-line actions — align by columns:
 
 ```cpp
 switch (severity)
@@ -232,39 +232,40 @@ switch (severity)
 
 ## C++20
 
-- **Concepts** для требований к шаблонным параметрам.
-- **Ranges / views** для композиции преобразований.
-- **`std::span` / `std::string_view`** — буферы и строки без копирования.
-- **`std::optional` / `std::variant`** вместо флагов и неполных структур.
-- **`consteval` / `constexpr` / `constinit`** для compile-time расчётов.
-- **Атрибуты:** `[[nodiscard]]`, `[[maybe_unused]]`, `[[noreturn]]`, `[[likely]]`, `[[unlikely]]`.
+- **Concepts** for requirements on template parameters.
+- **Ranges / views** for composing transformations.
+- **`std::span` / `std::string_view`** — buffers and strings without copying.
+- **`std::optional` / `std::variant`** instead of flags and incomplete structs.
+- **`consteval` / `constexpr` / `constinit`** for compile-time computations.
+- **Attributes:** `[[nodiscard]]`, `[[maybe_unused]]`, `[[noreturn]]`, `[[likely]]`, `[[unlikely]]`.
 
-## Комментарии
+## Comments
 
-- Публичные API — Doxygen (`///` или `/** */`).
-- Комментарии объясняют **почему**, не **что**. Над блоком, не в конце строки.
-- Сложные алгоритмы — ссылки на спецификацию (Lakos, Core Guidelines, Martin).
+- Public APIs — Doxygen (`///` or `/** */`).
+- Comments explain **why**, not **what**. Above the block, not at the end of the line.
+- Complex algorithms — references to the specification (Lakos, Core Guidelines, Martin).
 
-## Инструменты
+## Tooling
 
-- **`clang-format-18`** в CI (ubuntu-24.04 native + matches `clang-18` в build matrix). Параметры — см. корневой `.clang-format`. Версия пиннута: разные мажорные версии форматируют немного по-разному (особенно `AlignAfterOpenBracket`, `SortUsingDeclarations`), CI прогоняет `--dry-run --Werror`. Если CI красный по формату, **починить локально**:
+- **`clang-format-18`** in CI (ubuntu-24.04 native + matches `clang-18` in the build matrix). Parameters — see the root `.clang-format`. The version is pinned: different major versions format slightly differently (especially `AlignAfterOpenBracket`, `SortUsingDeclarations`), CI runs `--dry-run --Werror`. If CI is red on format, **fix it locally**:
 
   ```bash
-  sudo apt-get install -y clang-format-18           # ставится из Astra/Debian репов
+  sudo apt-get install -y clang-format-18           # installs from Astra/Debian repos
   find src include tests -name '*.h' -o -name '*.cpp' | xargs clang-format-18 -i --style=file
   ```
 
-  Reformat-коммит — отдельный, no semantic changes, SHA в `.git-blame-ignore-revs`.
-- `clang-tidy` — профили `modernize-*`, `cppcoreguidelines-*`, `readability-*`, `bugprone-*`, `performance-*`.
-- `lizard --CCN 15 --length 30 --arguments 5 --warnings_only` локально перед каждым пушем.
+  A reformat commit — separate, no semantic changes, the SHA in `.git-blame-ignore-revs`.
+- `clang-tidy` — the profiles `modernize-*`, `cppcoreguidelines-*`, `readability-*`, `bugprone-*`, `performance-*`.
+- `lizard --CCN 15 --length 30 --arguments 5 --warnings_only` locally before every push.
 
-## archcheck-specifika
+## archcheck specifics
 
-archcheck — сам инструмент проверки архитектуры, поэтому **dogfooding
-обязателен**. Код archcheck обязан проходить archcheck в CI:
+archcheck is itself an architecture-checking tool, so **dogfooding
+is mandatory**. The archcheck code must pass archcheck in CI:
 
-- Никаких циклов в include-графе (SF.9).
-- Никаких `using namespace` в `.h` (SF.7).
-- Каждый `.h` self-contained, с `#pragma once` (SF.8, SF.11).
-- Нет анонимных namespace в заголовках (SF.21).
-- Каждое правило — отдельный файл, отдельный класс, регистрация через статическую таблицу (OCP). Добавление нового правила не должно править существующие файлы правил.
+- No cycles in the include graph (SF.9).
+- No `using namespace` in `.h` (SF.7).
+- Every `.h` self-contained, with `#pragma once` (SF.8, SF.11).
+- No anonymous namespaces in headers (SF.21).
+- Each rule — a separate file, a separate class, registration through a static table (OCP). Adding a new rule must not edit existing rule files.
+</content>

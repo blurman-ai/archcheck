@@ -10,11 +10,11 @@
 
 ## Why for archcheck
 
-Тривиально проверяется, ловит реальный мусор (`.cc` рядом с `.cpp`, `.hpp` рядом с `.h`), даёт пользователю быструю победу на первом запуске. Допускает настройку — проект может выбрать `.cc/.hh` или `.cpp/.hpp`, главное единообразие.
+Trivially checked, catches real clutter (`.cc` alongside `.cpp`, `.hpp` alongside `.h`), gives the user a quick win on the first run. Allows configuration — a project may choose `.cc/.hh` or `.cpp/.hpp`, the key thing is uniformity.
 
 ## Detection
 
-Filesystem-scan по корню проекта: собрать суффиксы исходников и заголовков, посчитать частоты. Если найден файл с миноритарным суффиксом — флагать. Допустимые наборы пар (одна на проект):
+Filesystem-scan of the project root: collect source and header suffixes, count frequencies. If a file with a minority suffix is found — flag. Allowed pair sets (one per project):
 - `.cpp` + `.h`
 - `.cpp` + `.hpp`
 - `.cc` + `.h`
@@ -22,7 +22,7 @@ Filesystem-scan по корню проекта: собрать суффиксы 
 
 ## Fixtures
 
-- `pass_cpp_h/` — только `.cpp` + `.h`.
-- `pass_cpp_hpp/` — только `.cpp` + `.hpp`.
-- `fail_mixed/` — `foo.cpp` рядом с `bar.cc`.
-- `fail_outlier_header/` — все `.h`, один файл `.hxx`.
+- `pass_cpp_h/` — only `.cpp` + `.h`.
+- `pass_cpp_hpp/` — only `.cpp` + `.hpp`.
+- `fail_mixed/` — `foo.cpp` alongside `bar.cc`.
+- `fail_outlier_header/` — all `.h`, one `.hxx` file.

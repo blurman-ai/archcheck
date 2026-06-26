@@ -10,16 +10,16 @@
 
 ## Why for archcheck
 
-Forward-declaration чужого типа — это обход include-графа. Модуль формально не зависит от чужого `.h`, но реально использует чужой тип. Если чужой проект изменит layout / namespace / шаблонные параметры — наш код тихо сломается на link или сделает UB. Это особенно опасно для типов из `std::` (формальный UB по `[namespace.std]` — см. [forward-decl-of-std](forward-decl-of-std.md)).
+Forward-declaring a foreign type bypasses the include graph. The module formally does not depend on the foreign `.h`, but actually uses the foreign type. If the foreign project changes the layout / namespace / template parameters — our code silently breaks at link time or becomes UB. This is especially dangerous for types from `std::` (formal UB per `[namespace.std]` — see [forward-decl-of-std](forward-decl-of-std.md)).
 
 ## Detection
 
-Для каждой forward-declaration (`class Foo;` или `struct Foo;` без определения в TU):
-1. Определить «свой» namespace проекта (по конфигу: `project_namespace: archcheck::`).
-2. Если объявляемый тип не принадлежит project namespace — флагать.
+For each forward declaration (`class Foo;` or `struct Foo;` without a definition in the TU):
+1. Determine the project's "own" namespace (from the config: `project_namespace: archcheck::`).
+2. If the declared type does not belong to the project namespace — flag.
 
 ## Fixtures
 
-- `pass/` — `class archcheck::ComponentGraph;` (свой namespace).
-- `fail_foreign/` — `class llvm::raw_ostream;` в нашем `.h`.
-- `fail_std/` — `namespace std { class string; }` — отдельно флагать как UB.
+- `pass/` — `class archcheck::ComponentGraph;` (own namespace).
+- `fail_foreign/` — `class llvm::raw_ostream;` in our `.h`.
+- `fail_std/` — `namespace std { class string; }` — flag separately as UB.

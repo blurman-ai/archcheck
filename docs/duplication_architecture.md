@@ -1,370 +1,426 @@
-# Архитектура поиска дубликатов
+# Duplicate Detection Architecture
 
-_Актуально на 2026-06-01. Источник истины по дизайну duplication-подсистемы —
-этот документ; детальные замеры — в отчётах спайков (см. «Артефакты»)._
+_Current as of 2026-06-01. The source of truth for the design of the duplication
+subsystem is this document; detailed measurements are in the spike reports (see "Artifacts")._
 
-> **Решение 2026-06-01 — оставлен один детектор.** Подсистема сведена к
-> **нечёткому токеновому #056** (Type-3, «правленые копии»). Line-based #053 и
-> AST cross-TU #052 **убраны из дерева** (`experiments/line_duplication`,
-> `experiments/clone_detector` удалены — остаются только в git-истории). К ним
-> **не возвращаемся**: #053 верно ловил лишь Type-1/verbatim, что #056 покрывает
-> как частный случай; #052 (libclang, дорого) так и не вышел из proof-of-concept.
-> FP-логика, нажитая в #053 (отсев raw-string-блобов и мёртвых `#if 0`), не
-> потеряна — перенесена в лексер #056. Разделы ниже про #053/#052 — историческая
-> справка о том, что было и почему пробовали несколько слоёв.
+> **Decision 2026-06-01 — a single detector retained.** The subsystem has been
+> reduced to the **fuzzy token-based #056** (Type-3, "edited copies"). The
+> line-based #053 and AST cross-TU #052 have been **removed from the tree**
+> (`experiments/line_duplication`, `experiments/clone_detector` deleted —
+> they remain only in git history). We are **not coming back** to them: #053
+> correctly caught only Type-1/verbatim, which #056 covers as a special case;
+> #052 (libclang, expensive) never made it out of proof-of-concept. The FP
+> logic accumulated in #053 (filtering out raw-string blobs and dead `#if 0`)
+> is not lost — it was carried over into the #056 lexer. The sections below
+> about #053/#052 are a historical reference about what existed and why we
+> tried several layers.
 
-## 1. Назначение и позиционирование
+## 1. Purpose and positioning
 
-Дублирование между компонентами — это **missing reuse edge** в смысле Lakos
-physical design: код, который должен был быть общим (заголовок, базовый класс,
-шаблон), но размножен копипастой. archcheck ищет такие места, чтобы:
+Duplication between components is a **missing reuse edge** in the sense of Lakos
+physical design: code that should have been shared (a header, a base class, a
+template) but was multiplied by copy-paste. archcheck looks for such places in
+order to:
 
-> Эмпирическое подтверждение этой рамки — [research/dedup_techniques_corpus.md](research/dedup_techniques_corpus.md):
-> разбор реальных коммитов в OSS, где разработчики убирали копипаст (доминирующий
-> приём — вынос общего кода в общий заголовок/модуль, ровно «missing reuse edge»).
+> Empirical confirmation of this framing is [research/dedup_techniques_corpus.md](research/dedup_techniques_corpus.md):
+> an analysis of real commits in OSS where developers removed copy-paste (the
+> dominant technique being extraction of shared code into a shared
+> header/module, exactly the "missing reuse edge").
 
 
-- **гейтить в CI** рост дублирования (не дашборд — exit≠0, заставляет действовать);
-- давать **конкретные находки** (`file:line ↔ file:line`), а не общий `%`;
-- работать в fast-backend: **без libclang и `compile_commands.json`**, дёшево,
-  детерминированно.
+- **gate in CI** the growth of duplication (not a dashboard — exit≠0, forces action);
+- give **concrete findings** (`file:line ↔ file:line`), not a general `%`;
+- run in the fast backend: **without libclang and `compile_commands.json`**, cheaply,
+  deterministically.
 
-Ключевой принцип всей подсистемы: **детект без изменения кода = ноль.** Отчёт,
-который никто не чинит, противоречит позиционированию (CI-gate, не GUI). Поэтому
-любой дорогой слой (особенно семантическая проверка) оправдан только если его
-вывод **гейтит PR или порождает remediation** (вынос общего кода).
+The key principle of the whole subsystem: **detection without a code change = zero.**
+A report that nobody fixes contradicts the positioning (CI-gate, not GUI).
+Therefore any expensive layer (especially semantic checking) is justified only
+if its output **gates a PR or produces remediation** (extraction of shared code).
 
-## 2. Слои — что пробовали и что оставили
+## 2. Layers — what we tried and what we kept
 
-| Слой | Задача | Гранулярность | Цена | Бэкенд | Статус |
+| Layer | Task | Granularity | Cost | Backend | Status |
 |------|--------|---------------|------|--------|--------|
-| **#056** token-based | **Type-3 / diverged** (правленые копии) | **токен** | дёшево | preprocessor | **оставлен — единственный детектор** |
-| **#070** precision | отсев coincidental/idiom-FP над #056 | токен + смысл | средне | — | задача (поверх #056) |
-| ~~#053 line-based~~ | Type-1 / verbatim + Type-2-lite | строка | дёшево | preprocessor | **убран** (git history) — Type-1 покрыт #056 |
-| ~~#052 AST cross-TU~~ | точные cross-TU клоны | AST | дорого | libclang | **убран** (git history) — не вышел из PoC |
+| **#056** token-based | **Type-3 / diverged** (edited copies) | **token** | cheap | preprocessor | **kept — the sole detector** |
+| **#070** precision | filter coincidental/idiom-FP over #056 | token + meaning | medium | — | task (on top of #056) |
+| ~~#053 line-based~~ | Type-1 / verbatim + Type-2-lite | line | cheap | preprocessor | **removed** (git history) — Type-1 covered by #056 |
+| ~~#052 AST cross-TU~~ | exact cross-TU clones | AST | expensive | libclang | **removed** (git history) — never left PoC |
 
-Изначально слои задумывались комплементарными: разные оси расхождения ловятся
-по-разному. Каноничный пример — копия с **переименованием** локальных имён: #053
-(line) видел её как ~12% совпадения (имена разные → строки разные), а #056 (token)
-видит как 100% (нормализация имена прозрачит). Именно это и стало причиной
-схлопывания до одного слоя: #056 покрывает Type-1/verbatim как частный случай
-Type-3, а отдельная цена libclang (#052) не окупалась. Оставлен **только #056**.
+Originally the layers were conceived as complementary: different axes of
+divergence are caught differently. The canonical example is a copy with
+**renamed** local names: #053 (line) saw it as ~12% match (names differ → lines
+differ), while #056 (token) sees it as 100% (normalization makes names
+transparent). This is exactly what caused the collapse to a single layer: #056
+covers Type-1/verbatim as a special case of Type-3, and the separate cost of
+libclang (#052) did not pay off. **Only #056** has been retained.
 
-## 3. Конвейер токенового прохода (#056) — основной слой
+## 3. The token-pass pipeline (#056) — the main layer
 
 ```
 discovery+excludes → lex+selective-normalize → fragmentation
-   → inverted index (relative rare-df)         [RECALL: полнота]
-   → bag overlap (plain)                        [RECALL: дешёвый скоринг]
-   → token-LCS confirm (order-sensitive)        [PRECISION: порядок]
-   → классификатор характера                    [VERBATIM/RENAMED/EDITED/…]
-   → precision-фильтры (#070)                   [отсев idiom-FP]
-   → reporter / gate                            [действие]
+   → inverted index (relative rare-df)         [RECALL: completeness]
+   → bag overlap (plain)                        [RECALL: cheap scoring]
+   → token-LCS confirm (order-sensitive)        [PRECISION: order]
+   → character classifier                       [VERBATIM/RENAMED/EDITED/…]
+   → precision filters (#070)                   [filter idiom-FP]
+   → reporter / gate                            [action]
 ```
 
 ### 3.1. Lex + selective normalization
 
-Лексим без парсера. Нормализация — **избирательная** (ключевое решение, см. §6):
+We lex without a parser. Normalization is **selective** (a key decision, see §6):
 
-- идентификаторы локальных переменных/параметров → `id`;
-- литералы (числа, строки, символы) → `lit`;
-- **сохраняем как есть:** ключевые слова, операторы, скобки, **имена вызываемых
-  функций** (идентификатор перед `(`) и **case-метки** (идентификатор после
-  `case`).
+- identifiers of local variables/parameters → `id`;
+- literals (numbers, strings, characters) → `lit`;
+- **kept as-is:** keywords, operators, brackets, **names of called
+  functions** (the identifier before `(`) and **case labels** (the identifier
+  after `case`).
 
-Почему не всё в `id`: иначе любой прямолинейный код `var = call(args);`
-нормализуется в один и тот же каркас `id = id ( id ) ;`, и несвязанные фрагменты
-ложно совпадают. Сохранение callee-имён и case-меток оставляет в потоке
-**различающий семантический сигнал**, стабильный при копировании (локальные имена
-переименовывают часто, вызовы API — редко).
+Why not put everything into `id`: otherwise any straightforward code `var = call(args);`
+normalizes into the same skeleton `id = id ( id ) ;`, and unrelated fragments
+falsely match. Keeping callee names and case labels leaves a **distinguishing
+semantic signal** in the stream, stable under copying (local names are renamed
+often, API calls rarely).
 
 ### 3.2. Fragmentation (parser-free)
 
-Фрагменты функционального масштаба по эвристике баланса `{…}`: `{`, которому
-предшествует `)`, — тело функции/control-блока. Блок размера `[min_tokens,
-max_tokens]` эмитится как фрагмент; больше — спускаемся внутрь; меньше —
-отбрасываем. **Ограничение:** блоки > `max_tokens` (≈100 строк) дробятся → крупные
-дубли как одна пара не репортятся (документированная граница сегментации).
+Function-scale fragments by the `{…}` balance heuristic: a `{` preceded by `)`
+is a function/control-block body. A block of size `[min_tokens, max_tokens]` is
+emitted as a fragment; larger — we descend inside; smaller — we discard.
+**Limitation:** blocks > `max_tokens` (≈100 lines) are split → large duplicates
+are not reported as a single pair (a documented segmentation boundary).
 
-### 3.3. Inverted index — recall, с ОТНОСИТЕЛЬНЫМ rare-df
+### 3.3. Inverted index — recall, with a RELATIVE rare-df
 
-Кандидаты — через инвертированный индекс на низкочастотных токенах (пары,
-делящие ≥ `min_shared` редких токенов). **`rare_df` обязан быть относительным**
-(перцентиль df корпуса, ≈8–15% от N), не абсолютной константой: на большом дереве
-абсолютный `df≤50` отрезает ВСЕ пары (на 27k фрагментов — 0 из 371M). Желателен
-fallback на k-gram fingerprints — реколл теряет копии, у которых разошлись как раз
-распознавательные токены.
+Candidates — via an inverted index on low-frequency tokens (pairs sharing
+≥ `min_shared` rare tokens). **`rare_df` must be relative** (a percentile of the
+corpus df, ≈8–15% of N), not an absolute constant: on a large tree an absolute
+`df≤50` cuts off ALL pairs (on 27k fragments — 0 of 371M). A fallback to k-gram
+fingerprints is desirable — recall loses copies whose precisely distinguishing
+tokens have diverged.
 
-### 3.4. Bag overlap — дешёвый recall-скоринг
+### 3.4. Bag overlap — cheap recall scoring
 
-plain bag-of-tokens overlap (Jaccard). Цель фазы — **полнота**, не точность: bag
-намеренно игнорирует порядок. **idf-взвешивание — НЕ дефолт** (только опционально):
-на headline-кейсе «оператор флипнут в каждой строке» расходятся самые редкие
-токены, idf даёт им максимальный вес и **инвертирует ранжирование** (ложный switch
-0.45 выше истинной копии 0.36). idf уместен на precision-ранжировании, не на
-recall-гейте.
+plain bag-of-tokens overlap (Jaccard). The goal of this phase is **recall**, not
+precision: the bag deliberately ignores order. **idf-weighting is NOT the default**
+(only optional): in the headline case "operator flipped in every line" the
+rarest tokens diverge, idf gives them maximal weight and **inverts the ranking**
+(a false switch 0.45 above a true copy 0.36). idf is appropriate in
+precision-ranking, not on a recall-gate.
 
-### 3.5. token-LCS confirm — precision, ОБЯЗАТЕЛЬНАЯ фаза
+### 3.5. token-LCS confirm — precision, a MANDATORY phase
 
-Порядок токенов — та ось, что отделяет «та же процедура, флипнут оператор» (копия)
-от «другая процедура, те же идиомы» (не копия). Bag эту ось выбрасывает, поэтому
-LCS — не «опциональный re-rank верхушки», а несущая precision-фаза по всем
-кандидатам. **LCS живёт на своей шкале:** у крошечного нормализованного алфавита
-высокий floor (любые два C++-тела дают LCS ~0.7), граница TP/FP ≈ **0.80** —
-поэтому у precise-режима свой калиброванный гейт ~0.80, не bag-порог ~0.6.
+Token order is the axis that separates "the same procedure, operator flipped"
+(a copy) from "a different procedure, the same idioms" (not a copy). The bag
+throws this axis away, so LCS is not an "optional re-rank of the top", but a
+load-bearing precision phase over all candidates. **LCS lives on its own scale:**
+a tiny normalized alphabet has a high floor (any two C++ bodies give LCS ~0.7),
+the TP/FP boundary ≈ **0.80** — therefore the precise mode has its own calibrated
+gate ~0.80, not the bag threshold ~0.6.
 
-### 3.6. Классификатор характера дубля (#070 P3b)
+### 3.6. Duplicate-character classifier (#070 P3b)
 
-На каждую пару — ярлык из уже считаемых `lcs`/`line`/`diff` + разбор сырых токенов:
+For each pair — a label from the already computed `lcs`/`line`/`diff` + an
+analysis of raw tokens:
 
-| Условие | Ярлык |
+| Condition | Label |
 |---|---|
-| норм-diff пуст, нет subst | **VERBATIM** |
-| норм-diff пуст, изменены `id` | **RENAMED** |
-| норм-diff пуст, изменены `lit`/числа | **EDITED-CONST** |
-| норм-diff: `~` на операторе/keyword | **EDITED-LOGIC** |
-| норм-diff: доминируют `+`/`-` | **EXPANDED / SHRUNK** |
+| norm-diff empty, no subst | **VERBATIM** |
+| norm-diff empty, `id` changed | **RENAMED** |
+| norm-diff empty, `lit`/numbers changed | **EDITED-CONST** |
+| norm-diff: `~` on operator/keyword | **EDITED-LOGIC** |
+| norm-diff: `+`/`-` dominate | **EXPANDED / SHRUNK** |
 
-Тонкость: при `lcs=1, line<1` **RENAMED и EDITED-CONST неразличимы из норм-diff**
-(оба схлопнуты) — нужно хранить сырой лексем и сравнивать на «равном» хребте LCS
-(подсчёт id-subst vs lit-subst). См. #056 §«Механика классификатора».
+A subtlety: at `lcs=1, line<1` **RENAMED and EDITED-CONST are indistinguishable
+from the norm-diff** (both collapsed) — one must keep the raw lexeme and compare
+on an "equal" LCS backbone (counting id-subst vs lit-subst). See #056 §"Classifier
+mechanics".
 
-### 3.7. Precision-фильтры (#070) — три уровня по цене
+### 3.7. Precision filters (#070) — three levels by cost
 
-**Уровень 0: Selective normalization (основной рычаг, §6).** Бьёт FP в корне — не
-стирает различающий сигнал. Дёшево, без порога. ✅ Реализовано в лексере.
+**Level 0: Selective normalization (the main lever, §6).** Hits FP at the root —
+does not erase the distinguishing signal. Cheap, no threshold. ✅ Implemented in
+the lexer.
 
-**Уровень 1: P0-гарды (механические, без семантики):**
-- **P0.1** — diff-hunk+blame атрибуция (same-file overlap filter)
-- **P0.2** — git rename/move suppress (целые файлы как move, не drift)
-- **P0.3** — coordinate revalidation (phantom-range фильтр)
-- ~~**P0.4** — function-boundary anchor~~ (**удалён 2026-06-11**, см. историю ниже)
-- **P0.5** — symmetric-pair canonicalization (дедупликация (a,b)≡(b,a))
-- **P0.6** — joint token∧order floor (требовать w ≥ 0.75 AND line ≥ 0.50 одновременно)
+**Level 1: P0 guards (mechanical, no semantics):**
+- **P0.1** — diff-hunk+blame attribution (same-file overlap filter)
+- **P0.2** — git rename/move suppress (whole files as a move, not drift)
+- **P0.3** — coordinate revalidation (phantom-range filter)
+- ~~**P0.4** — function-boundary anchor~~ (**removed 2026-06-11**, see history below)
+- **P0.5** — symmetric-pair canonicalization (deduplication of (a,b)≡(b,a))
+- **P0.6** — joint token∧order floor (require w ≥ 0.75 AND line ≥ 0.50 simultaneously)
 
-Результат: precision 42% → ~55–62% при TP-retention ≥ 98%. ✅ Реализовано и
-протестировано (46 tests PASS).
+Result: precision 42% → ~55–62% at TP-retention ≥ 98%. ✅ Implemented and
+tested (46 tests PASS).
 
-**Уровень 2: P1-классификаторы (форма, не смысл):**
+**Level 2: P1 classifiers (form, not meaning):**
 - **P1.1** — data-table/literal-run classifier (low-diversity → down-weight)
-- **P1.2** — boilerplate-density filter (очень короткие → требовать w ≥ 0.90)
-- **P1.3** — header-impl gate (**не реализован**: был no-op-заглушкой, удалён; планируется — см. #070)
-- **P1.4** — file-local IDF down-weight (высокочастотные токены файла)
+- **P1.2** — boilerplate-density filter (very short → require w ≥ 0.90)
+- **P1.3** — header-impl gate (**not implemented**: was a no-op stub, removed; planned — see #070)
+- **P1.4** — file-local IDF down-weight (high-frequency tokens of the file)
 
-Результат: precision ~55–62% → ~65–75%. ✅ Реализовано, requires validation.
+Result: precision ~55–62% → ~65–75%. ✅ Implemented, requires validation.
 
-**Уровень 3: Информ-вес / entropy-гард (запасной).** Trigram-diversity /
-TF-IDF-вес строки для самых скелетных. **Понижен из основного в запасной**: замер
-показал **перекрытие распределений** TP/FP по diversity (FP 0.25–0.28, настоящий
-TP 0.32) — **чистого порога нет** (idiom-FP floor ~40 случаев).
+**Level 3: Information-weight / entropy guard (fallback).** Trigram-diversity /
+TF-IDF weight of a line for the most skeletal ones. **Demoted from main to
+fallback**: measurement showed an **overlap of distributions** of TP/FP by
+diversity (FP 0.25–0.28, a real TP 0.32) — **there is no clean threshold**
+(idiom-FP floor ~40 cases).
 
-**Уровень 4: LLM/семантический confirm (финальный, v0.2+).** Кандидат → агент
-читает оба фрагмента → вердикт REAL/RENAMED/EDITED/IDIOM-FP/DATA-TABLE. Смысл
-отделяет idiom-FP от копии там, где форма не может. Дорого → только после слоёв
-1–3 и только если вердикт **гейтит/чинит** (иначе не нужен). Спланирован в #059
-L3.
+**Level 4: LLM/semantic confirm (final, v0.2+).** Candidate → an agent reads
+both fragments → verdict REAL/RENAMED/EDITED/IDIOM-FP/DATA-TABLE. Meaning
+separates idiom-FP from a copy where form cannot. Expensive → only after
+layers 1–3 and only if the verdict **gates/fixes** (otherwise not needed).
+Planned in #059 L3.
 
-## 4. Метрики и их смысл
+## 4. Metrics and their meaning
 
-- **`lcs`** — совпадение по порядку нормализованных токенов. `lcs=1` = «то же с
-  точностью до локальных имён и литералов».
-- **`line`** — совпадение сырых строк (иллюстративно, как у #053). Расхождение
-  `lcs`≫`line` показывает, что правка ушла в нормализованные токены (имена/числа).
-- **`diff`** — что именно изменилось из пережившего нормализацию (`~`/`+`/`-`).
+- **`lcs`** — match by order of normalized tokens. `lcs=1` = "the same up to
+  local names and literals".
+- **`line`** — match of raw lines (illustrative, as in #053). A divergence
+  `lcs`≫`line` shows that the edit went into normalized tokens (names/numbers).
+- **`diff`** — what exactly changed of what survived normalization (`~`/`+`/`-`).
 
-**Семантика, которую важно держать в голове:** метрика меряет **что** изменили, а
-не **сколько строк**. Переименование локальных имён → **полное** совпадение (by
-design — это и есть Type-2-устойчивость), а не partial. Partial (`lcs<1`) возникает
-только когда правка задела операторы/keywords/структуру/литералы. Поэтому
-большинство реальных диверг-копий (`_int`, `Client/Strip`, `V1/V2`) лежат в ведре
-**полных** совпадений, а не партиалов.
+**Semantics that are important to keep in mind:** the metric measures **what**
+was changed, not **how many lines**. Renaming local names → a **full** match (by
+design — this is precisely the Type-2 robustness), not partial. A partial
+(`lcs<1`) arises only when the edit touched operators/keywords/structure/literals.
+Therefore most real diverged copies (`_int`, `Client/Strip`, `V1/V2`) lie in the
+bucket of **full** matches, not partials.
 
-## 5. Классы ложных срабатываний и как лечим
+## 5. Classes of false positives and how we treat them
 
-| FP-класс | пример | лечение |
+| FP class | example | treatment |
 |---|---|---|
-| **call-skeleton** | `var=call(a); var=call(b);` из разных доменов | selective norm: сохранить callee-имена → разные вызовы не совпадают |
-| **switch/enum idiom** | три `switch{case X:return N}` разных доменов | selective norm: сохранить case-метки → ушли под гейт 0.80 |
-| **data-table** | таблицы констант/цветов, байт-массивы шейдеров | data-heavy guard: фрагмент почти весь `lit` → EDITED-DATA / исключить |
-| **остаточный idiom-FP** | общая идиома, переживающая всё выше | принять как floor; добивает LLM-confirm |
+| **call-skeleton** | `var=call(a); var=call(b);` from different domains | selective norm: keep callee names → different calls don't match |
+| **switch/enum idiom** | three `switch{case X:return N}` from different domains | selective norm: keep case labels → fell under the gate 0.80 |
+| **data-table** | tables of constants/colors, byte arrays of shaders | data-heavy guard: a fragment is almost entirely `lit` → EDITED-DATA / exclude |
+| **residual idiom-FP** | a common idiom surviving everything above | accept as a floor; finished off by LLM-confirm |
 
-Принцип: **сначала не стирать сигнал (нормализация), потом фильтровать форму
-(entropy, запасной), в конце — смысл (LLM).** Form-пороги вторичны, т.к. их TP/FP
-перекрываются.
+The principle: **first do not erase the signal (normalization), then filter the
+form (entropy, fallback), and at the end — meaning (LLM).** Form thresholds are
+secondary, because their TP/FP overlap.
 
 ### 5.x FP Classification Rules (#071)
 
-Систематизированное различие между **TP (реальный copy-paste)** и **FP (легитимный паттерн)** для используемых в следующих сессиях. На основе эмпирики из тестирования на LibreSprite (все пары — TP, 0 FP) и проверки семантики с опорой на **Kapser & Godfrey, «"Cloning considered harmful" considered harmful»** (Empirical Software Engineering, 2008, 13(6):645–692).
+A systematized distinction between **TP (real copy-paste)** and **FP (legitimate
+pattern)** for use in subsequent sessions. Based on the empirics from testing on
+LibreSprite (all pairs — TP, 0 FP) and verification of semantics relying on
+**Kapser & Godfrey, «"Cloning considered harmful" considered harmful»**
+(Empirical Software Engineering, 2008, 13(6):645–692).
 
-**Порядок применения: extractability-тест ДО списков сигналов.** Вопрос: можно ли вынести повторяющиеся фрагменты в одну функцию с параметрами? Если **да** — это **TP** (copy-paste, нужен рефактор). Если **нет** (разные семантики, разные типы параметров) — это **FP**, гарды должны его отфильтровать.
+**Order of application: the extractability test BEFORE signal lists.** The
+question: can the repeating fragments be extracted into a single function with
+parameters? If **yes** — it is a **TP** (copy-paste, a refactor is needed). If
+**no** (different semantics, different parameter types) — it is an **FP**, the
+guards must filter it out.
 
-#### TP-сигналы (реальный copy-paste)
+#### TP signals (real copy-paste)
 
-1. **Идентичный код в разных файлах** — `weighted ≥ 0.95`, между разными компонентами. Пример: одинаковый блок чтения PNG в двух местах (`clip_win.cpp:521–529 ↔ 617–625`). Решение: общая функция.
+1. **Identical code in different files** — `weighted ≥ 0.95`, between different
+   components. Example: an identical PNG-reading block in two places
+   (`clip_win.cpp:521–529 ↔ 617–625`). Solution: a shared function.
 
-2. **Полностью скопированный code block** — `weighted = 1.0`, cross-file, часто с минимальной правкой переменных. Пример: switch-statement в двух командах. Решение: вынести в параметризованную функцию.
+2. **A fully copied code block** — `weighted = 1.0`, cross-file, often with
+   minimal editing of variables. Example: a switch-statement in two commands.
+   Solution: extract into a parameterized function.
 
-3. **Повторение одинакового кода 3+ раза в пределах одного файла** — если не входит в if-elif цепь обработки разных типов. Пример: XML-парсинг в четырёх местах `skin_theme.cpp`. Решение: helper loop или template function.
+3. **Repetition of the same code 3+ times within one file** — if it is not part
+   of an if-elif chain handling different types. Example: XML parsing in four
+   places in `skin_theme.cpp`. Solution: a helper loop or template function.
 
-4. **Код, extractable в функцию с параметрами** — выспроси extractability-тест сначала (п. выше). Если параметризация возможна → TP, независимо от weighted-значения.
+4. **Code extractable into a function with parameters** — ask the extractability
+   test first (item above). If parameterization is possible → TP, regardless of
+   the weighted value.
 
-#### Действующие FP-гарды
+#### Active FP guards
 
-Гарды, реализованные в `src/scan/duplication/duplication_scanner.cpp`:
+Guards implemented in `src/scan/duplication/duplication_scanner.cpp`:
 
-- **P0.2: whole-file clone suppression** (`phase8WholeFileSuppress`, строка 336). Если ≥80% фрагментов меньшего файла совпали с большим → целый файл считается move/copy/vendored, пара исключается. Используется для отсечки рефактора вровень с версионированием (реальный файл скопирован как есть).
+- **P0.2: whole-file clone suppression** (`phase8WholeFileSuppress`, line 336).
+  If ≥80% of the fragments of the smaller file matched the larger one → the whole
+  file is considered a move/copy/vendored, the pair is excluded. Used to cut off
+  refactor on par with versioning (a real file copied as-is).
 
-- **P0.9: generated files** (`isGeneratedPath`, строка 173). Маркеры: `.pb.cc`, `.pb.h`, `moc_`, `ui_`, `qrc_`, `.tab.c`, `lex.yy`, `/generated/`. Файлы машинной генерации (protobuf, Qt, flex/bison) не рефакторяться человеком — дублирование в них не actionable.
+- **P0.9: generated files** (`isGeneratedPath`, line 173). Markers: `.pb.cc`,
+  `.pb.h`, `moc_`, `ui_`, `qrc_`, `.tab.c`, `lex.yy`, `/generated/`.
+  Machine-generated files (protobuf, Qt, flex/bison) are not refactored by a
+  human — duplication in them is not actionable.
 
-#### История P0.4 (удалён 2026-06-11)
+#### History of P0.4 (removed 2026-06-11)
 
-**P0.4 function-boundary anchor** дропал same-file пары с зазором ≤5 строк между
-фрагментами — защита от «скользящее окно зацепило хвост одной функции + голову
-следующей». Но фрагментер в `src/` — **брейс-анкерный** (тела функций по балансу
-`{…}`), фрагмент физически не может пересечь границу функции; целевой FP-класс не
-существует. Зато гард подавлял самый частый паттерн копипасты: функция скопирована
-**вплотную под оригиналом** (типичный зазор 1–2 строки) и слегка изменена. Найдено
-при кросс-валидации по внешним оракулам (NiCad/Bellon, задача #107): идентичный клон
-с зазором 8 строк репортился, с зазором 1 строка — молча давился. Дефект жил
-незамеченным, потому что оба «теста» P0.4 были no-op (`REQUIRE(true)` / без вызова
-фильтра). Удалён целиком; регрессия запинена настоящей фикстурой в
-`duplication_fp_guards_test.cpp` («Same-file copy-paste pasted directly below…»).
-Эффект на корпусах: monit 21→21 пар (ноль новых FP), self-scan archcheck 1→2 — новая
-пара оказалась **настоящим TP** в нашем же лексере (`tryConsumeString` ↔
-`tryConsumeChar`). **Принцип** (тот же, что у P0.7/P0.8): гард, чей целевой FP-класс
-не существует при текущем фрагментере, — это чистый налог на recall.
+**P0.4 function-boundary anchor** dropped same-file pairs with a gap ≤5 lines
+between fragments — a defense against "the sliding window snagged the tail of one
+function + the head of the next". But the fragmenter in `src/` is **brace-anchored**
+(function bodies by `{…}` balance), a fragment physically cannot cross a function
+boundary; the target FP class does not exist. Yet the guard suppressed the most
+frequent copy-paste pattern: a function copied **right below the original**
+(typical gap 1–2 lines) and slightly modified. Found during cross-validation
+against external oracles (NiCad/Bellon, task #107): an identical clone with a gap
+of 8 lines was reported, with a gap of 1 line — silently suppressed. The defect
+lived unnoticed because both P0.4 "tests" were no-ops (`REQUIRE(true)` / without
+calling the filter). Removed entirely; the regression is pinned with a real
+fixture in `duplication_fp_guards_test.cpp` ("Same-file copy-paste pasted
+directly below…"). Effect on corpora: monit 21→21 pairs (zero new FP), self-scan
+archcheck 1→2 — the new pair turned out to be a **real TP** in our own lexer
+(`tryConsumeString` ↔ `tryConsumeChar`). **Principle** (the same as for P0.7/P0.8):
+a guard whose target FP class does not exist under the current fragmenter is a
+pure tax on recall.
 
-#### История P0.7 и P0.8 (удалены 2026-06-03)
+#### History of P0.7 and P0.8 (removed 2026-06-03)
 
-Были path-гардами, похожих на P0.9: **P0.7** фильтровал platform-twins (`/(mac|win|linux|posix)/`), **P0.8** — perf-variants (суффиксы `_nogamma`, `_fast`, `_slow`). Удалены по причине: path-гард не отличает глубокую платформо-специфику (API, syscalls) от случайного совпадения в имплементации простых helper-функций. Реальный пример: `OS::sleep()` и `OS::truncateFile()` идентичны на POSIX-платформах (os_macos.cpp ↔ os_linux.cpp) — это выносимый copy-paste (TP), а не интенциональная вариация, но path-гард давил их вместе с легитимными platform-специфичными разветвлениями. **Принцип**: `identical = report, regardless of path`.
+They were path guards, similar to P0.9: **P0.7** filtered platform-twins
+(`/(mac|win|linux|posix)/`), **P0.8** — perf-variants (suffixes `_nogamma`,
+`_fast`, `_slow`). Removed for the reason: a path guard does not distinguish deep
+platform-specificity (API, syscalls) from a random match in the implementation of
+simple helper functions. A real example: `OS::sleep()` and `OS::truncateFile()`
+are identical on POSIX platforms (os_macos.cpp ↔ os_linux.cpp) — this is
+extractable copy-paste (TP), not intentional variation, but the path guard
+suppressed them along with legitimate platform-specific branches. **Principle**:
+`identical = report, regardless of path`.
 
-#### Severity по co-change
+#### Severity by co-change
 
-Severity (вред от дубликата) определяется контекстом и коэволюцией в истории, не сходством текста; этот сигнал отделён от FP-классификации и учитывается в #078 (drift-гейт на co-change). Здесь классифицируем только **форму** (is-it-duplicate), не **приоритет** (how-bad).
+Severity (the harm from a duplicate) is determined by context and co-evolution in
+history, not by text similarity; this signal is separated from FP classification
+and is accounted for in #078 (drift-gate on co-change). Here we classify only the
+**form** (is-it-duplicate), not the **priority** (how-bad).
 
-## 6. Ключевое решение: selective normalization
+## 6. Key decision: selective normalization
 
-Вместо пост-фактум фильтрации шума порогами — **не стирать различающие токены на
-входе**. Замер (datavis-mw, precise @0.70, keep-calls+case):
+Instead of post-hoc filtering of noise with thresholds — **do not erase the
+distinguishing tokens at the input**. Measurement (datavis-mw, precise @0.70,
+keep-calls+case):
 
-- call-skeleton FP (WaterLevels↔EditorFrame) — **исчез**;
-- switch-idiom FP — 0.85 → 0.70–0.78 (**под гейт 0.80**);
-- настоящие копии (общие вызовы/метки) — **выжили**.
+- call-skeleton FP (WaterLevels↔EditorFrame) — **disappeared**;
+- switch-idiom FP — 0.85 → 0.70–0.78 (**under the gate 0.80**);
+- real copies (shared calls/labels) — **survived**.
 
-Цена: кандидатов больше (матч теперь по общему API/меткам — осмысленно,
-фильтруется порогом); теряем Type-2-копии, где переименовали **и сами вызовы**
-(редкий случай). Решение: `--keep-calls` **по умолчанию**; entropy-гард — запасной.
+The cost: more candidates (the match is now by shared API/labels — meaningful,
+filtered by the threshold); we lose Type-2 copies where **the calls themselves**
+were also renamed (a rare case). Decision: `--keep-calls` **by default**; the
+entropy guard is a fallback.
 
-## 7. Режимы
+## 7. Modes
 
-- **snapshot = explorer.** Скан дерева, ранжирует горячие точки, **не гейтит**.
-  Это исследовательский режим (поиск, обзор), а не CI-ворота.
-- **commit / baseline = gate.** baseline морозит исторические дубли; CI валит PR
-  на **новый** подтверждённый дубль. Вот где «происходит изменение кода»: автор
-  упирается в гейт и выносит общее. Confirm (#070) нужен здесь, чтобы гейт не
-  валился на idiom-FP (иначе его отключат).
-- **diff (#054).** Атрибуция копипасты коммиту: «добавил ли коммит C код, который
-  Type-3-дубль уже существовавшего у родителя P?». Через `git`, без checkout.
+- **snapshot = explorer.** Scans the tree, ranks hot spots, **does not gate**.
+  This is an exploratory mode (search, overview), not a CI gate.
+- **commit / baseline = gate.** baseline freezes historical duplicates; CI fails
+  a PR on a **new** confirmed duplicate. This is where "a code change happens":
+  the author hits the gate and extracts the common code. Confirm (#070) is needed
+  here so the gate does not fail on idiom-FP (otherwise it will be disabled).
+- **diff (#054).** Attribution of copy-paste to a commit: "did commit C add code
+  that is a Type-3 duplicate of code that already existed in the parent P?".
+  Through `git`, without checkout.
 
 ## 8. Excludes (vendored / generated)
 
-Без отсечки шума первый прогон тонет в нём (boost, upb-gen, mcut/minilzo). Уроки:
+Without cutting off the noise, the first run drowns in it (boost, upb-gen,
+mcut/minilzo). Lessons:
 
-- **матчинг регистронезависимый** — `ThirdParty` ≠ `third_party` ≠ `3rdParty`;
-- **вендор часто без маркера** — лежит обычными подпапками (`src/mcut`), имя не
-  спасает; **генерат проектно-специфичен** (`upb-gen/*.upb.h`, `*_autogen`);
-- ⇒ фиксированному списку доверять нельзя; вендор/генерат определять по
-  **сигналам** (license-заголовок, баннер `DO NOT EDIT`/`@generated`, отсутствие
-  входящих include-рёбер из app-кода, чужой стиль), помечать с источником.
+- **matching is case-insensitive** — `ThirdParty` ≠ `third_party` ≠ `3rdParty`;
+- **vendor is often without a marker** — it lies in ordinary subfolders
+  (`src/mcut`), the name doesn't help; **generated code is project-specific**
+  (`upb-gen/*.upb.h`, `*_autogen`);
+- ⇒ a fixed list cannot be trusted; vendor/generated must be determined by
+  **signals** (a license header, a `DO NOT EDIT`/`@generated` banner, the absence
+  of incoming include edges from app code, an alien style), marked with the source.
 
-См. также правила для config-агента (`v1_maj_agent_config_authoring_rules`).
+See also the rules for the config-agent (`v1_maj_agent_config_authoring_rules`).
 
-## 9. Границы (НЕ баги)
+## 9. Boundaries (NOT bugs)
 
-- **Type-4 / семантические клоны** (`for`↔`while`, другой алгоритм) — вне scope
-  fast-backend; это AST/CFG (#052).
-- **Сегментация** — `max_tokens` дробит блоки >~100 строк; класс/namespace в
-  `[min,max]` эмитится целиком вместо методов.
-- **Recall** — тугой rare-token гейт теряет сильно разошедшиеся копии; нужен
-  fingerprint-fallback.
-- **Idiom-FP floor** — формальными средствами в ноль не сводится (доказано
-  перекрытие распределений); остаток снимает LLM-confirm.
+- **Type-4 / semantic clones** (`for`↔`while`, a different algorithm) — out of
+  scope for the fast backend; this is AST/CFG (#052).
+- **Segmentation** — `max_tokens` splits blocks >~100 lines; a class/namespace in
+  `[min,max]` is emitted whole instead of its methods.
+- **Recall** — a tight rare-token gate loses strongly diverged copies; a
+  fingerprint-fallback is needed.
+- **Idiom-FP floor** — cannot be reduced to zero by formal means (the overlap of
+  distributions is proven); the remainder is removed by LLM-confirm.
 
-### 9.1. Интерфейс + тонкие делегирующие реализации — ✅ проверено (#116)
+### 9.1. Interface + thin delegating implementations — ✅ verified (#116)
 
-Типовой полиморфный паттерн «интерфейс + N похожих реализаций, каждая делегирует
-своему бэкенду одной-двумя строками» НЕ репортится как копипаст. Подтверждено
-направленными тестами в `tests/duplication_thin_delegates_test.cpp` (4 сценария,
-2026-06-13):
+The typical polymorphic pattern "an interface + N similar implementations, each
+delegating to its backend with one or two lines" is NOT reported as copy-paste.
+Confirmed by directed tests in `tests/duplication_thin_delegates_test.cpp`
+(4 scenarios, 2026-06-13):
 
-1. **Порог размера** (главный эшелон): тело тонкого делегата `{ backend_.op(...); }`
-   < `minTokens = 30` (fragmenter.h) — не становится фрагментом вовсе. Проверено:
-   3 реализации × 10 методов (arity 0–4) к РАЗНЫМ бэкендам → 0 пар; те же
-   реализации к ОДНОМУ бэкенду (различие лишь в имени класса) → тоже 0 пар.
-2. **Selective normalization**: callee-имена сохраняются — реализации к разным
-   бэкендам различаются в сохранённых токенах. Этот эшелон вторичен: на практике
-   тела не доживают до скоринга, их режет порог размера.
-3. **Extractability test**: одинаковые СОДЕРЖАТЕЛЬНЫЕ тела — честный TP. Контроль:
-   два идентичных `compute`-тела (>30 токенов, общий callee) на фоне различных
-   функций (для невырожденного IDF) → пара репортится.
+1. **Size threshold** (the main echelon): the body of a thin delegate
+   `{ backend_.op(...); }` < `minTokens = 30` (fragmenter.h) — does not become a
+   fragment at all. Verified: 3 implementations × 10 methods (arity 0–4) to
+   DIFFERENT backends → 0 pairs; the same implementations to the SAME backend
+   (differing only in the class name) → also 0 pairs.
+2. **Selective normalization**: callee names are kept — implementations to
+   different backends differ in the kept tokens. This echelon is secondary: in
+   practice the bodies do not survive to scoring, they are cut by the size
+   threshold.
+3. **Extractability test**: identical SUBSTANTIVE bodies — an honest TP. Control:
+   two identical `compute` bodies (>30 tokens, a shared callee) against a
+   background of different functions (for a non-degenerate IDF) → the pair is
+   reported.
 
-**Граничный результат (важно):** фрагментер меряет размер ТЕЛА, не сигнатуры.
-Делегат с 10 параметрами всё равно даёт тело `backend_.op9(a..j);` ≈ 25 токенов <
-30 → 0 фрагментов, 0 пар. Раздувание списка параметров само по себе НЕ переводит
-делегат через порог фрагментации; засветиться может только делегат с
-многострочным телом (> ~30 токенов), а не одиночным forwarding-вызовом.
+**Boundary result (important):** the fragmenter measures the size of the BODY,
+not the signature. A delegate with 10 parameters still gives a body
+`backend_.op9(a..j);` ≈ 25 tokens < 30 → 0 fragments, 0 pairs. Inflating the
+parameter list does not by itself push a delegate over the fragmentation
+threshold; only a delegate with a multi-line body (> ~30 tokens) can show up, not
+a single forwarding call.
 
-**Замечание о вырожденном корпусе:** при двух идентичных фрагментах без фона
-relative-df даёт `idf = log(2/2) = 0` → weighted = 0, и даже настоящий TP не
-доходит до гейта (см. §6). Поэтому TP-фикстуры (сценарии 3–4) несут различные
-фоновые функции ≥30 токенов — это требование к фикстуре, не свойство детектора.
+**A note about a degenerate corpus:** with two identical fragments and no
+background, the relative-df gives `idf = log(2/2) = 0` → weighted = 0, and even a
+real TP does not reach the gate (see §6). Therefore the TP fixtures (scenarios
+3–4) carry different background functions ≥30 tokens — this is a requirement of
+the fixture, not a property of the detector.
 
-## 10. Замкнутая петля (иначе всё бессмысленно)
+## 10. The closed loop (otherwise it is all pointless)
 
 ```
-detect (#053/#056 recall) → confirm (#070 precision) → ДЕЙСТВИЕ
-                                                         ├─ gate: новый дубль валит PR → автор дедупит
-                                                         └─ remediation: «вынеси в общий заголовок/базу» (Lakos)
+detect (#053/#056 recall) → confirm (#070 precision) → ACTION
+                                                         ├─ gate: new duplicate fails the PR → author dedups
+                                                         └─ remediation: "extract into a shared header/base" (Lakos)
 ```
 
-Метрика успеха — **«не выросло / починили»**, не «сколько нашли». #054 эмпирически
-подтвердил: дрейф **обратим** выносом общего кода; типовой приём — общий
-заголовок/базовый класс.
+The success metric is **"did not grow / was fixed"**, not "how much was found".
+#054 empirically confirmed: drift is **reversible** by extracting common code; the
+typical technique is a shared header/base class.
 
-## 11. Статус: спайк vs продукт
+## 11. Status: spike vs product
 
-- **В `experiments/`** (standalone C++20, не в основном билде): токеновый проход
-  #056 целиком — нормализация, фрагментация, индекс, bag, token-LCS, diff,
-  selective normalization, excludes, diff-mode #054. Плюс перенесённый из #053
-  отсев data-блобов: raw-string-литералы (`R"(...)"`) схлопываются в `lit`,
-  мёртвые `#if 0`/`#if false` блоки выкидываются в лексере.
-- **В `src/scan/duplication/`** — токеновый детектор перенесён (#072) и подключён
-  к CLI (`--duplication`, advisory, всегда exit 0): нормализация, фрагментация,
-  rare-token индекс + winnowing fingerprints (#092 закрыл fingerprint-recall),
-  скоринг (weighted/plain Jaccard, lineOverlap, token-LCS), P0/P1 precision-фильтры
-  (включая data-table guard P1.1), классификатор.
-- **Шкала классификатора в коде иная, чем в §3.6:** шипнуто
-  EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (`clone_classifier.h`); соответствие:
-  VERBATIM≈EXACT, RENAMED≈RENAMED, EDITED-CONST≈LITERAL,
+- **In `experiments/`** (standalone C++20, not in the main build): the token pass
+  #056 in its entirety — normalization, fragmentation, index, bag, token-LCS,
+  diff, selective normalization, excludes, diff-mode #054. Plus the data-blob
+  filtering carried over from #053: raw-string literals (`R"(...)"`) are collapsed
+  into `lit`, dead `#if 0`/`#if false` blocks are dropped in the lexer.
+- **In `src/scan/duplication/`** — the token detector has been ported (#072) and
+  connected to the CLI (`--duplication`, advisory, always exit 0): normalization,
+  fragmentation, rare-token index + winnowing fingerprints (#092 closed
+  fingerprint-recall), scoring (weighted/plain Jaccard, lineOverlap, token-LCS),
+  P0/P1 precision filters (including the data-table guard P1.1), classifier.
+- **The classifier scale in the code differs from §3.6:** what is shipped is
+  EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (`clone_classifier.h`); the
+  correspondence: VERBATIM≈EXACT, RENAMED≈RENAMED, EDITED-CONST≈LITERAL,
   EDITED-LOGIC/EXPANDED≈MIXED/STRUCTURAL.
-- **Не реализовано:** LLM-confirm-слой, P1.3 header-impl gate,
-  baseline/gate-режим для дублей (§7 «commit/baseline = gate» — пока только план).
+- **Not implemented:** the LLM-confirm layer, the P1.3 header-impl gate, the
+  baseline/gate mode for duplicates (§7 "commit/baseline = gate" — so far only a
+  plan).
 
-## 12. Карта задач и артефактов
+## 12. Map of tasks and artifacts
 
-- **#056** — `fast_backend_partial_duplication_pass` (token Type-3) — **ядро, единственный детектор**.
+- **#056** — `fast_backend_partial_duplication_pass` (token Type-3) — **the core, the sole detector**.
 - **#070** — `coincidental_clone_filtering` (precision: selective norm + confirm).
-- **#054** — `ai_repo_duplication_run` (потребитель сигнала: дрейф по истории).
-- **#033** — `ai_drift_dataset` (дублирование как AI-drift сигнал).
-- ~~**#053** `fast_backend_line_duplication_pass` (line Type-1)~~ — убран, git history.
-- ~~**#052** `cross_tu_duplication_detector` (AST-слой)~~ — убран, git history.
-- Литература (precision): essence-clones (info-theoretic, arXiv 2502.19219),
+- **#054** — `ai_repo_duplication_run` (consumer of the signal: drift over history).
+- **#033** — `ai_drift_dataset` (duplication as an AI-drift signal).
+- ~~**#053** `fast_backend_line_duplication_pass` (line Type-1)~~ — removed, git history.
+- ~~**#052** `cross_tu_duplication_detector` (AST layer)~~ — removed, git history.
+- Literature (precision): essence-clones (info-theoretic, arXiv 2502.19219),
   Kapser & Godfrey (benign clones), SourcererCC (low-freq index).
 
-> **`experiments/` вынесена из гита** (локальная песочница, см. корневой
-> `.gitignore`). Дампы и сырые отчёты (`partial_duplication/*`,
-> `ai_repo_run/SUMMARY.md`, корпусные TSV) — регенерируемы, в гите их больше нет.
-> Рукописный синтез сохранён в трекаемых доках:
-> - дедуп-приёмы из OSS (ground truth TP) → [research/dedup_techniques_corpus.md](research/dedup_techniques_corpus.md);
-> - FP-классы + precision → [duplication_fp_analysis.md](duplication_fp_analysis.md);
-> - корпусные AI-корреляции (#079/#080) → `backlog/wip/079…`, `backlog/wip/080…`.
+> **`experiments/` is taken out of git** (a local sandbox, see the root
+> `.gitignore`). Dumps and raw reports (`partial_duplication/*`,
+> `ai_repo_run/SUMMARY.md`, corpus TSVs) — regenerable, they are no longer in git.
+> The handwritten synthesis is preserved in tracked docs:
+> - dedup techniques from OSS (ground truth TP) → [research/dedup_techniques_corpus.md](research/dedup_techniques_corpus.md);
+> - FP classes + precision → [duplication_fp_analysis.md](duplication_fp_analysis.md);
+> - corpus AI-correlations (#079/#080) → `backlog/wip/079…`, `backlog/wip/080…`.

@@ -1,7 +1,7 @@
 # ADR-003: Fast preprocessor backend is the default; compile_commands.json optional
 
 **Status:** accepted (2026-05-29, task #006; confirmed by perf spike #043)
-**Origin:** [docs/dev/spike_clang_perf.md](../dev/spike_clang_perf.md), spec §«Двух-бекендная схема»
+**Origin:** [docs/dev/spike_clang_perf.md](../dev/spike_clang_perf.md), spec §"Two-backend scheme"
 
 ## Context
 

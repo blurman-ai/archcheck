@@ -10,20 +10,20 @@
 
 ## Why for archcheck
 
-Прямой граф-чек поверх уже считаемой *Instability* `I = Ce / (Ca + Ce)` (low I = stable, high I = unstable). Если модуль X с `I=0.2` зависит от модуля Y с `I=0.8`, X тянет за собой нестабильный (часто меняющийся) Y — любое изменение Y будет каскадно перепахивать X. Это базовая ошибка слоистой архитектуры.
+A direct graph check on top of the already-computed *Instability* `I = Ce / (Ca + Ce)` (low I = stable, high I = unstable). If module X with `I=0.2` depends on module Y with `I=0.8`, X drags along an unstable (frequently changing) Y — any change in Y will cascade and churn X. This is a basic layered-architecture mistake.
 
-Не требует новых данных: `I` уже вычисляется для Martin metrics.
+Requires no new data: `I` is already computed for Martin metrics.
 
 ## Detection
 
-Для каждой direct dependency `X → Y`:
-- Вычислить `I_X` и `I_Y`.
-- Если `I_X < I_Y` — флагать «SDP violation: stable X depends on less stable Y».
+For each direct dependency `X → Y`:
+- Compute `I_X` and `I_Y`.
+- If `I_X < I_Y` — flag "SDP violation: stable X depends on less stable Y".
 
-Опциональный порог толерантности (`I_Y - I_X > 0.2`), чтобы не шуметь на пограничных случаях.
+An optional tolerance threshold (`I_Y - I_X > 0.2`) to avoid noise on borderline cases.
 
 ## Fixtures
 
-- `pass_layered/` — domain (`I≈0`) ← application (`I≈0.5`) ← ui (`I≈1`). Каждый зависит вниз — в сторону стабильности.
-- `fail_inverted/` — domain зависит от ui (классический инверс layering).
-- `pass_tolerance/` — оба ≈0.5, разница ниже порога, не флагается.
+- `pass_layered/` — domain (`I≈0`) ← application (`I≈0.5`) ← ui (`I≈1`). Each depends downward — toward stability.
+- `fail_inverted/` — domain depends on ui (classic inverted layering).
+- `pass_tolerance/` — both ≈0.5, the difference is below the threshold, not flagged.

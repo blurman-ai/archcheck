@@ -1,4 +1,4 @@
-# Core library — STATIC, накапливает реализацию подсистем.
+# Core library — STATIC, accumulates the subsystem implementations.
 add_library(archcheck_core STATIC
    scan/include_scanner.cpp
    scan/project_files.cpp

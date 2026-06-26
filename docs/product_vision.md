@@ -2,192 +2,193 @@
 
 _2026-06-02_
 
-## Что строим
+## What we are building
 
-`archcheck` — это **CI-first guardrail для архитектурного дрейфа в C++**.
+`archcheck` is a **CI-first guardrail for architectural drift in C++**.
 
-Не “кто написал код”, а:
+Not "who wrote the code", but:
 
-- какой `PR` добавил нежелательную зависимость;
-- какой коммит создал цикл;
-- где выросла связность;
-- где команда нарушила собственные модульные границы.
+- which `PR` added an unwanted dependency;
+- which commit created a cycle;
+- where coupling grew;
+- where the team violated its own module boundaries.
 
-Правильная рамка:
+The right framing:
 
-- **Lakos physical design + drift regression в CI**
-- **zero-config сначала, config-rules потом**
+- **Lakos physical design + drift regression in CI**
+- **zero-config first, config-rules later**
 
-Неправильная рамка:
+The wrong framing:
 
-- “AI drift detector”
-- “универсальный quality platform”
-- “ещё один линтер/bug finder”
+- "AI drift detector"
+- "universal quality platform"
+- "yet another linter / bug finder"
 
-## Что сейчас не так
+## What is wrong right now
 
-### 1. Roadmap переоценивает duplication
+### 1. The roadmap overweights duplication
 
-Сейчас `docs/ROADMAP.md` делает duplication pass главным narrative `v0.1`.
-Это неверно.
+Right now `docs/ROADMAP.md` makes the duplication pass the main narrative of `v0.1`.
+That is incorrect.
 
-По факту:
+In fact:
 
-- граф/drift-слой уже выглядит как продуктовый core;
-- duplication шипается как **advisory reporting capability** (`--duplication`,
-  report-only, exit 0) — это поддерживаемая фича, а не preview/эксперимент;
-- но её precision недостаточен для trusted CI-gate, поэтому она остаётся
-  advisory и **не блокирует CI**.
+- the graph/drift layer already looks like the product core;
+- duplication ships as an **advisory reporting capability** (`--duplication`,
+  report-only, exit 0) — it is a supported feature, not a preview/experiment;
+- but its precision is not sufficient for a trusted CI gate, so it stays
+  advisory and **does not block CI**.
 
-Значит duplication — поддерживаемая advisory-фича, но не главный blocker
-продукта и не trusted gate.
+So duplication is a supported advisory feature, but not the main blocker of the
+product and not a trusted gate.
 
-### 2. Смешаны продукт и исследование про ИИ
+### 2. Product and the AI research are mixed together
 
-Исследование уже показало:
+The research has already shown:
 
-- drift реален;
-- инструмент его ловит;
-- но гипотеза “ИИ вызывает дрейф” пока не доказана.
+- drift is real;
+- the tool catches it;
+- but the hypothesis "AI causes drift" is not yet proven.
 
-Из этого следует:
+It follows that:
 
-- **продукт нельзя позиционировать как detector AI-decay**;
-- **исследование AI-vs-human — отдельный track**, не центр roadmap ядра.
+- **the product cannot be positioned as an AI-decay detector**;
+- **the AI-vs-human research is a separate track**, not the center of the core roadmap.
 
-### 3. Смешаны shipped core и research branches
+### 3. Shipped core and research branches are mixed together
 
-Сейчас рядом живут:
+Right now these live side by side:
 
-- реальный zero-config graph/drift core;
-- недоведённый config surface;
+- the real zero-config graph/drift core;
+- an unfinished config surface;
 - duplication spikes;
-- AI discovery/verification pipeline.
+- the AI discovery/verification pipeline.
 
-Это разные уровни зрелости, но в narrative они местами смешаны.
+These are different maturity levels, but in the narrative they are mixed together
+in places.
 
-### 4. Следующий слой ценности описан неудачно
+### 4. The next value layer is described poorly
 
-С точки зрения продукта следующий сильный шаг не в том, чтобы просто
-“добавить больше AST/libclang”.
+From a product standpoint the next strong step is not simply to
+"add more AST/libclang".
 
-Следующий сильный шаг:
+The next strong step is:
 
 - **module boundary rules**
 - `layers`
 - `forbidden`
 - `independence`
 
-То есть проверка **моих архитектурных границ**, а не только generic smells.
+That is, checking **my architectural boundaries**, not just generic smells.
 
-## Каким должен быть v0.1
+## What v0.1 should be
 
-`v0.1` должен быть не “duplication MVP”, а:
+`v0.1` should be not a "duplication MVP", but:
 
 ## v0.1 — Trusted Drift Core
 
 - zero-config include-graph checks;
 - baseline / diff / drift;
-- надёжные intrinsic rules;
-- понятный CLI-контракт;
-- детерминированный output;
-- удобный PR/commit workflow.
+- reliable intrinsic rules;
+- a clear CLI contract;
+- deterministic output;
+- a convenient PR/commit workflow.
 
-Что входит по смыслу:
+What belongs in it by meaning:
 
 - `SF.7`, `SF.8`, `SF.9`, Lakos-style intrinsic checks;
 - `DRIFT.1`, `DRIFT.2`;
 - baseline save/load;
 - `--diff`;
 - text/json reporting;
-- trust в результате.
+- trust in the result.
 
-Что НЕ должно быть центром `v0.1`:
+What should NOT be the center of `v0.1`:
 
-- duplication gate;
+- a duplication gate;
 - AI attribution;
-- synthesis loop;
-- “большая семантическая платформа”.
+- a synthesis loop;
+- a "big semantic platform".
 
-Duplication в `v0.1` шипается как **advisory reporting capability**
-(`--duplication` — report-only, exit 0, поддерживаемая фича).
+Duplication in `v0.1` ships as an **advisory reporting capability**
+(`--duplication` — report-only, exit 0, a supported feature).
 
-Чем она НЕ является в `v0.1`:
+What it is NOT in `v0.1`:
 
-- blocking CI gate (нужен gate-grade precision — отдельная будущая работа);
-- центром `v0.1` narrative (центр — trusted drift core).
+- a blocking CI gate (it needs gate-grade precision — separate future work);
+- the center of the `v0.1` narrative (the center is the trusted drift core).
 
-## Каким должен быть v0.2
+## What v0.2 should be
 
 ## v0.2 — Boundary Enforcement
 
-Главная цель `v0.2`:
+The main goal of `v0.2`:
 
-- превратить `archcheck` из zero-config guardrail
-- в guardrail + **контрактные модульные правила**.
+- turn `archcheck` from a zero-config guardrail
+- into a guardrail + **contractual module rules**.
 
-Значит фокус `v0.2`:
+So the focus of `v0.2`:
 
-- `.archcheck.yml` как реальная runtime-фича;
+- `.archcheck.yml` as a real runtime feature;
 - `layers`, `forbidden`, `independence`;
-- нормальная интеграция в CI;
-- при необходимости SARIF;
-- выборочное расширение graph drift метрик:
+- proper CI integration;
+- SARIF if needed;
+- selective expansion of graph drift metrics:
   - fan-out growth
   - blast radius growth
   - coupling growth
 
-`libclang` в `v0.2` допустим как supporting backend, но не как главный product story.
-Он нужен только там, где реально открывает проверяемую ценность.
+`libclang` in `v0.2` is acceptable as a supporting backend, but not as the main
+product story. It is needed only where it actually unlocks checkable value.
 
-## Что заморозить
+## What to freeze
 
-До прояснения product core не надо тащить в центр roadmap:
+Until the product core is clarified, do not pull into the center of the roadmap:
 
-- duplication как обязательный gate;
+- duplication as a mandatory gate;
 - AI rule synthesis;
-- “AI loop” как часть основного narrative;
-- plugin API;
+- the "AI loop" as part of the main narrative;
+- a plugin API;
 - visualization;
-- regex-rule zoo;
-- Martin metrics как headline-фичу;
-- широкую C-support story.
+- a regex-rule zoo;
+- Martin metrics as a headline feature;
+- a broad C-support story.
 
-Это можно держать:
+These can be kept:
 
-- в `future/`;
-- в `research/`;
-- в preview-слое,
+- in `future/`;
+- in `research/`;
+- in a preview layer,
 
-но не как текущий центр продукта.
+but not as the current center of the product.
 
-## Как правильно формулировать продукт
+## How to phrase the product correctly
 
-Короткая формулировка:
+Short formulation:
 
-> `archcheck` — это C++ CLI для CI, который ловит архитектурные регрессии в PR:
-> новые нежелательные зависимости, циклы и нарушения модульных границ.
+> `archcheck` is a C++ CLI for CI that catches architectural regressions in PRs:
+> new unwanted dependencies, cycles, and module boundary violations.
 
-Короткая формулировка для roadmap:
+Short formulation for the roadmap:
 
-> Сначала trusted drift core. Потом boundary rules. Потом selective semantic expansion.
+> First the trusted drift core. Then boundary rules. Then selective semantic expansion.
 
-## Что исправить в ROADMAP
+## What to fix in ROADMAP
 
-- Убрать framing “phase: duplication pass”.
-- Убрать duplication из роли главного `v0.1` narrative.
-- Разделить `product core`, `preview`, `research`.
-- Явно зафиксировать, что AI-specific claims пока не являются продуктовым обещанием.
-- Поднять config boundary rules выше generic semantic expansion.
+- Remove the "phase: duplication pass" framing.
+- Remove duplication from the role of the main `v0.1` narrative.
+- Separate `product core`, `preview`, `research`.
+- Explicitly state that AI-specific claims are not yet a product promise.
+- Raise config boundary rules above generic semantic expansion.
 
-## Практический приоритет
+## Practical priority
 
-Порядок должен быть таким:
+The order should be:
 
-1. Дочистить product contracts и alignment.
-2. Укрепить trusted graph/drift core.
-3. Довести config-rules до реального runtime.
-4. Duplication уже шипнут как advisory-фича (`--duplication`); следующий шаг по
-   нему — поднять precision до gate-grade, и только тогда рассматривать как
-   blocking gate.
-5. AI-attribution и synthesis держать как отдельное исследование.
+1. Finish cleaning up product contracts and alignment.
+2. Strengthen the trusted graph/drift core.
+3. Bring config-rules to a real runtime.
+4. Duplication already ships as an advisory feature (`--duplication`); the next
+   step for it is to raise precision to gate-grade, and only then consider it as
+   a blocking gate.
+5. Keep AI-attribution and synthesis as separate research.

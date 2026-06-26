@@ -1,8 +1,8 @@
 # Boolean-State Examples: Real-World Analysis
 
-**Дата:** 2026-06-07  
+**Date:** 2026-06-07  
 **Corpus:** 50 OSS repos, 172 structs with 1+ bool fields  
-**Методология:** eye-verify top candidates, classify state vs config
+**Methodology:** eye-verify top candidates, classify state vs config
 
 ## Corpus Statistics
 

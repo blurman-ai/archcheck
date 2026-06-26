@@ -1,14 +1,14 @@
-# Boolean-State DRIFT по истории коммитов (агентские репо)
+# Boolean-State DRIFT by commit history (agentic repos)
 
-**Репо:** 185 агентских (локально склонированных).
+**Repos:** 185 agentic (locally cloned).
 
-**Коммитов, добавивших bool в заголовки:** 5514; из них **3655** — в УЖЕ существующие файлы (= дрейф, рост структур во времени).
+**Commits that added bool to headers:** 5514; of those **3655** went into ALREADY existing files (= drift, growth of structs over time).
 
-**Сигнал дрейфа:** один коммит добавляет несколько bool-полей в существующий заголовок.
+**Drift signal:** a single commit adds several bool fields to an existing header.
 
-## Топ-40 коммитов по приросту bool в существующих заголовках
+## Top-40 commits by bool growth in existing headers
 
-| +bool | repo | commit | date | файлы:поля | subject |
+| +bool | repo | commit | date | files:fields | subject |
 |---|---|---|---|---|---|
 | **191** | yaap_frameworks_native | `44605ebd5f` | 2025-05-22 | `vkjson.h`: reported, reported, reported, reported, reported, reported | CodeGen(vk_parser): Output files from vk_parser.py and vkjso |
 | **191** | GrapheneOS_platform_frameworks_native | `44605ebd5f` | 2025-05-22 | `vkjson.h`: reported, reported, reported, reported, reported, reported | CodeGen(vk_parser): Output files from vk_parser.py and vkjso |
@@ -51,5 +51,5 @@
 | **17** | isc-projects_bind9 | `2893e128a7` | 2026-03-19 | `zone_p.h`: deleteit, fullsign, done, done, seen_nsec, delete_nsec | Move zone set/get properties to own source file |
 | **17** | scp-fs2open_fs2open.github.com | `da58556787` | 2025-06-11 | `ATNConfigSet.h`: hasSemanticContext, dipsIntoOuterContext, _readonly; `ATNDeserializationOptions.h`: _readOnly, _verifyATN, _generateRuleBypassTransitions; `ATNState.h`: epsilonOnlyTransitions | Library updates, Win2022 CI, CMake 4 Compat (#6766) |
 
-*(полный список — bool_history.csv)*
+*(full list — bool_history.csv)*
 

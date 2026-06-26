@@ -11,14 +11,14 @@
 
 ## Why for archcheck
 
-Глобальное мутабельное состояние ломает модульность: любой модуль может его читать/писать, и dependency-граф врёт — формально зависимости нет, фактически она есть через глобал. Прямой архитектурный дефект, не стиль.
+Global mutable state breaks modularity: any module can read/write it, and the dependency graph lies — formally there is no dependency, but in fact it exists through the global. A direct architectural defect, not style.
 
 ## Detection
 
-AST-проход: `VarDecl` в namespace или file scope (не `function-local`, не `class member`), тип не `const`-qualified, не `constexpr`/`constinit`. Игнорировать `inline constexpr` константы — они допустимы.
+AST pass: a `VarDecl` in namespace or file scope (not `function-local`, not a `class member`), type not `const`-qualified, not `constexpr`/`constinit`. Ignore `inline constexpr` constants — they are allowed.
 
 ## Fixtures
 
-- `pass/` — только `const` / `constexpr` / `constinit` глобалы.
-- `fail_mutable/` — `int counter = 0;` в namespace scope.
-- `fail_static_storage/` — `static int counter;` в `.cpp` (тоже флагать или нет — решить при реализации).
+- `pass/` — only `const` / `constexpr` / `constinit` globals.
+- `fail_mutable/` — `int counter = 0;` in namespace scope.
+- `fail_static_storage/` — `static int counter;` in a `.cpp` (whether to flag this too — decide at implementation time).

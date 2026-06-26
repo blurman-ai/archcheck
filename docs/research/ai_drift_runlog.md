@@ -1,29 +1,29 @@
-# DRIFT-прогоны на AI-PR'ах — рабочий лог
+# DRIFT runs on AI PRs — working log
 
-Этот файл — операционный журнал DRIFT-исследования по задаче
+This file is the operational journal of the DRIFT research for task
 [backlog/future/033](../../backlog/future/033_maj_ai_drift_dataset.md).
-Финальные находки переезжают в [ai_drift_cases.md](ai_drift_cases.md).
-Milestone-сводки — в [milestones.md](../milestones.md).
+Final findings move to [ai_drift_cases.md](ai_drift_cases.md).
+Milestone summaries are in [milestones.md](../milestones.md).
 
-**Клоны:** `~/oss/<repo>/` (постоянное хранилище, не sandbox).
-**Версия archcheck:** working tree после фикса #047 (BOM strip).
-**Методология:** clean checkout через `git clean -fdx` + `git checkout -f`
-(см. [#048](../../backlog/new/048_maj_drift_clean_checkout_methodology.md)
-о причинах). Helper: `/tmp/drift_one.sh`.
+**Clones:** `~/oss/<repo>/` (permanent storage, not a sandbox).
+**archcheck version:** working tree after the #047 fix (BOM strip).
+**Methodology:** clean checkout via `git clean -fdx` + `git checkout -f`
+(see [#048](../../backlog/new/048_maj_drift_clean_checkout_methodology.md)
+for the reasons). Helper: `/tmp/drift_one.sh`.
 
-## Сводная таблица всех прогонов (clean checkout)
+## Summary table of all runs (clean checkout)
 
-Все строки получены через единый helper `drift_one.sh`, который:
-1. `git clean -fdx <sub>` (включая ignored)
+All rows obtained via the single helper `drift_one.sh`, which:
+1. `git clean -fdx <sub>` (including ignored)
 2. `git checkout -f <parent>^1 -- <sub>` → archcheck `--save-graph-baseline`
-3. `git clean -fdx <sub>` снова
+3. `git clean -fdx <sub>` again
 4. `git checkout -f <merge> -- <sub>` → archcheck `--drift-baseline`
 
-`parent` — это `merge^1`, т.е. родитель merge-коммита по первой стороне,
-поэтому в диапазоне только коммиты самого PR.
+`parent` is `merge^1`, i.e. the parent of the merge commit on the first side,
+so the range contains only the commits of the PR itself.
 
-| Дата | Repo | PR | Files | DRIFT.1 | DRIFT.2 | Заметки |
-|------|------|----|-------|---------|---------|---------|
+| Date | Repo | PR | Files | DRIFT.1 | DRIFT.2 | Notes |
+|------|------|----|-------|---------|---------|-------|
 | 2026-05-29 | LibreSprite/LibreSprite | #581 toolbar/menu/macOS | 1253 | **1** | 0 | shortcut ui→pref |
 | 2026-05-29 | proximafusion/vmecpp | #360 asymmetric infra | 232 | 0 | 0 | clean |
 | 2026-05-29 | proximafusion/vmecpp | #340 consolidate constants | 232 | 0 | 0 | clean |
@@ -58,75 +58,75 @@ Milestone-сводки — в [milestones.md](../milestones.md).
 | 2026-05-29 | community-shaders/skyrim | #2205 perf VR DLSS | 230 | 0 | 0 | clean |
 | 2026-05-29 | community-shaders/skyrim | #2077 build version proposals | 230 | 0 | 0 | clean |
 
-## Итог корпуса
+## Corpus summary
 
-- **33 PR'а** проверено на **10 репозиториях**.
-- **7 PR'ов с DRIFT.1 hit'ами** (12 находок суммарно): LibreSprite #581,
+- **33 PRs** checked across **10 repositories**.
+- **7 PRs with DRIFT.1 hits** (12 findings total): LibreSprite #581,
   BambuStudio #10794, IrredenEngine #727, Kartend #27, Skyrim #2326, #2207
-  → подтверждено grep'ом против file-content.
-- **26 PR'ов clean** — 0 DRIFT.1, 0 DRIFT.2.
-- **DRIFT.2 (cycles) не сработал ни разу.** Ни один AI-коммит в корпусе
-  не ввёл новый include-cycle. Возможные интерпретации:
-  - циклы редки даже в неконтролируемом C++ коде
-  - наш порог largest_scc>=2 строг — мелкая инверсия не считается циклом
-  - корпус мал (33 PR'а) для статистики
+  → confirmed by grep against file-content.
+- **26 clean PRs** — 0 DRIFT.1, 0 DRIFT.2.
+- **DRIFT.2 (cycles) never fired.** Not a single AI commit in the corpus
+  introduced a new include cycle. Possible interpretations:
+  - cycles are rare even in uncontrolled C++ code
+  - our threshold largest_scc>=2 is strict — a small inversion does not count as a cycle
+  - the corpus is small (33 PRs) for statistics
 
-## Архетипы DRIFT.1 находок в корпусе
+## Archetypes of DRIFT.1 findings in the corpus
 
-1. **UI → low-level widgets** (BambuStudio #10794, Kartend #27 частично,
-   LibreSprite #581) — диалог/виджет тащит include конкретного младшего
-   компонента вместо абстракции.
-2. **Generic → Features** (Skyrim #2326, #2207) — общий код тянет include
-   конкретного feature-модуля, который раньше был изолирован.
-3. **System → Component** (IrredenEngine #727) — ECS-система начинает
-   импортировать компонент вместо запроса через query.
-4. **UI-config → core data** (LibreSprite #581) — обратное направление,
-   виджет читает preferences-слой напрямую.
+1. **UI → low-level widgets** (BambuStudio #10794, Kartend #27 partially,
+   LibreSprite #581) — a dialog/widget drags in the include of a concrete lower-level
+   component instead of an abstraction.
+2. **Generic → Features** (Skyrim #2326, #2207) — generic code pulls the include
+   of a concrete feature module that was previously isolated.
+3. **System → Component** (IrredenEngine #727) — an ECS system starts
+   importing a component instead of requesting through a query.
+4. **UI-config → core data** (LibreSprite #581) — the reverse direction,
+   a widget reads the preferences layer directly.
 
-Все 4 архетипа — именно те классы находок, под которые DRIFT.1
-проектировался.
+All 4 archetypes are exactly the classes of findings that DRIFT.1
+was designed for.
 
-## Чистые PR'ы — что говорят 0 DRIFT
+## Clean PRs — what 0 DRIFT tells us
 
-26 из 33 PR'ов прошли без drift. Это полезный негативный сигнал:
-**DRIFT.1 не false-positive шумогенератор**.
+26 of 33 PRs passed without drift. This is a useful negative signal:
+**DRIFT.1 is not a false-positive noise generator**.
 
-Особенно показательны крупные PR'ы:
-- spectre #7238: **+1352 LOC** — новая базовый класс Filters::Filter — clean
+The large PRs are especially telling:
+- spectre #7238: **+1352 LOC** — a new Filters::Filter base class — clean
 - OreStudio #588: **+9762 LOC** — composite/scripted instrument domain model — clean
-- moqx #327: **+1183 LOC** — новый модуль CrossExecFilter — clean
+- moqx #327: **+1183 LOC** — a new CrossExecFilter module — clean
 - IrredenEngine #798: **+427 LOC** — editor layer system — clean
 
-Чистые крупные PR'ы доказывают, что DRIFT.1 различает «новый код в
-своих границах» (OK) и «существующий код пересекает новые границы» (drift).
+Clean large PRs prove that DRIFT.1 distinguishes "new code within
+its own boundaries" (OK) from "existing code crossing new boundaries" (drift).
 
-## Найденные баги в archcheck в ходе прогона
+## Bugs found in archcheck during the run
 
-- **#047 (closed)** — UTF-8 BOM не зачищается, ломает DRIFT.1 на
-  wxWidgets/MSVC-проектах. Обнаружено на BambuStudio. Фикс применён.
-- **#048 (open)** — методологическая ловушка: dirty working tree даёт
-  массовые false-positive в DRIFT. Требуется helper-скрипт +
-  возможно режим `archcheck --diff` с git worktree изоляцией.
+- **#047 (closed)** — UTF-8 BOM not stripped, breaks DRIFT.1 on
+  wxWidgets/MSVC projects. Discovered on BambuStudio. Fix applied.
+- **#048 (open)** — methodological trap: a dirty working tree gives
+  mass false positives in DRIFT. Requires a helper script +
+  possibly an `archcheck --diff` mode with git worktree isolation.
 
-## Кандидаты в очереди (отложено)
+## Candidates in the queue (deferred)
 
-- apache/thrift (13 AI-PR'ов, но почти все non-C++)
-- dancinlab/hexa-lang (24 PR'а, но Python-проект)
-- raspberrypi/pico-sdk (3 PR'а, все +1 LOC)
-- Tier 2 из задачи #033: PX4 (запрещают AI attribution),
-  nodos-dev/sys-device (1 файл)
+- apache/thrift (13 AI PRs, but almost all non-C++)
+- dancinlab/hexa-lang (24 PRs, but a Python project)
+- raspberrypi/pico-sdk (3 PRs, all +1 LOC)
+- Tier 2 from task #033: PX4 (forbids AI attribution),
+  nodos-dev/sys-device (1 file)
 
-## Методология: clean checkout обязателен (2026-06-11)
+## Methodology: clean checkout is mandatory (2026-06-11)
 
-### Причина
+### Cause
 
-`git checkout <sha> -- <path>` обновляет только файлы, которые существуют в `<sha>`. Файлы, которые присутствуют в working tree (с прошлой итерации цикла или с master HEAD) но отсутствуют в `<sha>` — остаются в working tree. `git clean -fd` удаляет только untracked файлы; tracked файлы из других ревизий, которые числятся в индексе, не убираются. Итог: при scan'е `archcheck --save-graph-baseline` видит файлы, которых не должно быть в `parent` ревизии, и сохраняет их рёбра. Дальше при checkout'е `after` эти файлы могут пропасть или остаться. Если меняется список файлов или их edge'и — DRIFT ложно срабатывает.
+`git checkout <sha> -- <path>` updates only files that exist in `<sha>`. Files that are present in the working tree (from a previous loop iteration or from master HEAD) but absent in `<sha>` remain in the working tree. `git clean -fd` removes only untracked files; tracked files from other revisions that are recorded in the index are not removed. Result: during the scan `archcheck --save-graph-baseline` sees files that should not be in the `parent` revision, and saves their edges. Then on the `after` checkout these files may disappear or remain. If the file list or their edges change — DRIFT falsely fires.
 
-### Эмпирические данные
+### Empirical data
 
-| Repo | PR | Dirty | Clean | Дельта |
-|------|----|-------|-------|--------|
-| Kartend | #26 errorutils refactor | 26 DRIFT.1 | 0 | -26 (все FP) |
+| Repo | PR | Dirty | Clean | Delta |
+|------|----|-------|-------|-------|
+| Kartend | #26 errorutils refactor | 26 DRIFT.1 | 0 | -26 (all FP) |
 | Kartend | #27 promote uiconstants | 5 DRIFT.1 | 5 DRIFT.1 | 0 (real) |
 | Kartend | #34 covers leaf-struct | 0 | 0 | 0 |
 | OreStudio | #547 service-to-service auth | 1 DRIFT.1 | 0 | -1 (FP) |
@@ -136,23 +136,23 @@ Milestone-сводки — в [milestones.md](../milestones.md).
 | IrredenEngine | #727 render LOD | 2 DRIFT.1 | 2 DRIFT.1 | 0 (real) |
 | vmecpp | #360, #340 | 0 | 0 | 0 |
 
-### Правило
+### Rule
 
-Любой DRIFT-прогон на чужом репо — только через `scripts/drift_run.sh`:
+Any DRIFT run on a foreign repo — only via `scripts/drift_run.sh`:
 
 ```bash
 scripts/drift_run.sh <repo-path> <subdir> <before-sha> <after-sha> <label>
 ```
 
-Скрипт гарантирует чистое состояние перед каждой ревизией через `git clean -fdx` + `git checkout -f`.
+The script guarantees a clean state before each revision via `git clean -fdx` + `git checkout -f`.
 
-## Команды воспроизведения
+## Reproduction commands
 
 ```bash
-# Один PR:
+# One PR:
 bash scripts/drift_run.sh <repo-path> <subdir> <before-sha> <after-sha> <label>
 
-# Пример:
+# Example:
 bash scripts/drift_run.sh ~/oss/LibreSprite src \
     5f0fcd28ab2d5e74e0fa5b0e7bda79d8fafcc61a 276fdbdb27b537a074c3e170af6afc88c244a539 libresprite_581
 ```

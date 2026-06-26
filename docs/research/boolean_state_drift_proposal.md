@@ -1,33 +1,33 @@
 # Boolean-State Drift: Feasibility Assessment & Verdict
 
-**Дата:** 2026-06-07  
-**Основано на:** полный цикл — research + статический ценз (790 репо) + usage-разбор + git-history дрейф + per-struct верификация.
+**Date:** 2026-06-07  
+**Based on:** the full cycle — research + static census (790 repos) + usage analysis + git-history drift + per-struct verification.
 
-> **⚠️ ФИНАЛЬНЫЙ ВЕРДИКТ (после всего расследования) — ниже, в секции «Финальный вердикт v2».**
-> Исходный «YES with caveats» относился к *статическому счётчику* и оказался переоптимистичным; ключевой сигнал — не счётчик и не имена, а **инкрементальное накопление в одной структуре во времени**.
+> **⚠️ FINAL VERDICT (after the whole investigation) — below, in the "Final verdict v2" section.**
+> The original "YES with caveats" applied to the *static counter* and proved over-optimistic; the key signal is not the counter and not the names, but **incremental accumulation in a single struct over time**.
 
 ---
 
-## Финальный вердикт v2 (итог расследования)
+## Final verdict v2 (outcome of the investigation)
 
-**MAYBE — да, но узко и только во временной форме.**
+**MAYBE — yes, but narrowly and only in temporal form.**
 
-Прошли четыре независимых измерения сигнала:
+We went through four independent measurements of the signal:
 
-| Подход | Что показал | Годность |
+| Approach | What it showed | Fitness |
 |---|---|---|
-| Статический счётчик «5+ bool» (790 репо, 5811 структур) | 78% — конфиги | ❌ шум |
-| Нейминг-словарь (`started/running/…`) | единственный флаг v0.2 — FP | ❌ бесполезно |
-| Usage: групповое присваивание (`a=true;b=false`) | находит FSM без имён (ZuluSCSI audio, ncnn) | ⚠️ правильный примитив, нужен AST |
-| **История: per-struct + git-blame** | **0% FP, 57% реальный дрейф** | ✅ **рабочий сигнал** |
+| Static "5+ bool" counter (790 repos, 5811 structs) | 78% are configs | ❌ noise |
+| Naming dictionary (`started/running/…`) | the only v0.2 flag was an FP | ❌ useless |
+| Usage: group assignment (`a=true;b=false`) | finds FSMs without names (ZuluSCSI audio, ncnn) | ⚠️ right primitive, needs AST |
+| **History: per-struct + git-blame** | **0% FP, 57% real drift** | ✅ **working signal** |
 
-**Что реально работает:** атрибуция добавленных bool-полей к КОНКРЕТНОЙ структуре по git-истории, считая только поля (depth-0). Структура, чьи bool пришли через ≥4 разных коммита за месяцы/годы — это и есть constraint decay. Подтверждено глазами: EditorShell (5→23 bool за 6 недель), ATS `HttpTransact::State` (48 bool, многолетний), Terminal, MethodState и др.
+**What actually works:** attribution of added bool fields to a SPECIFIC struct via git history, counting only fields (depth-0). A struct whose bools arrived through ≥4 distinct commits over months/years — that is constraint decay. Confirmed by eye: EditorShell (5→23 bool in 6 weeks), ATS `HttpTransact::State` (48 bool, multi-year), Terminal, MethodState, etc.
 
-**Распространённость:** реальный дрейф ~в **каждом пятом** агентском C++ репо (~15-16 из 73), не в 75% (это была хлипкая file-метрика).
+**Prevalence:** real drift is in ~**one in five** agentic C++ repos (~15-16 of 73), not 75% (that was the flimsy file-metric).
 
-**Оставшаяся проблема:** отделить настоящий дрейф (🟢, 57%) от config-bag (🟡, 43%) — это семантика природы поля (state/mode vs `is*Enabled`/CLI-mirror/registration-guard), именем структуры не ловится. 0% грубых FP, но 🟢/🟡 без field-nature-анализа не разделить.
+**Remaining problem:** separating genuine drift (🟢, 57%) from config-bag (🟡, 43%) — this is the semantics of the field's nature (state/mode vs `is*Enabled`/CLI-mirror/registration-guard), which the struct name doesn't catch. 0% gross FP, but 🟢/🟡 cannot be separated without field-nature analysis.
 
-**Рекомендация для archcheck:** НЕ статическое правило-линтер. Если делать — то как **drift-метрику во времени** (рядом с cycles/coupling drift #086/#087): «структура X набрала N bool за M коммитов». Требует diff/AST-парсинга по истории (≈ #042). Без этого — не shipping. Детали пути и доказательства: `boolean_state_perstruct_drift.md`, `boolean_state_history_drift.md`, `boolean_state_drift_eyecheck.md`, `boolean_state_usage_verdicts.md`.
+**Recommendation for archcheck:** NOT a static lint rule. If built, then as a **drift metric over time** (alongside cycles/coupling drift #086/#087): "struct X gained N bool over M commits". Requires diff/AST parsing over history (≈ #042). Without that — not shipping. Path details and evidence: `boolean_state_perstruct_drift.md`, `boolean_state_history_drift.md`, `boolean_state_drift_eyecheck.md`, `boolean_state_usage_verdicts.md`.
 
 ---
 
@@ -64,7 +64,7 @@ THEN flag as implicit state machine
 **Net precision:** ~70-75%
 
 **CI suitability:** ✓ Fast (regex-only), ✓ Deterministic, ✗ Some false positives  
-**Authority:** ⚠ Level 4 ("несомненные практики") — cite Make Illegal States Unrepresentable + State Pattern
+**Authority:** ⚠ Level 4 ("undisputed practices") — cite Make Illegal States Unrepresentable + State Pattern
 
 ---
 
@@ -217,7 +217,7 @@ CPartFile bool fields over 6 months:
 ✗ **Not Lakos** (not physical design specific)  
 ✗ **Not Lockheart/Martin** (too high-level for code smell detection)
 
-**Positioning:** Level 4 rule ("несомненные практики"), not Core Guidelines default  
+**Positioning:** Level 4 rule ("undisputed practices"), not Core Guidelines default  
 **Why:** Detects common pattern, but some legitimate use cases (bitmasks) require context-awareness
 
 ---

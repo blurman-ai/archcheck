@@ -1,8 +1,8 @@
 # no-recursion-across-modules
 
 - **Category:** S/G (AST + graph)
-- **Authority:** medium — расширение clang-tidy
-- **Source:** clang-tidy `misc-no-recursion` (за основу детектора call-graph); archcheck-специфика — мэппинг на модули
+- **Authority:** medium — extension of clang-tidy
+- **Source:** clang-tidy `misc-no-recursion` (basis for the call-graph detector); archcheck-specific part — mapping onto modules
 
 ## Rule
 
@@ -10,18 +10,18 @@
 
 ## Why for archcheck
 
-Обычная рекурсия внутри модуля — нормально. Рекурсия, где цикл проходит через ≥ 2 модуля (`A::foo() → B::bar() → A::baz()`), означает скрытую двустороннюю зависимость — даже если includes выглядят как DAG, runtime call-graph замкнут. Часто признак того, что слой неаккуратно разрезан и две части модулей реально один компонент. archcheck уже строит граф компонентов — добавление call-graph поверх даёт дополнительный сигнал.
+Ordinary recursion within a module is fine. Recursion whose cycle crosses ≥ 2 modules (`A::foo() → B::bar() → A::baz()`) means a hidden bidirectional dependency — even if the includes look like a DAG, the runtime call-graph is closed. Often a sign that a layer was cut carelessly and two parts of the modules are really one component. archcheck already builds the component graph — adding a call-graph on top gives an additional signal.
 
 ## Detection
 
-1. AST-проход: построить call-graph `FunctionDecl → FunctionDecl` (Clang `CallGraph`).
-2. Спроецировать вершины на модули (по mapping path → module).
-3. Найти strongly-connected components в проекции; для каждой SCC размером > 1 — флагать как «inter-module recursion: A ↔ B».
+1. AST pass: build the call-graph `FunctionDecl → FunctionDecl` (Clang `CallGraph`).
+2. Project the vertices onto modules (via path → module mapping).
+3. Find strongly-connected components in the projection; for each SCC of size > 1 — flag as "inter-module recursion: A ↔ B".
 
-Опционально, не дефолт: дорого, требует libclang и полный AST.
+Optional, not a default: expensive, requires libclang and the full AST.
 
 ## Fixtures
 
-- `pass_intra_module/` — `module_a::factorial()` рекурсивно вызывает себя.
-- `pass_dag/` — `A::foo() → B::bar()`, без обратного вызова.
+- `pass_intra_module/` — `module_a::factorial()` recursively calls itself.
+- `pass_dag/` — `A::foo() → B::bar()`, without a back-call.
 - `fail_cross_module/` — `A::foo() → B::bar() → A::baz() → A::foo()`.

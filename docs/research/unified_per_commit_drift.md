@@ -1,30 +1,31 @@
-# Единый per-commit drift-датасет: корреляции (#119)
+# Unified per-commit drift dataset: correlations (#119)
 
-**Статус:** первый полный прогон, 2026-06-25.
-**Данные:** `experiments/per_commit/results_full.boolrule.jsonl` — широкая per-commit
-таблица (1 строка = 1 коммит), каждый drift-сигнал уже отдельная колонка. **517 975**
-ok-коммитов, **1188** реп. Авторство присоединено из `experiments/per_commit/authorship.tsv`
-(покрытие 93.4%: human 408 222, agent 72 778, automation 3 006, нет метки 33 969).
-**Код анализа:** `experiments/ai_repo_run/drift_correlation.py`.
+**Status:** first full run, 2026-06-25.
+**Data:** `experiments/per_commit/results_full.boolrule.jsonl` — a wide per-commit
+table (1 row = 1 commit), each drift signal already a separate column. **517,975**
+ok-commits, **1188** repos. Authorship joined in from `experiments/per_commit/authorship.tsv`
+(coverage 93.4%: human 408,222, agent 72,778, automation 3,006, no label 33,969).
+**Analysis code:** `experiments/ai_repo_run/drift_correlation.py`.
 
-## Вопрос
+## Question
 
-Существует ли наблюдаемая «подпись дрейф-склонного коммита» — коррелируют ли per-commit
-drift-сигналы между собой, и отличим ли дрейф у agentic-авторов — **за вычетом** размера
-коммита (универсальный драйвер) и композиции реп (Симпсон, урок #115).
+Is there an observable "signature of a drift-prone commit" — do per-commit
+drift signals correlate with each other, and is drift distinguishable for agentic
+authors — **net of** commit size (the universal driver) and repo composition
+(Simpson, lesson #115).
 
-## Метод (дисциплина обязательна)
+## Method (discipline is mandatory)
 
-- **Spearman** (ранговая; распределения тяжёлохвостые, почти все сигналы — разреженные счётчики).
-- **Контроль на размер** коммита (`added_total`): partial Spearman первого порядка.
-- **Repo fixed effects**: ранги демин-ятся within-repo, затем partial — убивает межрепные
-  артефакты (Симпсон).
-- **Поштучная сверка** каждой заметной связи на реальных коммитах ([[feedback_verify_each_case_over_aggregate]]).
-- **Agentic-срез** — within-repo, size-banded, sign-тест по репам (не пулинг — #115).
+- **Spearman** (rank-based; the distributions are heavy-tailed, almost all signals are sparse counters).
+- **Control for** commit size (`added_total`): first-order partial Spearman.
+- **Repo fixed effects**: ranks are demeaned within-repo, then partial — this kills cross-repo
+  artifacts (Simpson).
+- **Case-by-case verification** of every notable link on real commits ([[feedback_verify_each_case_over_aggregate]]).
+- **Agentic slice** — within-repo, size-banded, sign test across repos (not pooling — #115).
 
-## Распространённость сигналов (доля ненулевых, ok-коммиты)
+## Signal prevalence (share of non-zero, ok-commits)
 
-| сигнал | % | | сигнал | % |
+| signal | % | | signal | % |
 |---|---|---|---|---|
 | n_test | 22.6 | | n_satd | 4.5 |
 | n_complexity | 17.2 | | n_bool_field | 2.07 |
@@ -33,64 +34,66 @@ drift-сигналы между собой, и отличим ли дрейф у
 | nccd_delta | 9.2 | | n_new_god_headers | 0.21 |
 | n_removed_edges | 3.0 | | n_grown_cycles | 0.11 |
 
-Очень редкие (cycles/god-headers/cross-area) — почти из одних нулей; Spearman там вырожден,
-в выводы не идут.
+The very rare ones (cycles/god-headers/cross-area) — almost all zeros; Spearman there is
+degenerate and does not go into conclusions.
 
-## Находка A — сильной «дрейф-подписи» нет; размер — универсальный драйвер
+## Finding A — there is no strong "drift signature"; size is the universal driver
 
-В сырой Spearman-матрице всё слабо-положительно скоррелировано, и сильнее всего — с размером
-коммита: `n_test×size=.54`, `added_edges×size=.39`, `complexity×size=.38`, `newclone×size=.31`.
-То есть «всё растёт вместе» — в основном потому, что большой коммит трогает всё сразу.
-После контроля на размер бóльшая часть пар схлопывается (напр. `added_edges×complexity` .16→.01).
+In the raw Spearman matrix everything is weakly positively correlated, and most of all — with
+commit size: `n_test×size=.54`, `added_edges×size=.39`, `complexity×size=.38`, `newclone×size=.31`.
+That is, "everything grows together" — mostly because a big commit touches everything at once.
+After controlling for size, most of the pairs collapse (e.g. `added_edges×complexity` .16→.01).
 
-## Находка B — горстка слабых, но устойчивых структурных сцеплений
+## Finding B — a handful of weak but robust structural couplings
 
-Пары, переживающие **и** size-control, **и** repo FE (within-repo partial Spearman, ×100):
+Pairs that survive **both** size control **and** repo FE (within-repo partial Spearman, ×100):
 
-| пара | base | →size | →within-repo | смысл |
+| pair | base | →size | →within-repo | meaning |
 |---|---|---|---|---|
-| added_edges × removed_edges | 28 | 26 | **24** | реструктуризация (рёбра туда-сюда) |
-| added_edges × new_cross_area | 18 | 16 | **16** | новые рёбра через границы областей |
-| added_edges × test | 33 | 15 | **15** | граф-правки вместе с тестами |
-| newclone × test | 27 | 14 | **12** | копипаст вместе с тестами |
-| **bool_field × complexity** | 17 | 13 | **12** | **накопление булей ⟷ рост сложности** |
-| newclone × complexity | 23 | 13 | **11** | дублирование + сложность |
-| added_edges × newclone | 22 | 11 | **11** | новые зависимости + клоны |
+| added_edges × removed_edges | 28 | 26 | **24** | restructuring (edges back and forth) |
+| added_edges × new_cross_area | 18 | 16 | **16** | new edges across area boundaries |
+| added_edges × test | 33 | 15 | **15** | graph edits together with tests |
+| newclone × test | 27 | 14 | **12** | copy-paste together with tests |
+| **bool_field × complexity** | 17 | 13 | **12** | **bool accretion ⟷ complexity growth** |
+| newclone × complexity | 23 | 13 | **11** | duplication + complexity |
+| added_edges × newclone | 22 | 11 | **11** | new dependencies + clones |
 
-Все связи **слабые** (within partial ≤ .24). Вывод: нет единого «дрейф-склонного коммита»;
-сигналы при контроле размера+репы почти независимы, кроме нескольких локальных механизмов.
+All links are **weak** (within partial ≤ .24). Conclusion: there is no single "drift-prone commit";
+when controlled for size+repo, the signals are almost independent, except for a few local mechanisms.
 
-## Находка C — `bool_field × complexity`: устойчивое сцепление, подтверждённое поштучно
+## Finding C — `bool_field × complexity`: a robust coupling, confirmed case by case
 
-Это главный содержательный результат (и расплата за #089/#090/#135). Связь:
-- переживает size-control (.17→.13) и repo FE (.13→.12);
-- **не** тянется config-bag'ами/выбросами: size-partial держится .12–.13 даже после
-  выкидывания всех коммитов с `n_bool_field ≥ 15/10/5/3` — её даёт массовая +1/+2-полоса,
-  а не гигантские config-структуры;
-- 59.2% коммитов с накоплением булей также растят сложность.
+This is the main substantive result (and the payoff for #089/#090/#135). The link:
+- survives size control (.17→.13) and repo FE (.13→.12);
+- is **not** driven by config-bags/outliers: the size-partial holds at .12–.13 even after
+  dropping all commits with `n_bool_field ≥ 15/10/5/3` — it is produced by the mass +1/+2 band,
+  not by giant config structures;
+- 59.2% of commits with bool accretion also grow complexity.
 
-**Поштучная сверка (6 коммитов, независимый метод — diff на sha^/sha):** в 5 из 6 буль и рост
-сложности **в одном модуле**, и функция-потребитель ветвится ровно на добавленном буле:
+**Case-by-case verification (6 commits, independent method — diff on sha^/sha):** in 5 of 6 the bool
+and the complexity growth are **in the same module**, and the consuming function branches exactly on
+the added bool:
 
-| коммит | буль (где) | сложность (где) | сцепление |
+| commit | bool (where) | complexity (where) | coupling |
 |---|---|---|---|
-| anakryiko/wprof `ce28295` | `env.record` (env.h) | `parse_arg` (env.c) +4 | ✓ флаг→парсинг арга |
-| anakryiko/wprof `0067e48` | `env.emit_req_split/embed` | `emit_req_event` +16, `emit_req_task_event` +7 | ✓ флаг→ветвление |
-| jameshball/osci-render `a4deab1` | `ShapeVoice.glideActive/hadPreviousNote` | `ShapeVoice::startNote` +13 | ✓ glide-флаги→ветвление |
-| teriflix/scrite `880d129` | `Watcher.m_hasCursor` | `syncDocument` | ✓ тот же модуль |
-| openeuler/umdk `6223f14` | `seg.is_reused` | `bondp_import_seg` +10 | ✓ тот же модуль |
-| DnCraptor/pico-spec `4f12d19` | `mem.is_rom` | 6 функций в разных модулях | ~ большой коммит, слабее |
+| anakryiko/wprof `ce28295` | `env.record` (env.h) | `parse_arg` (env.c) +4 | ✓ flag→arg parsing |
+| anakryiko/wprof `0067e48` | `env.emit_req_split/embed` | `emit_req_event` +16, `emit_req_task_event` +7 | ✓ flag→branching |
+| jameshball/osci-render `a4deab1` | `ShapeVoice.glideActive/hadPreviousNote` | `ShapeVoice::startNote` +13 | ✓ glide flags→branching |
+| teriflix/scrite `880d129` | `Watcher.m_hasCursor` | `syncDocument` | ✓ same module |
+| openeuler/umdk `6223f14` | `seg.is_reused` | `bondp_import_seg` +10 | ✓ same module |
+| DnCraptor/pico-spec `4f12d19` | `mem.is_rom` | 6 functions in different modules | ~ big commit, weaker |
 
-**Механизм:** добавили state-флаг в структуру → функция, потребляющая флаг, ветвится на нём →
-local complexity растёт. Ровно «boolean blindness → сложность» из research #089. Это интерпретация,
-которую raw-счёт булей дать не мог (тезис #135: смысл даёт корреляция, не счётчик).
+**Mechanism:** a state flag was added to a struct → the function consuming the flag branches on it →
+local complexity grows. Exactly the "boolean blindness → complexity" from research #089. This is the
+interpretation that a raw bool count could not give (thesis of #135: meaning comes from the correlation,
+not the counter).
 
-## Находка D — agentic-подписи дрейфа НЕТ
+## Finding D — there is NO agentic drift signature
 
-Within-repo, size-banded (10 квантильных бинов `added_total`), sign-тест доли ненулевых сигналов
-по 632 репам, где есть и agent-, и human-коммиты:
+Within-repo, size-banded (10 quantile bins of `added_total`), sign test of the share of non-zero
+signals across 632 repos that have both agent and human commits:
 
-| сигнал | репо | agent>human | human>agent | p | вердикт |
+| signal | repos | agent>human | human>agent | p | verdict |
 |---|---|---|---|---|---|
 | n_bool_field | 376 | 154 | 222 | 0.001 | HUMAN↑ |
 | n_complexity | 565 | 289 | 276 | 0.614 | — |
@@ -100,69 +103,69 @@ Within-repo, size-banded (10 квантильных бинов `added_total`), s
 | n_test | 560 | 218 | 342 | <0.001 | HUMAN↑ |
 | n_flag_arg | 395 | 125 | 270 | <0.001 | HUMAN↑ |
 
-В полной выборке — **ни одного `agent↑`**, по 6 из 7 сигналов human↑, но величина крошечная
-(медианная within-repo разница доли ненулевых: −0.5…−2.8 п.п.).
+In the full sample — **not a single `agent↑`**, human↑ on 6 of 7 signals, but the magnitude is tiny
+(median within-repo difference in share of non-zero: −0.5…−2.8 pp).
 
-**Оговорка разметки (обязательна):** «agent» = явный AI-маркер в git-метаданных (author/committer
-identity + Co-authored-by) — это **объявленный** AI, часто PR-gated и более вычищенный. «human» =
-«нет AI-маркера» = **пол** по AI (IDE-автокомплит и срезанные трейлеры невидимы). Загрязнение
-human-ведра необъявленным AI **ослабляет** реальный agent-эффект и может породить мнимый human↑.
+**Labeling caveat (mandatory):** "agent" = an explicit AI marker in git metadata (author/committer
+identity + Co-authored-by) — this is **declared** AI, often PR-gated and more cleaned up. "human" =
+"no AI marker" = a **floor** on AI (IDE autocomplete and stripped trailers are invisible). Contamination
+of the human bucket with undeclared AI **weakens** the real agent effect and can produce a spurious human↑.
 
-**Sensitivity — AI-насыщенные репы** (доля agent ≥ 30%, 356 реп, где human-ведро чище): human↑
-**исчезает по всем сигналам**. Единственный значимый сдвиг — `n_complexity` AGENT↑ (p=0.032,
-медиана +0.021), но он **не переживает поправку на множественность** (Bonferroni 0.05/7 = 0.007;
-0.032×7 ≈ 0.22 — н.з.), потому не преследуется.
+**Sensitivity — AI-saturated repos** (agent share ≥ 30%, 356 repos, where the human bucket is cleaner): human↑
+**disappears across all signals**. The only significant shift is `n_complexity` AGENT↑ (p=0.032,
+median +0.021), but it **does not survive a multiplicity correction** (Bonferroni 0.05/7 = 0.007;
+0.032×7 ≈ 0.22 — n.s.), so it is not pursued.
 
-| сигнал | full: вердикт (медиана) | AI-native (agent≥30%): вердикт (p) |
+| signal | full: verdict (median) | AI-native (agent≥30%): verdict (p) |
 |---|---|---|
 | n_bool_field | HUMAN↑ (−0.005) | — (0.065) |
-| n_complexity | — (+0.002) | agent↑ слабо, не робастно (0.032) |
+| n_complexity | — (+0.002) | agent↑ weak, not robust (0.032) |
 | n_newclone | HUMAN↑ (−0.021) | — (0.700) |
 | n_added_edges | HUMAN↑ (−0.020) | — (0.494) |
 | n_satd | HUMAN↑ (−0.017) | — (0.081) |
 | n_test | HUMAN↑ (−0.028) | — (0.059) |
 | n_flag_arg | HUMAN↑ (−0.012) | — (0.598) |
 
-**Итог D:** **робастной agentic-подписи per-commit дрейфа нет.** Full-sample human↑ — артефакт
-разметки (гаснет в чистых AI-репах); единственный намёк (complexity↑ у агентов в AI-репах) слаб и
-не выживает коррекции. Направление эффекта зависит от того, как классифицировать авторство, —
-сам по себе сильный довод, что наблюдаемого agentic-сигнала здесь нет. Согласуется с #115
-(agentic-эффект гибнет под repo FE) и распространяет вывод на все сигналы, включая bool.
+**Bottom line D:** **there is no robust agentic signature of per-commit drift.** The full-sample human↑ is
+a labeling artifact (it fades in clean AI repos); the only hint (complexity↑ for agents in AI repos) is weak and
+does not survive correction. The direction of the effect depends on how authorship is classified —
+itself a strong argument that there is no observable agentic signal here. Consistent with #115
+(the agentic effect dies under repo FE) and extends the conclusion to all signals, including bool.
 
-## Вердикт
+## Verdict
 
-1. **«Дрейф-склонного коммита» как сильного явления нет.** Главный общий драйвер — размер коммита;
-   при контроле на него сигналы почти независимы.
-2. **Есть несколько слабых, но устойчивых локальных механизмов** (B): реструктуризация рёбер,
-   копипаст+тесты, дублирование+сложность, и — содержательно ценное — **накопление булей ⟷ рост
-   сложности** (C), подтверждённое поштучно как «флаг→ветвление в том же модуле».
-3. **Робастной agentic-подписи per-commit дрейфа нет** (D): full-sample human↑ — артефакт разметки
-   (гаснет в чистых AI-репах), единственный намёк (complexity↑ у агентов) не выживает коррекции;
-   направление зависит от классификации авторства.
+1. **There is no "drift-prone commit" as a strong phenomenon.** The main common driver is commit size;
+   when controlled for it, the signals are almost independent.
+2. **There are several weak but robust local mechanisms** (B): edge restructuring,
+   copy-paste+tests, duplication+complexity, and — substantively valuable — **bool accretion ⟷ complexity
+   growth** (C), confirmed case by case as "flag→branching in the same module".
+3. **There is no robust agentic signature of per-commit drift** (D): the full-sample human↑ is a labeling
+   artifact (it fades in clean AI repos), the only hint (complexity↑ for agents) does not survive correction;
+   the direction depends on the authorship classification.
 
-(`n_other` — катч-олл для небукетированных advisory-нарушений — **тождественно 0** во всех 517 975
-строках: каждый сигнал archcheck попадает в именованную колонку, скрытых сигналов в выводе нет;
-разворачивать нечего.)
+(`n_other` — the catch-all for un-bucketed advisory violations — is **identically 0** across all 517,975
+rows: every archcheck signal lands in a named column, there are no hidden signals in the output;
+nothing to unfold.)
 
-## Границы
+## Boundaries
 
-- Observational, описательно. **Не причинность** — корреляция «буль↔сложность» совместима и с
-  «флаг рождает ветвление», и с «сложную фичу пишут флагом» — направление не доказываемо этими данными.
-- Все эффекты слабые (within partial ≤ .24) — это про тенденции в массе, не про предсказание коммита.
-- `author_kind` — floor по AI (см. оговорку D); окно/состав корпуса — `worklist_light` (1188 реп),
-  не репрезентативная выборка популяции (criteria-gated, см. [[project_corpus_criteria_gate]]).
-- Очень редкие графовые сигналы (cycles 0.11%, god-headers 0.21%, cross-area 0.49%) — почти из
-  одних нулей: в корреляционную матрицу (B) не идут как вырожденные, но в agentic-sign-тесте (D)
-  присутствуют и подтверждают тот же паттерн.
-- **Граница покрытия (без молчаливого усечения):** объединены сигналы, которые archcheck эмитит
-  в `--diff` (graph/clone/complexity/satd/test/flag-arg/bool). **lateral grade-флаги** (CYCLE/SDP/NEW
-  из `lateral_drift_scan.py`) — отдельное семейство со своим прогоном и **не** джойнились сюда (их
-  нет в advisory-выводе бинаря — см. `n_other`=0); по lateral вывод об agentic-эффекте отдельно
-  получен и тот же (гибнет под repo FE) в #115. Доджойн lateral — опциональный апгрейд матрицы.
+- Observational, descriptive. **Not causal** — the "bool↔complexity" correlation is compatible both with
+  "a flag spawns a branch" and "a complex feature is written with a flag" — the direction is not provable from this data.
+- All effects are weak (within partial ≤ .24) — this is about tendencies in the mass, not about predicting a commit.
+- `author_kind` is a floor on AI (see caveat D); the corpus window/composition is `worklist_light` (1188 repos),
+  not a representative sample of the population (criteria-gated, see [[project_corpus_criteria_gate]]).
+- The very rare graph signals (cycles 0.11%, god-headers 0.21%, cross-area 0.49%) are almost all
+  zeros: they do not go into the correlation matrix (B) as degenerate, but in the agentic sign test (D)
+  they are present and confirm the same pattern.
+- **Coverage boundary (no silent truncation):** the signals that archcheck emits in `--diff`
+  (graph/clone/complexity/satd/test/flag-arg/bool) are unified. The **lateral grade flags** (CYCLE/SDP/NEW
+  from `lateral_drift_scan.py`) are a separate family with their own run and were **not** joined here (they
+  are not in the binary's advisory output — see `n_other`=0); for lateral, the conclusion about the agentic effect was
+  obtained separately and is the same (it dies under repo FE) in #115. Joining lateral in is an optional matrix upgrade.
 
-## Воспроизвести
+## Reproduce
 
 ```bash
-python3 experiments/ai_repo_run/drift_correlation.py   # матрицы A/B/C-survivors
-# agentic-срез D и config-bag-чувствительность — инлайн-сниппеты в истории #119
+python3 experiments/ai_repo_run/drift_correlation.py   # A/B/C-survivors matrices
+# agentic slice D and config-bag sensitivity — inline snippets in the #119 history
 ```

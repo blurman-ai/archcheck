@@ -1,116 +1,116 @@
-# Dogfood archcheck по goodfirstissue (2026-06-14)
+# Dogfooding archcheck against goodfirstissue (2026-06-14)
 
-Запись о том, как прогон archcheck по подборке живых C++-проектов с
-[goodfirstissue.dev](https://goodfirstissue.dev/language/cplusplus) вскрыл серию
-дефектов самого инструмента. Один баг пофикшен в этой же сессии, четыре оформлены
-в задачи (#125–#128). Сырые находки по каждой репе — локально (gitignored) в
+A record of how a run of archcheck over a selection of live C++ projects from
+[goodfirstissue.dev](https://goodfirstissue.dev/language/cplusplus) uncovered a series of
+defects in the tool itself. One bug was fixed in this same session, four were filed
+as tasks (#125–#128). The raw findings per repo are local (gitignored) in
 `experiments/goodfirstissue_dogfood/` (`SUMMARY.md` + `<owner_repo>.md`).
 
-## Что за сайт и почему мы туда смотрели
+## What the site is and why we looked there
 
-**goodfirstissue.dev** — агрегатор «good first issue» из популярных OSS-проектов.
-Сайт существует, чтобы помогать новым контрибьюторам найти посильную задачу: он
-собирает репозитории с открытыми issue, помеченными `good first issue`, и
-группирует по языкам. Для нас это оказалось удобным **курированным списком зрелых,
-активных C++-кодовых баз** разного профиля (header-only template, Qt-приложения,
-LLVM-инструменты, крипто, аудио, 3D).
+**goodfirstissue.dev** is an aggregator of "good first issue" entries from popular OSS projects.
+The site exists to help new contributors find a manageable task: it
+collects repositories with open issues labeled `good first issue` and
+groups them by language. For us it turned out to be a handy **curated list of mature,
+active C++ codebases** of varied profiles (header-only template, Qt apps,
+LLVM tools, crypto, audio, 3D).
 
-Зачем нам этот список:
-- **dogfooding на чужом коде** — прогнать archcheck по разнообразным реальным
-  проектам, а не только по фикстурам и собственному репозиторию;
-- **demo/контрибьюшн** (#1/#3) — найти настоящие нарушения в известных проектах;
-- НЕ для корпуса constraint-decay: это зрелые ревьюимые проекты, под наши ворота
-  (`experiments/CORPUS_CRITERIA.md`: агентность, >300 коммитов, не-гигант) они не
-  подходят — и первый же прогон (GSL) это подтвердил.
+Why we wanted this list:
+- **dogfooding on other people's code** — run archcheck over a variety of real
+  projects, not just fixtures and our own repository;
+- **demo/contribution** (#1/#3) — find genuine violations in well-known projects;
+- NOT for the constraint-decay corpus: these are mature, reviewed projects, and they
+  don't fit our gate (`experiments/CORPUS_CRITERIA.md`: agentic, >300 commits, not a giant) —
+  and the very first run (GSL) confirmed it.
 
-Важная оговорка: сама страница отдаёт только список проектов; тексты issue
-подгружаются JS и наружу не идут. Поэтому мы использовали список как **набор мишеней
-для прогона**, а не как источник конкретных задач.
+An important caveat: the page itself serves only the list of projects; the issue
+texts are loaded via JS and don't go to the outside. So we used the list as a **set of targets
+for a run**, not as a source of specific tasks.
 
-## Метод
+## Method
 
-Для каждой репы: shallow-клон (`--depth 1 --filter=blob:none`, `GIT_LFS_SKIP_SMUDGE=1`)
-на просторный диск D → `archcheck --graph` + полный скан → **скептик-триаж каждого
-нарушения** (TP реальное vs FP артефакт/идиома) по строке-источнику → запись находки
-→ удаление клона (на диске только текстовые отчёты). Прогон шёл автономно, по одной
-репе с паузами, параллельно с корпус-прогоном в соседней сессии, щадя ресурсы.
+For each repo: shallow clone (`--depth 1 --filter=blob:none`, `GIT_LFS_SKIP_SMUDGE=1`)
+onto a spacious disk D → `archcheck --graph` + full scan → **skeptic triage of every
+violation** (real TP vs FP artifact/idiom) against the source line → record the finding
+→ delete the clone (only text reports remain on disk). The run was autonomous, one
+repo at a time with pauses, in parallel with a corpus run in a neighboring session, sparing resources.
 
-Скептик-триаж был обязателен (CLAUDE.md «самопроверка выводов»): «0 нарушений» или
-«N циклов» от сканера **не** принимались на веру.
+The skeptic triage was mandatory (CLAUDE.md "self-checking conclusions"): "0 violations" or
+"N cycles" from the scanner were **not** taken on faith.
 
-## Что прошли (10 реп)
+## What we passed through (10 repos)
 
 GSL · mlpack · mosh · newsboat · botan · mumble · bpftrace · supercollider ·
 openvdb · pcl.
 
-## Что нашли
+## What we found
 
-### Дефекты archcheck (по важности)
+### archcheck defects (by importance)
 
-1. **🔴 Vendor/generated код не исключается (#127)** — главный по влиянию на
-   применимость. supercollider вкомпилил весь Boost в `external_libraries/` →
-   ~2900 нарушений, >95% — чужой код. bpftrace (заголовки ядра UAPI в
-   `src/stdlib/include/`), newsboat (генерённые Coco/R `Parser.h`/`Scanner.h`) —
-   те же грабли поменьше. Замер по корпусу (1686 реп): **168 реп** содержат
-   вкомпиленные либы в путях БЕЗ стандартных vendor-токенов (imgui, eigen, CMSIS,
-   zlib, fmt, ggml…). Вывод: наивный фильтр по имени папки недостаточен, нужны
-   сигналы вне имени (`.gitmodules`, вложенный LICENSE+код, копирайт-мода,
-   граф-остров).
+1. **🔴 Vendor/generated code is not excluded (#127)** — the biggest one for
+   applicability. supercollider had all of Boost compiled into `external_libraries/` →
+   ~2900 violations, >95% being foreign code. bpftrace (kernel UAPI headers in
+   `src/stdlib/include/`), newsboat (generated Coco/R `Parser.h`/`Scanner.h`) —
+   the same rake, smaller. A measurement over the corpus (1686 repos): **168 repos** contain
+   compiled-in libs in paths WITHOUT standard vendor tokens (imgui, eigen, CMSIS,
+   zlib, fmt, ggml…). Conclusion: a naive filter by folder name is insufficient, signals
+   beyond the name are needed (`.gitmodules`, a nested LICENSE+code, a copyright mode,
+   a graph island).
 
-2. **🐞 SF.9 ложные циклы на idiom `header ↔ impl` (#126)** — header-only либы
-   разбивают компонент на `X.h` (объявления) + `X_impl.hpp`/`impl/X.hpp`
-   (определения), которые включают друг друга. Это не цикл, а один компонент.
-   mlpack дал 259 таких (96% его «циклов»); pcl — 206 (вариант с подкаталогом
-   `impl/`).
+2. **🐞 SF.9 false cycles on the `header ↔ impl` idiom (#126)** — header-only libs
+   split a component into `X.h` (declarations) + `X_impl.hpp`/`impl/X.hpp`
+   (definitions) that include each other. This is not a cycle but a single component.
+   mlpack produced 259 of these (96% of its "cycles"); pcl — 206 (the subdirectory
+   `impl/` variant).
 
-3. **🐞 SF.8 пропускает include-guard после длинной шапки (#128)** — на
-   openvdb/nanovdb 30 заголовков помечены «нет guard», хотя `#ifndef` стоит на
-   строке 125 (после лицензионного блока). Детектор смотрит только начало файла.
-   Подтверждено ручной пере-проверкой.
+3. **🐞 SF.8 misses an include guard after a long header (#128)** — on
+   openvdb/nanovdb 30 headers were flagged "no guard," though the `#ifndef` is on
+   line 125 (after the license block). The detector looks only at the start of the file.
+   Confirmed by a manual re-check.
 
-4. **🐞 extensionless headers не сканируются (#125)** — GSL (заголовки `gsl/span`
-   без расширения, stdlib-стиль) дала граф из 0 узлов: сканер опознаёт только
-   `.h/.hpp/...`. Маргинально по корпусу, но важно для stdlib-стиля.
+4. **🐞 extensionless headers are not scanned (#125)** — GSL (headers `gsl/span`
+   without an extension, stdlib style) produced a graph of 0 nodes: the scanner only recognizes
+   `.h/.hpp/...`. Marginal across the corpus, but important for the stdlib style.
 
-5. **Кандидат: молчаливое под-разрешение графа** — botan включает свои заголовки
-   как `<botan/..>` через каталог, который генерит `configure.py`; в сыром клоне
-   его нет → 6494 external, 119 рёбер на 1298 узлов, «0 нарушений» недостоверно.
-   Предложение: предупреждать при `edges ≪ nodes` или доминировании external.
+5. **Candidate: silent under-resolution of the graph** — botan includes its own headers
+   as `<botan/..>` through a directory generated by `configure.py`; in a raw clone
+   it's absent → 6494 external, 119 edges over 1298 nodes, "0 violations" not trustworthy.
+   Proposal: warn when `edges ≪ nodes` or external dominates.
 
-### Реальные находки (archcheck работает корректно)
+### Real findings (archcheck works correctly)
 
-- **`using namespace` в заголовке (SF.7)** — самый устойчивый TP-класс: встретился
-  на mosh, newsboat, mumble (`using namespace std`!), supercollider, openvdb, pcl.
-- **Настоящие SF.9-циклы** между разными компонентами — bpftrace (`ast.h↔clone.h`),
+- **`using namespace` in a header (SF.7)** — the most robust TP class: appeared
+  on mosh, newsboat, mumble (`using namespace std`!), supercollider, openvdb, pcl.
+- **Genuine SF.9 cycles** between different components — bpftrace (`ast.h↔clone.h`),
   openvdb (`LeafNode↔LeafNodeBool`).
 - **GodHeader** — mumble `Global.h` (fan-in 87), newsboat `utils.h` (75).
 
-## Что исправили
+## What we fixed
 
-**SF.9 idiom `X.hpp ↔ X_impl.hpp` (same-dir)** — пофикшено в этой сессии
-(коммит `2690a34`): добавлены маркеры `_impl.{hpp,hh,h,hxx}` в `kImplMarkers`
-(`src/rules/sf9_no_cycles.cpp`) + фикстура. На mlpack: 259 → 16 SF.9-циклов,
-тесты 528/528, dogfood archcheck = 0. Остаток (impl/-подкаталог, большие SCC) —
-в #126.
+**SF.9 idiom `X.hpp ↔ X_impl.hpp` (same-dir)** — fixed in this session
+(commit `2690a34`): the markers `_impl.{hpp,hh,h,hxx}` added to `kImplMarkers`
+(`src/rules/sf9_no_cycles.cpp`) + a fixture. On mlpack: 259 → 16 SF.9 cycles,
+tests 528/528, dogfood archcheck = 0. The remainder (the impl/ subdirectory, large SCCs) —
+in #126.
 
-## Выводы
+## Conclusions
 
-1. **Эти репы — тест корректности archcheck, а не demo-витрина.** Зрелые проекты
-   по сути чисты; ценность обхода — во вскрытых дефектах самого тула.
-2. **Vendor-exclusion (#127) — приоритет №1**: без него archcheck непригоден на
-   проектах с bundled-зависимостями (норма в C++), реальные находки тонут в шуме.
-3. **Скептик-триаж окупается каждый раз**: агрегат скрывал слепоту (GSL),
-   96% FP (mlpack), под-разрешение (botan). На openvdb «селективность» обманула —
-   спасла только ручная пере-проверка файла.
-4. **Порядок фиксов**: #127 (vendor) → #126 (SF.9 impl/) → #128 (SF.8 guard) →
+1. **These repos are a test of archcheck correctness, not a demo showcase.** Mature projects
+   are essentially clean; the value of the sweep is in the tool's own defects it uncovered.
+2. **Vendor-exclusion (#127) is priority #1**: without it archcheck is unusable on
+   projects with bundled dependencies (the norm in C++), and real findings drown in noise.
+3. **Skeptic triage pays off every time**: the aggregate hid blindness (GSL),
+   96% FP (mlpack), under-resolution (botan). On openvdb "selectivity" deceived us —
+   only a manual re-check of the file saved it.
+4. **Fix order**: #127 (vendor) → #126 (SF.9 impl/) → #128 (SF.8 guard) →
    #125 (extensionless).
-5. **Demo-кандидаты для будущего**: mosh, mumble, bpftrace (реальные TP без FP).
+5. **Demo candidates for the future**: mosh, mumble, bpftrace (real TP without FP).
 
-## Ссылки
+## Links
 
-- Задачи: [#125](../../backlog/new/125_maj_scan_extensionless_headers.md),
+- Tasks: [#125](../../backlog/new/125_maj_scan_extensionless_headers.md),
   [#126](../../backlog/new/126_maj_sf9_collapse_impl_into_component.md),
   [#127](../../backlog/new/127_maj_vendor_generated_exclusion.md),
   [#128](../../backlog/new/128_maj_sf8_guard_after_header_block.md).
-- Сырые находки по репам: `experiments/goodfirstissue_dogfood/` (локально, gitignored).
-- Источник списка мишеней: https://goodfirstissue.dev/language/cplusplus
+- Raw findings per repo: `experiments/goodfirstissue_dogfood/` (local, gitignored).
+- Source of the target list: https://goodfirstissue.dev/language/cplusplus

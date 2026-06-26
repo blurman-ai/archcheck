@@ -1,260 +1,260 @@
-# Lateral drift: корпусный прогон критерия
+# Lateral drift: corpus run of the criterion
 
-_2026-06-12. Прогон критерия бокового межмодульного дрейфа
-([lateral_module_drift_criterion.md](lateral_module_drift_criterion.md)) на доступной
-части корпуса. Конвейер: `make_window_baselines.py` + `lateral_drift_scan.py`
-(`experiments/ai_repo_run/`). Задача #111._
+_2026-06-12. Run of the lateral cross-module drift criterion
+([lateral_module_drift_criterion.md](lateral_module_drift_criterion.md)) on the available
+part of the corpus. Pipeline: `make_window_baselines.py` + `lateral_drift_scan.py`
+(`experiments/ai_repo_run/`). Task #111._
 
-## 1. Покрытие
+## 1. Coverage
 
-Из 481 jsonl-репы корпуса на диске осталось 184 (остальные удалены после регена);
-baseline построен для **183**:
+Of the 481 jsonl repos in the corpus, 184 remained on disk (the rest were deleted after the regen);
+a baseline was built for **183**:
 
-| Тип baseline | Реп | Как |
+| Baseline type | Repos | How |
 |---|---|---|
-| Точный (родитель первого оконного коммита) | 114 | `git ls-tree`+`cat-file` → `archcheck --save-graph-baseline` |
-| Off-by-one (shallow-клоны: граница = первый коммит) | 68 | дерево первого коммита; его собственные рёбра событий не дают (недодетекция) |
-| Пустой (репа родилась в окне) | 1 | — |
+| Exact (parent of the first window commit) | 114 | `git ls-tree`+`cat-file` → `archcheck --save-graph-baseline` |
+| Off-by-one (shallow clones: boundary = first commit) | 68 | tree of the first commit; its own event edges are not produced (under-detection) |
+| Empty (repo was born within the window) | 1 | — |
 
-`git archive` для извлечения не годится — виснет на ассето-тяжёлых репах (Alchemy);
-извлекаются только C++-исходники.
+`git archive` is not suitable for extraction — it hangs on asset-heavy repos (Alchemy);
+only C++ sources are extracted.
 
-## 2. Результат: 108× подавление шума
+## 2. Result: 108× noise suppression
 
-| | записей |
+| | records |
 |---|---|
-| Сырых коммитов с `added_edges > 0` (эти 183 репы) | 10 617 |
-| **LATERAL-событий** | **98** |
-| — LATERAL.CYCLE (замыкает модульный цикл) | 43 |
-| — LATERAL.SDP (зависимость на менее стабильное) | 11 |
-| — LATERAL.NEW (первая боковая связь) | 44 |
+| Raw commits with `added_edges > 0` (these 183 repos) | 10,617 |
+| **LATERAL events** | **98** |
+| — LATERAL.CYCLE (closes a module cycle) | 43 |
+| — LATERAL.SDP (dependency on something less stable) | 11 |
+| — LATERAL.NEW (first lateral link) | 44 |
 
-19 реп с событиями из 183 — у подавляющего большинства реп критерий молчит весь
-годовой период, что и требуется от CI-гейта.
+19 repos with events out of 183 — for the vast majority of repos the criterion stays silent over the
+whole year-long period, which is exactly what is required of a CI gate.
 
-## 3. Качество: eyeball топ-30 → TP ≈ 87%
+## 3. Quality: eyeball of top 30 → TP ≈ 87%
 
-Выборка: round-robin по репам, CYCLE приоритетно; «TP» = ребро реально новое и
-архитектурно подозрительное (планка задачи: ≥70%).
+Sample: round-robin over repos, CYCLE prioritized; "TP" = the edge is genuinely new and
+architecturally suspicious (task bar: ≥70%).
 
-**26 TP / 4 FP.** Классы FP:
+**26 TP / 4 FP.** FP classes:
 
-1. **Move с переименованием** (scylladb `compress.hh → sstables/compressor.hh`) —
-   rename-эвристика по basename бессильна, когда файл при переезде переименован.
-2. **Тест-код сквозь фильтр** (impala `otel-test.cc`, каталог `testutil/`) —
-   дефисный суффикс `-test` и сегмент `testutil` не покрыты; копеечное расширение фильтра.
-3. **Здоровое потребление** ×2 (KDE kcm → новая библиотека; qmk community-модуль →
-   ядро quantum) — направление зависимости правильное, но пара формально новая.
-   Оба — LATERAL.NEW; грейды CYCLE/SDP в топ-30 чисты на 100% (кроме scylla-move).
+1. **Move with rename** (scylladb `compress.hh → sstables/compressor.hh`) —
+   the basename-based rename heuristic is powerless when a file is renamed during the move.
+2. **Test code through the filter** (impala `otel-test.cc`, directory `testutil/`) —
+   the hyphenated suffix `-test` and the `testutil` segment are not covered; a trivial filter extension.
+3. **Healthy consumption** ×2 (KDE kcm → new library; qmk community module →
+   the quantum core) — the dependency direction is correct, but the pair is formally new.
+   Both are LATERAL.NEW; the CYCLE/SDP grades in the top 30 are 100% clean (except the scylla move).
 
-Показательные TP:
+Illustrative TPs:
 
-- **MCP-волна 2025–26**: domoticz (`hardware↔push`, `main→mcpserver`), netdata
-  (`libnetdata→daemon`, `web→daemon` — *библиотека* полезла в демона), gearmulator
-  (`editorLib→networkLib`) — новые MCP-серверы прорастают вбок через все слои.
-- Bitcoin-ABC `kernel→avalanche` — ядро зависит от фичи (ABC-специфичный дрейф).
-- rocksdb `util→options` (цикл от рефакторинга compression API),
-  `tools/ldb → db_stress_tool` (продакшн-утилита зависит от стресс-теста).
-- KDE `libklookandfeel→kcms` — незавершённый экстракт: новая библиотека тянется
-  обратно в kcms за `colorsapplicator.h`. NEW-события того же экстракта (потребители
-  переходят на библиотеку) — здоровые; разводка грейдов работает.
-- Lightpad (AI-разрабатываемый редактор): `syntax→core`, `core→git` — agent-коммиты
-  с мгновенными циклами.
+- **MCP wave 2025–26**: domoticz (`hardware↔push`, `main→mcpserver`), netdata
+  (`libnetdata→daemon`, `web→daemon` — a *library* reached into the daemon), gearmulator
+  (`editorLib→networkLib`) — new MCP servers grow sideways through all layers.
+- Bitcoin-ABC `kernel→avalanche` — the core depends on a feature (ABC-specific drift).
+- rocksdb `util→options` (cycle from the compression API refactor),
+  `tools/ldb → db_stress_tool` (a production utility depends on a stress test).
+- KDE `libklookandfeel→kcms` — an unfinished extraction: the new library is pulled
+  back into kcms for `colorsapplicator.h`. The NEW events of the same extraction (consumers
+  migrating to the library) are healthy; grade separation works.
+- Lightpad (an AI-developed editor): `syntax→core`, `core→git` — agent commits
+  with instant cycles.
 
-## 4. Agentic vs human (сырые количества, без нормировки)
+## 4. Agentic vs human (raw counts, no normalization)
 
-| author_kind | CYCLE | SDP | NEW | всего |
+| author_kind | CYCLE | SDP | NEW | total |
 |---|---|---|---|---|
 | human | 36 | 9 | 41 | 86 |
-| agent (бот-автор или AI-co-author-трейлер) | 7 | 2 | 3 | 12 |
+| agent (bot author or AI co-author trailer) | 7 | 2 | 3 | 12 |
 
-Классификация ловит только явных бот-авторов (BOT_HINTS) и Co-Authored-By-трейлеры;
-агентская работа под именем мейнтейнера (domoticz MCP — стиль очевидно ассистированный)
-неотличима. Нормировка на долю agent-коммитов в этих репах — следующий шаг
-(repo fixed effects, дизайн boolean-drift); 12 событий — мало для вывода.
+The classification only catches explicit bot authors (BOT_HINTS) and Co-Authored-By trailers;
+agentic work under a maintainer's name (domoticz MCP — the style is obviously assisted)
+is indistinguishable. Normalization by the share of agent commits in these repos is the next step
+(repo fixed effects, boolean-drift design); 12 events are too few for a conclusion.
 
-> **Обновлено #115:** на полном корпусе (§8) нормировка сделана. Сырое agent-преобладание
-> **не переживает repo fixed effects** — это композиционный эффект, не per-commit-сигнал.
+> **Updated #115:** on the full corpus (§8) the normalization was done. The raw agent dominance
+> **does not survive repo fixed effects** — it is a compositional effect, not a per-commit signal.
 
-## 5. Технические находки по дороге
+## 5. Technical findings along the way
 
-1. **`generate_per_commit_graph_drift.py` не сохранял списки `removed`** — только
-   счётчик. Replay только добавлений: ≤5.6% фантомных рёбер (доля removed по
-   счётчикам); условие персистентности критерия не проверяется (выполняется тривиально).
-2. **Apache-баннер = «вендор»**: `hasVendorLicenseHeader` считает полный Apache-баннер
-   вендорным маркером → у Apache-лицензированных проектов (VPP до SPDX-миграции)
-   из графа выпадает ~90% собственных файлов (VPP: 2621 файла → 267 узлов).
-   Кандидат на отдельную задачу в archcheck: баннер, общий для большинства файлов
-   проекта, — это лицензия проекта, а не вендоринг.
-3. **Mass-touch-коммиты обязаны регистрировать пары**: рёбра, влитые mass-touch-веткой
-   (вкл. SPDX-миграции на тысячи файлов), должны гасить «первую пару» — иначе
-   следующий же нормальный коммит в той паре даёт FP (vpp `vnet→vlibapi`).
-4. **Склейка `include/X`+`src/X` должна требовать асимметрию заголовки/исходники**,
-   иначе сливаются разные приложения с похожими подкаталогами (xLights+xSchedule
-   давали 134 ложных события — 40% прогона).
-5. **Резолв-артефакты**: «новое» ребро из файла, которого коммит не трогал, — это
-   переразрешившийся include (появился одноимённый заголовок: FastLED
-   `OctoWS2811.h`); цели с basename системных заголовков (`string.h`, `omp.h`) —
-   коллизии резолвера. Оба класса отфильтрованы в скане.
+1. **`generate_per_commit_graph_drift.py` did not save the `removed` lists** — only
+   the counter. Replay of additions only: ≤5.6% phantom edges (the removed share by
+   counters); the criterion's persistence condition is not checked (it is satisfied trivially).
+2. **The Apache banner = "vendor"**: `hasVendorLicenseHeader` treats a full Apache banner
+   as a vendor marker → in Apache-licensed projects (VPP before the SPDX migration)
+   ~90% of their own files drop out of the graph (VPP: 2621 files → 267 nodes).
+   A candidate for a separate task in archcheck: a banner common to most of a project's
+   files is the project's license, not vendoring.
+3. **Mass-touch commits must register pairs**: edges merged in by a mass-touch branch
+   (including SPDX migrations across thousands of files) must absorb the "first pair" — otherwise
+   the very next normal commit in that pair gives an FP (vpp `vnet→vlibapi`).
+4. **Merging `include/X`+`src/X` must require a header/source asymmetry**,
+   otherwise different applications with similar subdirectories get merged (xLights+xSchedule
+   produced 134 false events — 40% of the run).
+5. **Resolution artifacts**: a "new" edge from a file the commit did not touch is a
+   re-resolved include (a same-named header appeared: FastLED
+   `OctoWS2811.h`); targets with the basename of system headers (`string.h`, `omp.h`) are
+   resolver collisions. Both classes are filtered out in the scan.
 
-## 6. Выводы для продукта (DRIFT.4)
+## 6. Product conclusions (DRIFT.4)
 
-- Сигнал/шум подтверждён: 108× подавление, TP ≈ 87% на топ-30, CYCLE-грейд чист.
-- **LATERAL.CYCLE — кандидат в gate** `--diff`-режима; SDP/NEW — advisory
-  (сквозное правило: вероятностное = advisory). Подтверждено KDE-кейсом: при
-  здоровом экстракте библиотеки NEW шумит, CYCLE ловит ровно незавершённость.
-- В CI-режиме не нужны ни baseline-реконструкция (граф родителя считается из git),
-  ни персистентность (гейт стоит до вливания) — двух главных костылей прогона
-  в продукте не будет.
-- Перед имплементацией DRIFT.4 закрыть в archcheck: Apache-баннер (п. 5.2),
-  `-test`/`testutil`-фильтр (п. 3.2).
+- Signal/noise is confirmed: 108× suppression, TP ≈ 87% on the top 30, the CYCLE grade is clean.
+- **LATERAL.CYCLE is a candidate gate** for `--diff` mode; SDP/NEW are advisory
+  (cross-cutting rule: probabilistic = advisory). Confirmed by the KDE case: with a
+  healthy library extraction, NEW is noisy, CYCLE catches exactly the incompleteness.
+- In CI mode neither baseline reconstruction (the parent's graph is computed from git)
+  nor persistence (the gate sits before the merge) is needed — the two main crutches of the run
+  will be absent in the product.
+- Before implementing DRIFT.4, close in archcheck: the Apache banner (item 5.2),
+  the `-test`/`testutil` filter (item 3.2).
 
-## 7. Ограничения прогона
+## 7. Run limitations
 
-- 183/481 реп (38%); остальные требуют переклона (~30–40 ГБ) — решение отложено.
-- Off-by-one baseline у 68 shallow-реп — недодетекция первого оконного коммита.
-- Грейс-период 10 коммитов короток для горячих реп (KDE: библиотека зрела 59 коммитов);
-  кандидат — time-based (30 дней).
-- `agent`-классификация консервативна (см. §4).
+- 183/481 repos (38%); the rest require re-cloning (~30–40 GB) — the decision is deferred.
+- Off-by-one baseline in 68 shallow repos — under-detection of the first window commit.
+- A grace period of 10 commits is short for hot repos (KDE: the library matured over 59 commits);
+  a candidate is time-based (30 days).
+- The `agent` classification is conservative (see §4).
 
-## 8. Полное покрытие корпуса (#115)
+## 8. Full corpus coverage (#115)
 
-_2026-06-12, продолжение. Переклон удалённых реп + полный прогон + нормированный
-agentic-разрез. Скрипты: `reclone_missing.py`, `agentic_normalized.py`._
+_2026-06-12, continued. Re-clone of the deleted repos + full run + normalized
+agentic cut. Scripts: `reclone_missing.py`, `agentic_normalized.py`._
 
-### 8.1. Покрытие восстановлено
+### 8.1. Coverage restored
 
-Из 297 удалённых реп переклонено **полными** клонами (не shallow, не partial):
-296 успешно, 1 исчезла с GitHub (`studiocollective/songbird`, 404), 0 сетевых фейлов.
-Baseline построен для **479** реп:
+Of the 297 deleted repos, **full** clones (not shallow, not partial) were re-cloned:
+296 successfully, 1 vanished from GitHub (`studiocollective/songbird`, 404), 0 network failures.
+A baseline was built for **479** repos:
 
-| Тип baseline | Реп |
+| Baseline type | Repos |
 |---|---|
-| Точный (`ok`, родитель первого оконного коммита) | 143 новых + 183 прежних = 326 |
-| Пустой (`ok_empty`, репа родилась в окне: на `base~1` ещё нет C++) | 151 |
-| Root-commit / прочее | 2 |
+| Exact (`ok`, parent of the first window commit) | 143 new + 183 prior = 326 |
+| Empty (`ok_empty`, repo born within the window: at `base~1` there is no C++ yet) | 151 |
+| Root-commit / other | 2 |
 
-Полные клоны убрали off-by-one #111: истинный родитель окна теперь доступен.
-`ok_empty` — **легитимен** (проверено: окно покрывает C++-историю репы от инцепции,
-родитель первого коммита пуст), не баг и не источник NEW-спама (даёт лишь 82/495 событий).
+Full clones removed off-by-one #111: the true window parent is now available.
+`ok_empty` is **legitimate** (verified: the window covers the repo's C++ history from inception,
+the first commit's parent is empty), not a bug and not a source of NEW spam (it yields only 82/495 events).
 
-### 8.2. Результат полного прогона
+### 8.2. Full-run result
 
-| | записей |
+| | records |
 |---|---|
-| **LATERAL-событий (479 реп)** | **495** |
+| **LATERAL events (479 repos)** | **495** |
 | — LATERAL.CYCLE | 153 |
 | — LATERAL.SDP | 58 |
 | — LATERAL.NEW | 284 |
 
-Подмножество прежних 183 реп (`exists`) воспроизвело **ровно 98 событий** — детерминизм
-подтверждён, регрессии нет. Рост NEW (44→284) — из молодых переклонённых реп с
-корректным baseline (~1.4 NEW/репа против 0.24 у старых): активная модуляризация
-свежих проектов; NEW — advisory, это ожидаемо. 56 реп с событиями из 479.
+The subset of the prior 183 repos (`exists`) reproduced **exactly 98 events** — determinism
+confirmed, no regression. The growth in NEW (44→284) comes from young re-cloned repos with
+a correct baseline (~1.4 NEW/repo vs 0.24 for the old ones): active modularization
+of fresh projects; NEW is advisory, this is expected. 56 repos with events out of 479.
 
-### 8.3. Eyeball топ-20 из новых реп → TP 85 %
+### 8.3. Eyeball of top 20 from new repos → TP 85%
 
-Выборка 20 событий из переклонённых реп (round-robin, CYCLE-first), верификация
-**на коммите события** (не HEAD — модули переименовываются позже):
+Sample of 20 events from re-cloned repos (round-robin, CYCLE-first), verification
+**at the event commit** (not HEAD — modules are renamed later):
 
 | | TP | FP | precision |
 |---|---|---|---|
-| Все грейды | 17 | 3 | **85 %** |
-| Только CYCLE (gate) | 11 | 2 | **84.6 %** |
+| All grades | 17 | 3 | **85%** |
+| CYCLE only (gate) | 11 | 2 | **84.6%** |
 
-Планка ≥70 % взята, совпадает с #111 (87 %). 3 FP: 2 — CYCLE-мисгрейд (moduleB —
-leaf-утилита `engine/assets` / `include/common`, обратной дуги на `base~1` нет →
-должно быть NEW, не CYCLE); 1 — NEW из file-split (типы вынесены в новый заголовок
-и реинклюднуты).
+The bar of ≥70% holds, matching #111 (87%). 3 FP: 2 — CYCLE misgrade (moduleB —
+a leaf utility `engine/assets` / `include/common`, no back-edge at `base~1` →
+should be NEW, not CYCLE); 1 — NEW from a file split (types moved out into a new header
+and re-included).
 
-> **Закрыто #117 (back-edge confirmation).** Разбор показал: из 2 «CYCLE-FP»
-> реально FP лишь **Astraeus** (leaf `assets`); **PantheonChain** — настоящий
-> *same-commit* цикл (коммит добавляет обе дуги `include↔layer1` разом, eyeball
-> пропустил встречное ребро `units.h → layer1/asset.h`). Истинная CYCLE-precision
-> eyeball'а — **12/13 ≈ 92 %**. Грейдер CYCLE теперь подтверждает обратную дугу
-> B→A живыми исходниками на `<sha>~1` (резолв includes как в archcheck: относительный
-> `../x` → нормализация от каталога файла, root-relative `eng/x.h` → суффикс,
-> bare `x.h` → basename). Корпусный эффект: **CYCLE 153 → 146** — понижены ровно
-> 7 фантомных back-edge (Astraeus, 3× Aztec, GBAStation, ThemisDB, UE5;
-> независимо проверены git-grep'ом), 0 потерянных событий, 0 неожиданных апгрейдов.
-> Ключевой урок: 15 из 22 первоначальных кандидатов на понижение оказались
-> **настоящими** циклами через относительные `../`-includes — наивный суффикс-резолв
-> их терял; перенесено в спеку DRIFT.4.
+> **Closed #117 (back-edge confirmation).** The analysis showed: of the 2 "CYCLE-FP",
+> only **Astraeus** (leaf `assets`) is really an FP; **PantheonChain** is a genuine
+> *same-commit* cycle (the commit adds both arcs `include↔layer1` at once, the eyeball
+> missed the opposing edge `units.h → layer1/asset.h`). The true CYCLE precision of the
+> eyeball is **12/13 ≈ 92%**. The CYCLE grader now confirms the back-edge
+> B→A from live sources at `<sha>~1` (resolving includes as archcheck does: relative
+> `../x` → normalization from the file's directory, root-relative `eng/x.h` → suffix,
+> bare `x.h` → basename). Corpus effect: **CYCLE 153 → 146** — exactly
+> 7 phantom back-edges were downgraded (Astraeus, 3× Aztec, GBAStation, ThemisDB, UE5;
+> independently verified with git-grep), 0 lost events, 0 unexpected upgrades.
+> Key lesson: 15 of the 22 initial downgrade candidates turned out to be
+> **genuine** cycles through relative `../` includes — a naive suffix resolution
+> lost them; carried over into the DRIFT.4 spec.
 
-### 8.4. Agentic-разрез: сигнал не переживает repo fixed effects
+### 8.4. Agentic cut: the signal does not survive repo fixed effects
 
-Сырьё: 294 agent / 201 human событий. Нормировка на экспозицию (коммиты в окне):
+Raw material: 294 agent / 201 human events. Normalization by exposure (commits in the window):
 
-| Срез | agent | human | ratio |
+| Cut | agent | human | ratio |
 |---|---|---|---|
-| **Пулинг** (события / 1k коммитов) | 9.19 | 4.27 | **2.15×** |
-| **Repo fixed effects** (within-repo, 50 mixed-реп) | 23 репы выше | 27 реп выше | **n.s.**, sign-test p≈0.67 |
+| **Pooling** (events / 1k commits) | 9.19 | 4.27 | **2.15×** |
+| **Repo fixed effects** (within-repo, 50 mixed repos) | 23 repos higher | 27 repos higher | **n.s.**, sign-test p≈0.67 |
 
-Пулинговое 2.15×-преобладание агентов — **артефакт композиции**: 60 % всех agent-событий
-(176/294) даёт **одна репа** `makr-code/ThemisDB` (13 024 коммита `copilot-swe-agent[bot]`
-из 18 818 — настоящий agent-построенный проект, классификация верна). Топ-3 реп = 77 %
-agent-событий. Внутри реп, где есть И agent-, И human-коммиты, систематического
-agent>human дрейфа **нет** (23 vs 27, p≈0.67).
+The pooled 2.15× agent dominance is a **composition artifact**: 60% of all agent events
+(176/294) come from **one repo** `makr-code/ThemisDB` (13,024 commits by `copilot-swe-agent[bot]`
+out of 18,818 — a genuinely agent-built project, the classification is correct). The top-3 repos = 77%
+of agent events. Within repos that have BOTH agent and human commits, there is **no** systematic
+agent>human drift (23 vs 27, p≈0.67).
 
-**Вывод:** на per-commit уровне агентское авторство не повышает боковой дрейф; рост —
-это agent-насыщенный ХВОСТ распределения реп (молодые, дрейф-склонные проекты вроде
-ThemisDB), а не сдвиг per-unit. Согласуется с прежней находкой velocity-surge
-(плотность плоская, рост — агентский хвост, не популяционный сигнал).
+**Conclusion:** at the per-commit level, agentic authorship does not increase lateral drift; the growth
+is the agent-saturated TAIL of the repo distribution (young, drift-prone projects like
+ThemisDB), not a per-unit shift. Consistent with the earlier velocity-surge finding
+(density flat, the growth is an agentic tail, not a population signal).
 
-### 8.5. Почему before/after-дизайн (interrupted time series) на этом корпусе невозможен
+### 8.5. Why a before/after design (interrupted time series) is impossible on this corpus
 
-Repo fixed effects (§8.4) сравнивает agent- и human-коммиты *в одной репе в один
-период* — остаётся конфаундер: внутри репы агенту могут доставаться особые задачи.
-Чище был бы **interrupted time series**: одна репа, дрейф *до* перехода на агентов
-против *после* (держит постоянными кодовую базу, команду, домен). Зонд
-`before_after_probe.py` искал такие репы — с длинной human-историей до агентов,
-агент-доминированием после и событиями по обе стороны. Результат:
+Repo fixed effects (§8.4) compares agent and human commits *in the same repo in the same
+period* — a confounder remains: within a repo the agent may get special tasks. Cleaner would be an
+**interrupted time series**: one repo, drift *before* the switch to agents
+versus *after* (holding the codebase, team, and domain constant). The probe
+`before_after_probe.py` looked for such repos — with a long human history before agents,
+agent dominance after, and events on both sides. Result:
 
-| Репа | pre-human коммитов | agent-доля после switch | events до/после |
+| Repo | pre-human commits | agent share after switch | events before/after |
 |---|---|---|---|
-| AztecProtocol/aztec-packages | 22 980 | **5 %** | 24 / 49 |
-| scylladb/scylladb | 3 662 | **4 %** | 12 / 12 |
-| makr-code/ThemisDB | 37 | **74 %** | 2 / 198 |
+| AztecProtocol/aztec-packages | 22,980 | **5%** | 24 / 49 |
+| scylladb/scylladb | 3,662 | **4%** | 12 / 12 |
+| makr-code/ThemisDB | 37 | **74%** | 2 / 198 |
 
-**Сила лечения и зрелость кодовой базы антикоррелированы.** Зрелые репы (Aztec,
-scylladb) дают идеальный pre-baseline, но внедряют агентов по чуть-чуть (4–5 % даже
-после) — лечения нет, контраст размазан. Сильно-агентские репы (ThemisDB, 74 %)
-рождаются агентскими (37 коммитов до) — нет baseline. Никто не переключает 5-летний
-human-проект на 74 % агентов разом, поэтому нужный natural experiment в популяции
-**не существует**. Cross-sectional repo fixed effects — потолок того, что выжимается
-из observational OSS-данных; он сказал «нет per-commit эффекта». Дальше — только
-проспективный дизайн или целевой поиск реп с *публично объявленным* резким переходом
-(по объявлениям, не по git-сигнатуре).
+**Treatment strength and codebase maturity are anti-correlated.** Mature repos (Aztec,
+scylladb) provide an ideal pre-baseline, but they introduce agents in tiny amounts (4–5% even
+after) — there is no treatment, the contrast is smeared. Strongly agentic repos (ThemisDB, 74%)
+are born agentic (37 commits before) — there is no baseline. Nobody switches a 5-year-old
+human project to 74% agents all at once, so the needed natural experiment **does not exist** in the
+population. Cross-sectional repo fixed effects is the ceiling of what can be squeezed
+out of observational OSS data; it said "no per-commit effect". Beyond that — only
+a prospective design or a targeted search for repos with a *publicly announced* abrupt transition
+(by announcements, not by git signature).
 
-### 8.6. Что осталось открытым
+### 8.6. What remained open
 
-- ~~Грейдер CYCLE без подтверждения back-edge~~ — **закрыто #117** (§8.3):
-  CYCLE подтверждается живыми исходниками; итог CYCLE 146.
-- ~~File-split как NEW-FP~~ — **закрыто #119** (§8.7): контентная сигнатура + алиас.
-- ~~Time-based grace period~~ — **закрыто #121** (§8.7): гибрид 30 дней / 10 коммитов.
-- `studiocollective/songbird` (404) — 480/481 покрытие, не критично.
-- Removed-edge списки (#120): поле генератора добавлено, replay фантомы ≤5.6% терпимы.
+- ~~CYCLE grader without back-edge confirmation~~ — **closed #117** (§8.3):
+  CYCLE is confirmed from live sources; the result is CYCLE 146.
+- ~~File split as NEW-FP~~ — **closed #119** (§8.7): content signature + alias.
+- ~~Time-based grace period~~ — **closed #121** (§8.7): hybrid 30 days / 10 commits.
+- `studiocollective/songbird` (404) — 480/481 coverage, not critical.
+- Removed-edge lists (#120): the generator field was added, replay phantoms ≤5.6% are tolerable.
 
-### 8.7. Перепрогон #119 + #121 (2026-06-12)
+### 8.7. Re-run of #119 + #121 (2026-06-12)
 
-Два улучшения применены одновременно к 479 репо:
+Two improvements applied simultaneously to 479 repos:
 
-**#121 — Time-based grace:** `GRACE_PERIOD_DAYS=30` + гибрид `GRACE_PERIOD_COMMITS=10`,
-CYCLE исключены из grace (цикл при рождении — смелл независимо от зрелости).
+**#121 — Time-based grace:** `GRACE_PERIOD_DAYS=30` + hybrid `GRACE_PERIOD_COMMITS=10`,
+CYCLE excluded from grace (a cycle at birth is a smell regardless of maturity).
 
-**#119 — File-split FP filter:** `detect_splits()` — контентная сигнатура (≥50% строк
-нового заголовка из изменённого донора) + `split_origin` алиас на будущее.
-Стоимость: 2 git-вызова на кандидат, только при наличии события.
+**#119 — File-split FP filter:** `detect_splits()` — content signature (≥50% of the lines
+of the new header come from the changed donor) + `split_origin` alias for the future.
+Cost: 2 git calls per candidate, only when an event is present.
 
-| Метрика | До (#117) | После (#119+#121) | Дельта |
+| Metric | Before (#117) | After (#119+#121) | Delta |
 |---------|-----------|-------------------|--------|
-| CYCLE | 146 | **186** | +40 (вышли из grace — ожидаемо) |
+| CYCLE | 146 | **186** | +40 (came out of grace — expected) |
 | NEW | 288 | **191** | −97 (grace + split) |
 | SDP | 61 | **40** | −21 (grace) |
-| **Итого** | **495** | **417** | **−78 (−16%)** |
+| **Total** | **495** | **417** | **−78 (−16%)** |
 
-Проверено на примерах:
-- `AztecProtocol/barretenberg/chonk`: первое появление 2025-10-28, событие 2025-11-11
-  (14 дней < 30) → правильно подавляется (зарождающийся модуль).
-- `AmoghS1234/CipherMesh`: весь проект создан за 28 дней → все события правильно в grace.
-- CYCLE не потеряны — наоборот выросли (+40) из-за вывода из-под grace.
+Verified on examples:
+- `AztecProtocol/barretenberg/chonk`: first appearance 2025-10-28, event 2025-11-11
+  (14 days < 30) → correctly suppressed (a nascent module).
+- `AmoghS1234/CipherMesh`: the whole project created over 28 days → all events correctly in grace.
+- CYCLE not lost — on the contrary they grew (+40) due to being pulled out from under grace.

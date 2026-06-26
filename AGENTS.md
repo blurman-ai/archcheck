@@ -1,166 +1,166 @@
 # AGENTS.md
 
-Руководство для coding agents, работающих в репозитории `archcheck`.
+Guide for coding agents working in the `archcheck` repository.
 
-> Для Claude Code основной источник инструкций — [CLAUDE.md](CLAUDE.md).
-> Этот файл — краткая агент-нейтральная выжимка; при расхождении деталей
-> приоритет у канонических docs, на которые он ссылается.
+> For Claude Code, the primary source of instructions is [CLAUDE.md](CLAUDE.md).
+> This file is a short agent-neutral summary; when details diverge,
+> priority goes to the canonical docs it references.
 
-## Язык и стиль работы
+## Language and working style
 
-- Отвечай пользователю по-русски, тепло и по-человечески.
-- Пиши коротко, предметно, без лишней болтовни.
-- Приоритет источников при конфликте:
-  - **что реально shipped** → [CHANGELOG.md](CHANGELOG.md) (authoritative по версиям);
-  - **продуктовая рамка и архитектура** → [docs/architecture-spec.md](docs/architecture-spec.md);
-  - затем [docs/MVP.md](docs/MVP.md), затем [README.md](README.md).
+- Reply to the user in Russian, warmly and personally.
+- Write concisely, to the point, without unnecessary chatter.
+- Source priority on conflict:
+  - **what is actually shipped** → [CHANGELOG.md](CHANGELOG.md) (authoritative on versions);
+  - **product framing and architecture** → [docs/architecture-spec.md](docs/architecture-spec.md);
+  - then [docs/MVP.md](docs/MVP.md), then [README.md](README.md).
 
-## Состояние проекта
+## Project status
 
-- **v0.1 в активной разработке.** Репозиторий реализован и собирается: есть
-  `src/`, `include/archcheck/`, `tests/`, `CMakeLists.txt`, CI на GitHub Actions.
-- Ядро-пайплайн работает: fast preprocessor scan → include graph → default rules
-  → reporters. Бинарь ships SF.7/8/9 + Lakos (cycles, god-headers, chain length),
-  baseline, drift и diff. Точный shipped-набор — в [CHANGELOG.md](CHANGELOG.md).
-- Имя продукта **зафиксировано**: `archcheck` (бинарь `archcheck`). Рабочая
-  директория остаётся `cpparch` ради стабильности путей.
+- **v0.1 in active development.** The repository is implemented and builds: there are
+  `src/`, `include/archcheck/`, `tests/`, `CMakeLists.txt`, CI on GitHub Actions.
+- The core pipeline works: fast preprocessor scan → include graph → default rules
+  → reporters. The binary ships SF.7/8/9 + Lakos (cycles, god-headers, chain length),
+  baseline, drift, and diff. The exact shipped set is in [CHANGELOG.md](CHANGELOG.md).
+- The product name is **locked**: `archcheck` (binary `archcheck`). The working
+  directory stays `cpparch` for path stability.
 
-## Что это за продукт
+## What this product is
 
-`archcheck` — **CI-first CLI** для проверки архитектурных инвариантов C++ проектов.
+`archcheck` is a **CI-first CLI** for enforcing architectural invariants on C++ projects.
 
-Инструмент:
+The tool:
 
-- работает preprocessor-only, без `compile_commands.json` (include-правила);
-  чтение `compile_commands.json` для семантических правил — план v0.2 (libclang);
-- строит граф зависимостей по include (по AST — позже, v0.2);
-- применяет набор default-правил; YAML-описанные модульные правила парсятся
-  и валидируются, но пока не enforce'ятся (v0.2);
-- репортит нарушения как `file:line` (column — будущий semantic-backend);
-- завершается с ненулевым кодом при нарушениях.
+- works preprocessor-only, without `compile_commands.json` (include rules);
+  reading `compile_commands.json` for semantic rules is a v0.2 plan (libclang);
+- builds the include dependency graph (by AST — later, v0.2);
+- applies a set of default rules; YAML-described module rules are parsed
+  and validated, but not yet enforced (v0.2);
+- reports violations as `file:line` (column — future semantic backend);
+- exits with a non-zero code on violations.
 
-Позиционирование принципиально:
+The positioning is deliberate:
 
-- **не** "ArchUnit для C++";
-- а **Lakos physical design + C++ Core Guidelines SF.\* checks в CI**.
+- **not** "ArchUnit for C++";
+- but **Lakos physical design + C++ Core Guidelines SF.\* checks in CI**.
 
-Каждое default-правило несёт атрибуцию (Core Guidelines / Lakos / Martin).
-Сохраняй эту рамку в docs, сообщениях и описаниях фич.
+Every default rule carries attribution (Core Guidelines / Lakos / Martin).
+Preserve this framing in docs, messages, and feature descriptions.
 
-## Что это НЕ делает
+## What it does NOT do
 
-- не линтер (clang-tidy);
-- не bug finder (PVS/Coverity/cppcheck);
-- не formatter (clang-format);
-- не include optimizer (IWYU);
-- не GUI, не web dashboard, не IDE extension.
+- not a linter (clang-tidy);
+- not a bug finder (PVS/Coverity/cppcheck);
+- not a formatter (clang-format);
+- not an include optimizer (IWYU);
+- not a GUI, not a web dashboard, not an IDE extension.
 
-Если новая идея противоречит списку — остановись и проверь, нужна ли она вообще.
+If a new idea contradicts this list — stop and check whether it is needed at all.
 
-## Обязательное чтение перед нетривиальной работой
+## Mandatory reading before non-trivial work
 
-- [CLAUDE.md](CLAUDE.md) — рабочие принципы и команды;
-- [docs/architecture-spec.md](docs/architecture-spec.md) — главный источник по продукту;
-- [docs/MVP.md](docs/MVP.md) — границы MVP;
-- [docs/code_style.md](docs/code_style.md) — стиль C++20 (**единственный источник истины по стилю**);
-- [docs/code_quality.md](docs/code_quality.md) — анти-slop ограничения и пороги;
-- [docs/dev/git_workflow.md](docs/dev/git_workflow.md) — git-процесс;
-- [backlog/README.md](backlog/README.md) — жизненный цикл задач.
+- [CLAUDE.md](CLAUDE.md) — working principles and commands;
+- [docs/architecture-spec.md](docs/architecture-spec.md) — the main source on the product;
+- [docs/MVP.md](docs/MVP.md) — the boundaries of the MVP;
+- [docs/code_style.md](docs/code_style.md) — C++20 style (**the single source of truth on style**);
+- [docs/code_quality.md](docs/code_quality.md) — anti-slop constraints and thresholds;
+- [docs/dev/git_workflow.md](docs/dev/git_workflow.md) — the git process;
+- [backlog/README.md](backlog/README.md) — the task lifecycle.
 
-Перед редактированием существующего файла прочитай его целиком.
+Before editing an existing file, read it in full.
 
-## Архитектура
+## Architecture
 
-Пайплайн:
+Pipeline:
 
 ```text
 scan → graph → rules → report
 ```
 
-Подсистемы под `src/` (существуют):
+Subsystems under `src/` (existing):
 
 - `config/` — YAML loader → `Config`;
-- `scan/` — `include_scanner` (fast, preprocessor-only, shipped) и
-  `clang_scanner` (libclang, семантические правила — v0.2);
-- `graph/` — DAG, циклы, levelization, CCD/ACD/NCCD;
-- `rules/` — одно правило = один класс = один файл, сгруппированы по источнику;
-- `report/` — text/json reporters (sarif — позже).
+- `scan/` — `include_scanner` (fast, preprocessor-only, shipped) and
+  `clang_scanner` (libclang, semantic rules — v0.2);
+- `graph/` — DAG, cycles, levelization, CCD/ACD/NCCD;
+- `rules/` — one rule = one class = one file, grouped by source;
+- `report/` — text/json reporters (sarif — later).
 
-Ключевые инварианты:
+Key invariants:
 
-- Разделение `include_scanner` / `clang_scanner` — **осознанное**. Не схлопывай без обсуждения.
-- **Одно правило = один класс = один файл.** Регистрация через статическую таблицу;
-  добавление правила не должно трогать существующие файлы правил (OCP).
-- Не строй "универсальный rule engine".
+- The `include_scanner` / `clang_scanner` split is **deliberate**. Don't collapse it without discussion.
+- **One rule = one class = one file.** Registration via a static table;
+  adding a rule must not touch existing rule files (OCP).
+- Don't build a "generic rule engine".
 
-## Технологические ограничения
+## Technology constraints
 
-- Язык **C++20**; сборка **CMake (Ninja)**; зависимости через FetchContent.
-- YAML: **`ryml`**. Тесты: **Catch2 v3**. CI: GitHub Actions.
-- libclang/libtooling — для будущего семантического backend-а.
-- **Зависимости — минимум.** Без Boost, без тяжёлых graph-библиотек:
-  `unordered_map<NodeId, vector<NodeId>>` достаточно.
-- Дистрибутив: один статический бинарь на платформу + Docker image.
+- Language **C++20**; build **CMake (Ninja)**; dependencies via FetchContent.
+- YAML: **`ryml`**. Tests: **Catch2 v3**. CI: GitHub Actions.
+- libclang/libtooling — for the future semantic backend.
+- **Dependencies — minimum.** No Boost, no heavy graph libraries:
+  `unordered_map<NodeId, vector<NodeId>>` is sufficient.
+- Distribution: a single static binary per platform + Docker image.
 
-## Границы scope
+## Scope boundaries
 
-Без явного запроса НЕ добавляй: AST-based rules сверх плана, plugin system,
-visualization, auto architecture inference, IDE integrations. Это явно вне продукта.
+Without an explicit request, do NOT add: AST-based rules beyond the plan, a plugin system,
+visualization, automatic architecture inference, IDE integrations. These are explicitly out of the product.
 
-## Правила качества и проектирования
+## Quality and design rules
 
-Принципы: **YAGNI**, **Authority over opinion**, **Zero-config first**,
+Principles: **YAGNI**, **Authority over opinion**, **Zero-config first**,
 **Deterministic output**, **Boring tech**.
 
-Практика:
+Practice:
 
-- сначала проверь, нельзя ли решить задачу удалением кода;
-- сначала поищи существующую сущность, прежде чем создавать новую;
-- не добавляй абстракции "на вырост"; не рефактори код, который не понимаешь;
-- не делай большой рефакторинг посреди фичи без отдельного согласования.
+- first check whether the task can be solved by deleting code;
+- first look for an existing entity before creating a new one;
+- don't add abstractions "for growth"; don't refactor code you don't understand;
+- don't do a large refactor in the middle of a feature without separate agreement.
 
-Жёсткие пороги — в [docs/code_quality.md](docs/code_quality.md) (функция ≤ 30 строк,
-класс ≤ 300, параметров ≤ 4, вложенность ≤ 3, ≤ 50 новых строк на изменение без
-тестов/fixtures, ≤ 2 новых файла, ≤ 1 новый класс, 0 абстракций без запроса).
-Перед пушем гонять `lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/`.
+Hard thresholds are in [docs/code_quality.md](docs/code_quality.md) (function ≤ 30 lines,
+class ≤ 300, parameters ≤ 4, nesting ≤ 3, ≤ 50 new lines per change without
+tests/fixtures, ≤ 2 new files, ≤ 1 new class, 0 abstractions without a request).
+Before pushing, run `lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/`.
 
-## Стиль C++ кода
+## C++ code style
 
-**Единственный источник истины — [docs/code_style.md](docs/code_style.md). Читай его, не дублируй.**
+**The single source of truth is [docs/code_style.md](docs/code_style.md). Read it, don't duplicate it.**
 
-Самое частое (точные формулировки и обоснование — в code_style.md):
+The most common points (exact wording and rationale — in code_style.md):
 
-- Allman braces, 2 пробела, строки ≤ 120, UTF-8 без BOM, Unix newlines.
-- Namespaces `lower_snake_case`; типы `PascalCase`; **методы и свободные функции
-  `lowerCamelCase`**; локальные/параметры `lowerCamelCase`.
-- **Поля класса — trailing underscore: `name_`** (не `_name`, не `m_name`).
-  Поля `struct`-data-carrier-ов — без подчёркивания.
-- `constexpr`-константы `kPascalCase`; макросы `UPPER_SNAKE_CASE`.
-- **Для нового кода не префиксуем интерфейсы `I`** — чисто-виртуальная база это
-  обычный `class` (`Rule`, не `IRule`). (В коде есть legacy `IRule` — это не цель
-  для нового кода; массовый rename вне scope обычной задачи.)
-- Без `using namespace` в заголовках; заголовки self-contained; `#pragma once`;
-  без анонимных namespace в заголовках.
-- Предпочитай `[[nodiscard]]`, `noexcept`, `string_view`/`span`, `optional`/`variant`,
-  `ranges`, `concepts`, RAII и стандартную библиотеку.
+- Allman braces, 2 spaces, lines ≤ 120, UTF-8 without BOM, Unix newlines.
+- Namespaces `lower_snake_case`; types `PascalCase`; **methods and free functions
+  `lowerCamelCase`**; locals/parameters `lowerCamelCase`.
+- **Class fields — trailing underscore: `name_`** (not `_name`, not `m_name`).
+  Fields of `struct` data-carriers — without an underscore.
+- `constexpr` constants `kPascalCase`; macros `UPPER_SNAKE_CASE`.
+- **For new code we don't prefix interfaces with `I`** — a pure-virtual base is
+  an ordinary `class` (`Rule`, not `IRule`). (There is legacy `IRule` in the code — it is not a target
+  for new code; a mass rename is out of scope for an ordinary task.)
+- No `using namespace` in headers; headers self-contained; `#pragma once`;
+  no anonymous namespaces in headers.
+- Prefer `[[nodiscard]]`, `noexcept`, `string_view`/`span`, `optional`/`variant`,
+  `ranges`, `concepts`, RAII, and the standard library.
 
-## Правила и fixtures
+## Rules and fixtures
 
-Правило без fixtures не существует. Каждое новое правило обязано иметь
-`fixtures/<rule>/pass/` и `fixtures/<rule>/fail_*/`. Если фичу нельзя проверить
-через fixtures — её не реализуют.
+A rule without fixtures does not exist. Every new rule must have
+`fixtures/<rule>/pass/` and `fixtures/<rule>/fail_*/`. If a feature cannot be tested
+through fixtures — it is not implemented.
 
-Каждое default-правило обязано иметь атрибуцию (Core Guidelines / Lakos / Martin).
-Без источника — это не default, а опциональный lower-priority check.
+Every default rule must have attribution (Core Guidelines / Lakos / Martin).
+Without a source, it is not a default but an optional lower-priority check.
 
 ## Dogfooding
 
-`archcheck` обязан проходить собственные правила в CI (no cycles, SF.7/8/9/21,
-без god-headers и т.д.). Любой merge, ломающий собственные правила, недопустим.
+`archcheck` must pass its own rules in CI (no cycles, SF.7/8/9/21,
+no god-headers, etc.). Any merge that breaks its own rules is unacceptable.
 
-## Контракты CLI
+## CLI contracts
 
-Коды возврата (контракт — не менять без версионирования):
+Exit codes (a contract — don't change without versioning):
 
 - `0` — OK
 - `1` — violations found
@@ -169,23 +169,23 @@ visualization, auto architecture inference, IDE integrations. Это явно в
 
 ## Workflow
 
-Задачи живут в `backlog/`, по одному `.md` на задачу: `new/` — заведено,
-`wip/` — в работе, `completed/` — завершено и превращено в документацию
-(секции «как работает / чем управляется / с чем связана / диагностика»).
-Не смешивай несколько задач в один файл. См. [backlog/README.md](backlog/README.md).
+Tasks live in `backlog/`, one `.md` per task: `new/` — filed,
+`wip/` — in progress, `completed/` — done and turned into documentation
+(sections "how it works / what controls it / what it relates to / diagnostics").
+Don't mix multiple tasks into one file. See [backlog/README.md](backlog/README.md).
 
-## Ограничения на действия агента
+## Constraints on agent actions
 
-- **Не коммить без явной просьбы** (`/commit` или «сделай коммит»). Завершил — жди.
-- **Сборку запускать можно свободно** — это инструмент-проект, верификация через
-  реальную компиляцию здесь норма. По умолчанию собирать **Debug**, не Release.
-- Не придумывай лишнюю структуру или абстракции без подтверждённой необходимости.
+- **Don't commit without an explicit request** (`/commit` or "make a commit"). Done — wait.
+- **Builds can be run freely** — this is a tool project, verification through
+  a real compilation is normal here. By default build **Debug**, not Release.
+- Don't invent extra structure or abstractions without a confirmed need.
 
-## Короткая проверка перед тем как считать задачу выполненной
+## A short check before considering a task done
 
-- не расширил ли scope сверх запрошенного;
-- не добавил ли абстракцию без явной пользы;
-- можно ли удалить часть нового кода;
-- есть ли проверяемый путь в fixtures/тестах;
-- не противоречит ли изменение Lakos/Core Guidelines framing;
-- не конфликтует ли изменение с [docs/architecture-spec.md](docs/architecture-spec.md).
+- did you not expand scope beyond what was requested;
+- did you not add an abstraction without clear benefit;
+- can part of the new code be deleted;
+- is there a testable path in fixtures/tests;
+- does the change not contradict the Lakos/Core Guidelines framing;
+- does the change not conflict with [docs/architecture-spec.md](docs/architecture-spec.md).

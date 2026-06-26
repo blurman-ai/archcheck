@@ -10,21 +10,21 @@
 
 ## Why for archcheck
 
-Усиливает Martin's *Abstractness* (A) — превращает «интерфейсный» слой в реально интерфейсный. Если базовый класс назван `IFoo` / `FooInterface` (или просто используется только как точка наследования), он обязан быть pure abstract. Иначе «интерфейс» тянет за собой реализацию — модуль, который должен был зависеть от абстракции, цепляется к конкретике.
+Reinforces Martin's *Abstractness* (A) — turns an "interface" layer into a genuinely interface one. If a base class is named `IFoo` / `FooInterface` (or is simply used only as an inheritance point), it must be pure abstract. Otherwise the "interface" drags an implementation along — a module that was supposed to depend on the abstraction clings to the concrete.
 
 ## Detection
 
-AST-проход: класс, который:
-- наследуется хотя бы одним другим классом, **и**
-- имеет хотя бы одну виртуальную функцию.
+AST pass: a class that:
+- is inherited by at least one other class, **and**
+- has at least one virtual function.
 
-Проверка: все non-static функции — pure virtual; нет data members; есть virtual destructor.
+Check: all non-static functions are pure virtual; no data members; there is a virtual destructor.
 
-Опционально под флагом «строгий» — флагать только классы с префиксом `I` или суффиксом `Interface`.
+Optionally under a "strict" flag — flag only classes with the prefix `I` or the suffix `Interface`.
 
 ## Fixtures
 
 - `pass/` — `class IFoo { virtual ~IFoo() = default; virtual void Do() = 0; };`.
-- `fail_data/` — interface с `int _state;`.
-- `fail_impl/` — interface с непустым телом метода.
-- `fail_no_virtual_dtor/` — все методы pure, но нет `virtual ~`.
+- `fail_data/` — an interface with `int _state;`.
+- `fail_impl/` — an interface with a non-empty method body.
+- `fail_no_virtual_dtor/` — all methods pure, but no `virtual ~`.

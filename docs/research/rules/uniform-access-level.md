@@ -10,15 +10,15 @@
 
 ## Why for archcheck
 
-Маркер «god-class» / смешанных concerns: часть полей публичные (struct-like), часть приватные (class-like). Такие классы обычно вырастают из POD, которым прикрутили инвариант, но не довели до конца — то есть это технический долг прямо на границе ответственности модуля.
+A marker of a "god-class" / mixed concerns: some fields public (struct-like), some private (class-like). Such classes usually grow out of a POD onto which an invariant was bolted but never finished — that is, technical debt right at the module's responsibility boundary.
 
 ## Detection
 
-AST: для каждого `CXXRecordDecl` собрать access-уровни всех non-`const` non-static `FieldDecl`. Если множество уровней > 1 — флагать.
+AST: for each `CXXRecordDecl`, collect the access levels of all non-`const` non-static `FieldDecl`s. If the set of levels > 1 — flag.
 
 ## Fixtures
 
-- `pass_struct/` — все поля `public` (POD).
-- `pass_class/` — все non-const поля `private`.
-- `pass_mixed_const/` — `public: const int kVersion = 1; private: int _state;` (const разрешён публично).
-- `fail_mixed/` — `public: int x; private: int _y;` — оба non-const, разные уровни.
+- `pass_struct/` — all fields `public` (POD).
+- `pass_class/` — all non-const fields `private`.
+- `pass_mixed_const/` — `public: const int kVersion = 1; private: int _state;` (const allowed publicly).
+- `fail_mixed/` — `public: int x; private: int _y;` — both non-const, different levels.

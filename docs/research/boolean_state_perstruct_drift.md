@@ -1,12 +1,12 @@
-# Boolean-State DRIFT — per-struct (атрибуция к структуре + git blame)
+# Boolean-State DRIFT — per-struct (attribution to struct + git blame)
 
-**Метод:** парсим текущие структуры → реальные bool-поля (depth-0, без сигнатур/локальных) → `git blame` каждого поля → группируем ПО СТРУКТУРЕ. Дрейф = поля одной структуры пришли через ≥4 разных коммитов.
+**Method:** parse current structs → real bool fields (depth-0, no signatures/locals) → `git blame` each field → group BY STRUCT. Drift = fields of one struct arrived through ≥4 distinct commits.
 
-**Репо:** 73 агентских. **Структур-дрейфов:** 65 в 30 репо; из них content (не config-bag): **51 в 27 репо**.
+**Repos:** 73 agentic. **Struct drifts:** 65 in 30 repos; of those content (not config-bag): **51 in 27 repos**.
 
-## Топ content-структур (config-bag исключены)
+## Top content structs (config-bag excluded)
 
-| Коммитов | Полей | Дней | Структура | Файл |
+| Commits | Fields | Days | Struct | File |
 |---|---|---|---|---|
 | **13** | 16 | 640 (2024-06-03→2026-03-05) | `IsolateBase` | [setup.h](file://~/oss/cloudflare_workerd/src/workerd/jsg/setup.h)<br><sub>cloudflare_workerd/src/workerd/jsg/setup.h</sub> |
 | **9** | 24 | 725 (2024-06-03→2026-05-29) | `ToolboxUIElement` | [ToolboxUIElement.h](file://~/oss/gwdevhub_GWToolboxpp/GWToolboxdll/ToolboxUIElement.h)<br><sub>gwdevhub_GWToolboxpp/GWToolboxdll/ToolboxUIElement.h</sub> |
@@ -49,30 +49,30 @@
 | **4** | 9 | 214 (2025-10-21→2026-05-23) | `DATALAYER_INFO_BYDATTO3` | [datalayer_extended.h](file://~/oss/dalathegreat_Battery-Emulator/Software/src/datalayer/datalayer_extended.h)<br><sub>dalathegreat_Battery-Emulator/Software/src/datalayer/datalayer_extended.h</sub> |
 | **4** | 5 | 206 (2025-10-29→2026-05-23) | `symbolt` | [symbol.h](file://~/oss/esbmc_esbmc/src/util/symbol.h)<br><sub>esbmc_esbmc/src/util/symbol.h</sub> |
 
-*(config-bag структур отдельно: 14; полный список — perstruct_drift.csv)*
+*(config-bag structs separately: 14; full list — perstruct_drift.csv)*
 
 
 ---
 
-## Ручная верификация топ-14 (eye-check)
+## Manual verification of the top-14 (eye-check)
 
-Проверены глазами 14 топовых content-структур (код + git-история полей):
+I eye-checked the 14 top content structs (code + git history of fields):
 
-| Вердикт | Кол-во | Структуры |
+| Verdict | Count | Structs |
 |---|---|---|
-| 🟢 **реальный дрейф** | **8 (57%)** | EditorShell, State (ATS HttpTransact), Terminal, MethodState, Channel, Graph, CommonAudioProcessor, CustomLine |
-| 🟡 config-bag (имя не поймал фильтр) | 6 (43%) | IsolateBase, DATALAYER_SYSTEM_INFO_TYPE, DATALAYER_BATTERY_SETTINGS_TYPE, FGenericPlatformSentrySubsystem, OptionManager, Oiiotool |
+| 🟢 **real drift** | **8 (57%)** | EditorShell, State (ATS HttpTransact), Terminal, MethodState, Channel, Graph, CommonAudioProcessor, CustomLine |
+| 🟡 config-bag (name not caught by filter) | 6 (43%) | IsolateBase, DATALAYER_SYSTEM_INFO_TYPE, DATALAYER_BATTERY_SETTINGS_TYPE, FGenericPlatformSentrySubsystem, OptionManager, Oiiotool |
 | 🔴 FP | **0 (0%)** | — |
 
-**Точность скакнула: file-level 23% реальных / 45% мусора → per-struct 57% реальных / 0% мусора.**
-Per-struct атрибуция + depth-0 парсер устранили ВСЕ ложные срабатывания (разные структуры, генерёнка, bool в сигнатурах). Остаточная путаница — только 🟢 vs 🟡 (config-bag), и это семантическое различие (природа полей: state/mode vs `is*Enabled`/logging-toggle/registration-guard), которое именем структуры не ловится.
+**Precision jumped: file-level 23% real / 45% junk → per-struct 57% real / 0% junk.**
+Per-struct attribution + depth-0 parser eliminated ALL false positives (different structs, generated code, bool in signatures). The remaining confusion is only 🟢 vs 🟡 (config-bag), and that is a semantic distinction (nature of the fields: state/mode vs `is*Enabled`/logging-toggle/registration-guard) that the struct name doesn't catch.
 
-### Эталоны реального дрейфа (подтверждены)
-- **EditorShell** (donner) — [файл](file://~/oss/jwmcglynn_donner/donner/editor/EditorShell.h) — с 5 до 23 bool за 6 недель, «owns all long-lived GUI/editor orchestration state».
-- **State** (apache trafficserver, `HttpTransact`) — [файл](file://~/oss/apache_trafficserver/include/proxy/http/HttpTransact.h) — 48 per-transaction bool, многолетний рост (уже архитектурный запах).
-- **Terminal** (microsoft) — [файл](file://~/oss/microsoft_terminal/src/cascadia/TerminalCore/Terminal.hpp) — god-class терминала.
-- **MethodState** (MOLA lidar) — [файл](file://~/oss/MOLAorg_mola_lidar_odometry/module/include/mola_lidar_odometry/LidarOdometry.h) — lifecycle/dirty-флаги одометрии.
-- **Channel** (FluidNC), **Graph** (hhds), **CommonAudioProcessor** (osci-render), **CustomLine** (GWToolbox) — + ранее ToolboxUIElement, platform.hpp, engine.hpp, solidity_convertert.
+### Reference cases of real drift (confirmed)
+- **EditorShell** (donner) — [file](file://~/oss/jwmcglynn_donner/donner/editor/EditorShell.h) — from 5 to 23 bool in 6 weeks, "owns all long-lived GUI/editor orchestration state".
+- **State** (apache trafficserver, `HttpTransact`) — [file](file://~/oss/apache_trafficserver/include/proxy/http/HttpTransact.h) — 48 per-transaction bool, multi-year growth (already an architectural smell).
+- **Terminal** (microsoft) — [file](file://~/oss/microsoft_terminal/src/cascadia/TerminalCore/Terminal.hpp) — terminal god-class.
+- **MethodState** (MOLA lidar) — [file](file://~/oss/MOLAorg_mola_lidar_odometry/module/include/mola_lidar_odometry/LidarOdometry.h) — odometry lifecycle/dirty flags.
+- **Channel** (FluidNC), **Graph** (hhds), **CommonAudioProcessor** (osci-render), **CustomLine** (GWToolbox) — + earlier ToolboxUIElement, platform.hpp, engine.hpp, solidity_convertert.
 
-### Честная оценка распространённости
-51 content-структура-дрейф в 27 репо; при ~57% подтверждаемости реальный дрейф — примерно в **~15-16 из 73 репо (~21%)**. То есть «накопление boolean-state в одной содержательной структуре во времени» реально есть **примерно в каждом пятом** агентском C++ репо — не в 75%, как давала хлипкая file-метрика, но и не «ничего».
+### Honest estimate of prevalence
+51 content-struct drifts in 27 repos; at ~57% confirmability, real drift is in roughly **~15-16 of 73 repos (~21%)**. That is, "accumulation of boolean-state in a single meaningful struct over time" really exists in **about one in five** agentic C++ repos — not 75% as the flimsy file-metric suggested, but not "nothing" either.

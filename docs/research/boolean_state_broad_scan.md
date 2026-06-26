@@ -1,22 +1,22 @@
-# Boolean-State — широкий прогон (без name-фильтров)
+# Boolean-State — broad scan (no name filters)
 
-**Кандидатов:** 5811 структур с 5+ реальными bool-полями в 790 репозиториях.
+**Candidates:** 5811 structs with 5+ real bool fields across 790 repositories.
 
-**Фильтры:** только глубина-0 (реальные поля, не локальные переменные). Name-whitelist и blacklist УБРАНЫ. Колонки `vendor`/`state-like` — пометки, не фильтр.
+**Filters:** depth-0 only (real fields, not local variables). Name whitelist and blacklist REMOVED. The `vendor`/`state-like` columns are annotations, not filters.
 
-## Сводка (790 репо)
+## Summary (790 repos)
 
-| Метрика | Значение |
+| Metric | Value |
 |---|---|
-| Всего структур с 5+ bool | **5811** |
-| Вендоренные | 383 (6%) |
-| Свои (non-vendor) | 5428 |
-| — из них **0 state-подобных имён** (конфиг/data-мешки) | **4231 (78%)** |
-| — 1-2 state-имени | 1021 |
-| — 3+ state, но <50% полей | 121 |
-| — **3+ state, ≥50% полей** (нейминг-кандидаты в FSM) | **55** |
+| Total structs with 5+ bool | **5811** |
+| Vendored | 383 (6%) |
+| Own (non-vendor) | 5428 |
+| — of those with **0 state-like names** (config/data bags) | **4231 (78%)** |
+| — 1-2 state names | 1021 |
+| — 3+ state, but <50% of fields | 121 |
+| — **3+ state, ≥50% of fields** (naming candidates for FSM) | **55** |
 
-**Вывод по неймингу:** ~1% структур с 5+ bool выглядят машиной состояний *по именам*. 78% — заведомо конфиг (0 lifecycle-имён). Гиганты сверху (TeslaBattery 215, PQCSettings 199, SettingsCache 76) — все конфиги. Но нейминг слеп к FSM с «нестандартными» именами — реальную долю даёт только анализ использования (см. [boolean_state_usage_verdicts.md](boolean_state_usage_verdicts.md)).
+**Naming conclusion:** ~1% of structs with 5+ bool look like a state machine *by name*. 78% are clearly config (0 lifecycle names). The giants at the top (TeslaBattery 215, PQCSettings 199, SettingsCache 76) are all configs. But naming is blind to FSMs with "non-standard" names — only usage analysis gives the real share (see [boolean_state_usage_verdicts.md](boolean_state_usage_verdicts.md)).
 
 | Bools | State-like | Vendor | Struct | File |
 |---|---|---|---|---|
@@ -171,5 +171,5 @@
 | 29 | 3 |  | `ImGuiContext` | [imgui_internal.h](file://~/oss/BambuStudio/src/imgui/imgui_internal.h) |
 | 29 | 0 |  | `smu7_hwmgr` | [smu7_hwmgr.h](file://~/oss/LineageOS_android_kernel_asus_sm8350/drivers/gpu/drm/amd/powerplay/hwmgr/smu7_hwmgr.h) |
 
-*(показаны топ-150 из 5811; полный список — broad_scan.csv)*
+*(top 150 of 5811 shown; full list — broad_scan.csv)*
 

@@ -2,7 +2,7 @@
 
 Authoritative reference for `.archcheck.yml` schema starting at v1.
 
-This document supersedes the YAML example in `docs/architecture-spec.md` §«Анализ по конфигу». Spec keeps a pointer here.
+This document supersedes the YAML example in `docs/architecture-spec.md` §"Config-driven analysis". Spec keeps a pointer here.
 
 ## Enforcement status (current release)
 

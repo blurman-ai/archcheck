@@ -51,7 +51,7 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 # ryml — YAML parser. Header-only-ish, low-allocation, no Boost.
-# Spec §«Технологический стек» / §«Зависимости — минимум».
+# Spec §"Tech stack" / §"Dependencies — minimum".
 FetchContent_Declare(
    ryml
    GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
@@ -64,7 +64,7 @@ set(RYML_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(RYML_DEFAULT_CALLBACKS ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(ryml)
 
-# Project layout — see docs/architecture-spec.md §«Высокоуровневая структура кода».
+# Project layout — see docs/architecture-spec.md §"High-level code structure".
 add_subdirectory(src)
 
 if(ARCHCHECK_BUILD_TESTS)

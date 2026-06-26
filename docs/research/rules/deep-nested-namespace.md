@@ -1,26 +1,26 @@
 # deep-nested-namespace
 
-- **Category:** P (preprocessor scan) или R (text pattern)
-- **Authority:** medium — Google C++ Style Guide + общая практика
-- **Source:** [Google C++ Style Guide — Namespaces](https://google.github.io/styleguide/cppguide.html#Namespaces); Lakos *LSCSD* §2.4 (физический пакеджинг).
+- **Category:** P (preprocessor scan) or R (text pattern)
+- **Authority:** medium — Google C++ Style Guide + common practice
+- **Source:** [Google C++ Style Guide — Namespaces](https://google.github.io/styleguide/cppguide.html#Namespaces); Lakos *LSCSD* §2.4 (physical packaging).
 
 ## Rule
 
-> "Глубина вложенности namespace > 4 уровней — флаг."
+> "Namespace nesting depth > 4 levels — flag."
 
 ## Why for archcheck
 
-Простой sprawl-детектор. `archcheck::rules::core_guidelines::sf::detail::` — пять уровней — это сигнал, что иерархия пакетов вышла из-под контроля или что вместо физического разделения (через директории / компоненты) пытаются делать логическое через nested namespace. Не глубокий архитектурный смысл, но дёшево и ловит реальный анти-паттерн.
+A simple sprawl detector. `archcheck::rules::core_guidelines::sf::detail::` — five levels — is a signal that the package hierarchy has gotten out of hand, or that instead of physical separation (via directories / components) people are trying to do logical separation via nested namespaces. No deep architectural meaning, but cheap and catches a real anti-pattern.
 
 ## Detection
 
-Preprocessor scan: для каждого файла отследить максимальную глубину вложенности `namespace X { namespace Y { ... } }`. Учитывать compact form C++17 (`namespace X::Y::Z {`) как глубину 3. Если > порога (default 4) — флагать. Порог настраиваемый.
+Preprocessor scan: for each file, track the maximum nesting depth of `namespace X { namespace Y { ... } }`. Count the C++17 compact form (`namespace X::Y::Z {`) as depth 3. If > threshold (default 4) — flag. Threshold configurable.
 
-Игнорировать anonymous namespace при подсчёте (он структурный, не семантический).
+Ignore anonymous namespaces in the count (they are structural, not semantic).
 
 ## Fixtures
 
 - `pass_shallow/` — `namespace archcheck::rules { ... }`.
-- `pass_compact_form/` — `namespace archcheck::rules::lakos { ... }` (3 уровня).
-- `fail_deep/` — `namespace a::b::c::d::e::f { ... }` (6 уровней).
-- `fail_traditional/` — пять вложенных `namespace X {` блоков.
+- `pass_compact_form/` — `namespace archcheck::rules::lakos { ... }` (3 levels).
+- `fail_deep/` — `namespace a::b::c::d::e::f { ... }` (6 levels).
+- `fail_traditional/` — five nested `namespace X {` blocks.

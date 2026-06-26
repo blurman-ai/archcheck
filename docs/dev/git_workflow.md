@@ -1,28 +1,28 @@
 # Git workflow — archcheck
 
-OSS-стандарты процесса. Каждый блок — со ссылкой на источник, чтобы у любого external contributor не было вопросов «почему так».
+OSS process standards. Each block carries a link to its source, so that no external contributor has to wonder "why this way".
 
 ## Branching: GitHub Flow
 
-Источник: [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow).
+Source: [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow).
 
-- `master` всегда зелёный.
-- Feature-ветка: `<type>/<NNN>-<short-slug>` — например `feat/004-project-skeleton`, `docs/006-spec-refactor`, `chore/007-workflow-setup`.
-- `<type>` ∈ `feat / fix / docs / refactor / chore / test / build / perf / ci` — те же, что в Conventional Commits.
-- `<NNN>` — ID задачи из `backlog/`. Нет задачи — сначала завести.
-- После merge ветка удаляется автоматически (`Settings → General → Pull Requests → Automatically delete head branches`).
+- `master` is always green.
+- Feature branch: `<type>/<NNN>-<short-slug>` — for example `feat/004-project-skeleton`, `docs/006-spec-refactor`, `chore/007-workflow-setup`.
+- `<type>` ∈ `feat / fix / docs / refactor / chore / test / build / perf / ci` — the same as in Conventional Commits.
+- `<NNN>` — task ID from `backlog/`. No task — create one first.
+- After merge the branch is deleted automatically (`Settings → General → Pull Requests → Automatically delete head branches`).
 
-### Direct push для admin
+### Direct push for admin
 
-Admin репо добавлен в *Bypass list* ruleset-а master (Settings → Rules). `git push origin master` напрямую разрешён. PR остаётся опцией для рискованных изменений, не обязательным шагом.
+The repo admin is added to the master ruleset's *Bypass list* (Settings → Rules). `git push origin master` directly is allowed. A PR remains an option for risky changes, not a mandatory step.
 
-Force-push в master заблокирован для всех, включая admin — намеренно, защита от случайного переписывания истории.
+Force-push to master is blocked for everyone, including admin — deliberately, as protection against accidental history rewriting.
 
 ## Commits: Conventional Commits 1.0
 
-Источник: [conventionalcommits.org/v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
+Source: [conventionalcommits.org/v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
 
-Формат:
+Format:
 
 ```
 <type>(<scope>): <description>
@@ -34,59 +34,59 @@ Force-push в master заблокирован для всех, включая ad
 
 **Types:**
 
-| Type | Когда |
+| Type | When |
 |---|---|
-| `feat` | новая функциональность продукта |
-| `fix` | багфикс в коде продукта |
-| `docs` | только документация (README, docs/, спека) |
-| `refactor` | изменение кода без изменения поведения |
-| `test` | тесты или фикстуры |
-| `build` | build-система (CMake, зависимости) |
-| `ci` | CI-конфиги (GitHub Actions) |
-| `perf` | оптимизация |
-| `chore` | рутина: инфраструктура репо, скилы, переименования, конфиги |
+| `feat` | new product functionality |
+| `fix` | bugfix in product code |
+| `docs` | documentation only (README, docs/, spec) |
+| `refactor` | code change without behavior change |
+| `test` | tests or fixtures |
+| `build` | build system (CMake, dependencies) |
+| `ci` | CI configs (GitHub Actions) |
+| `perf` | optimization |
+| `chore` | routine: repo infrastructure, skills, renames, configs |
 
-**Scopes** для archcheck (по подсистемам):
+**Scopes** for archcheck (by subsystem):
 
-| Scope | Подсистема |
+| Scope | Subsystem |
 |---|---|
 | `config` | YAML loader, Config struct |
-| `graph` | компонентный граф, циклы, метрики |
+| `graph` | component graph, cycles, metrics |
 | `scan` | include / clang scanners |
 | `rules/sf` | Core Guidelines SF.* |
-| `rules/lakos` | циклы, god-headers, CCD/ACD/NCCD |
-| `rules/martin` | I/A/D метрики |
-| `rules/custom` | пользовательские pattern-правила |
+| `rules/lakos` | cycles, god-headers, CCD/ACD/NCCD |
+| `rules/martin` | I/A/D metrics |
+| `rules/custom` | user pattern rules |
 | `report` | text / json / sarif reporters |
-| `cli` | main, аргументы, exit codes |
+| `cli` | main, arguments, exit codes |
 | `fixtures` | `fixtures/` |
-| `build` | CMake, упаковка |
-| `docs` | общие документы |
-| `spec` | архитектурная спецификация |
+| `build` | CMake, packaging |
+| `docs` | general documents |
+| `spec` | architecture specification |
 | `claude` | `.claude/` (settings, skills) |
 | `tasks` | `backlog/` |
-| `process` | git workflow, CHANGELOG, релиз-процесс |
+| `process` | git workflow, CHANGELOG, release process |
 
-Если изменения охватывают несколько scope-ов — указать самый репрезентативный или опустить scope.
+If changes span several scopes — specify the most representative one or omit the scope.
 
-**Subject:** ≤ 72 символа, lowercase, императив (`add`, не `added`), без точки в конце. Можно ссылаться на задачу: `(#NNN)`.
+**Subject:** ≤ 72 characters, lowercase, imperative (`add`, not `added`), no trailing period. May reference a task: `(#NNN)`.
 
-**Trailers** (поверх Conventional Commits — парсерами игнорируются, нужны для AI-аудита):
+**Trailers** (on top of Conventional Commits — ignored by parsers, needed for AI audit):
 
 ```
 AI-Assisted: Claude
-Verified: <как проверял — autotest / manual / build / nothing>
-Risk: low|med|high (причина)
+Verified: <how it was checked — autotest / manual / build / nothing>
+Risk: low|med|high (reason)
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Versioning: SemVer 2.0
 
-Источник: [semver.org/spec/v2.0.0](https://semver.org/spec/v2.0.0.html).
+Source: [semver.org/spec/v2.0.0](https://semver.org/spec/v2.0.0.html).
 
-- Pre-1.0 (текущая фаза): `0.x.y`. SemVer §4 разрешает breaking-изменения в MINOR; избегаем, но не запрещаем.
-- v1.0 — когда стабилизированы CLI-флаги, exit codes, JSON-схема отчёта, формат YAML-конфига, формат baseline.
-- Что считается breaking change — см. [`docs/architecture-spec.md`](../architecture-spec.md) секция «Stability contract».
+- Pre-1.0 (current phase): `0.x.y`. SemVer §4 permits breaking changes in MINOR; we avoid them but do not forbid them.
+- v1.0 — when CLI flags, exit codes, the JSON report schema, the YAML config format, and the baseline format are stabilized.
+- What counts as a breaking change — see [`docs/architecture-spec.md`](../architecture-spec.md) section "Stability contract".
 
 ## Tags: annotated `vX.Y.Z`
 
@@ -95,38 +95,38 @@ git tag -a v0.1.0 -m "Release 0.1.0"
 git push origin master --follow-tags
 ```
 
-Lightweight tags (`git tag v0.1.0` без `-a`) не использовать — теряется метаинформация (автор, дата, сообщение).
+Do not use lightweight tags (`git tag v0.1.0` without `-a`) — metadata (author, date, message) is lost.
 
 ## Changelog: Keep a Changelog 1.1
 
-Источник: [keepachangelog.com/v1.1.0](https://keepachangelog.com/en/1.1.0/).
+Source: [keepachangelog.com/v1.1.0](https://keepachangelog.com/en/1.1.0/).
 
-[`CHANGELOG.md`](../../CHANGELOG.md) в корне репо. Секции: `Added / Changed / Deprecated / Removed / Fixed / Security`. Сверху всегда `[Unreleased]`, при релизе — фиксируется как `[X.Y.Z] - YYYY-MM-DD`, и заводится новая пустая `[Unreleased]`. Пишется руками, не авто-генерируется — курируемый changelog читается людьми лучше.
+[`CHANGELOG.md`](../../CHANGELOG.md) at the repo root. Sections: `Added / Changed / Deprecated / Removed / Fixed / Security`. `[Unreleased]` is always on top; at release it is frozen as `[X.Y.Z] - YYYY-MM-DD`, and a new empty `[Unreleased]` is started. Written by hand, not auto-generated — a curated changelog reads better for humans.
 
-## Известные ограничения lint-gate
+## Known lint-gate limitations
 
-### clang-format: расхождение локальной и CI-сборки
+### clang-format: divergence between local and CI builds
 
-CI использует `clang-format-18` из Ubuntu apt. Локальная среда (AstraLinux) содержит `clang-format-18.1.8 (9.astra6)` — другую сборку того же major-версии. Изредка они форматируют сложные конструкции (многострочные тернарные, длинные цепочки `<<`) по-разному.
+CI uses `clang-format-18` from Ubuntu apt. The local environment (AstraLinux) contains `clang-format-18.1.8 (9.astra6)` — a different build of the same major version. Occasionally they format complex constructs (multiline ternaries, long `<<` chains) differently.
 
-**Принятое решение:** принять как риск. Если CI падает с `-Wclang-format-violations` на файле, который lint-gate принял локально — гнать `clang-format -i` и пушить отдельный `fix(ci)` коммит.
+**Accepted decision:** accept it as a risk. If CI fails with `-Wclang-format-violations` on a file that the lint-gate accepted locally — run `clang-format -i` and push a separate `fix(ci)` commit.
 
-Полное устранение требует единого бинарника (Docker с Ubuntu), что слишком тяжело для локальной разработки.
+Full elimination would require a single binary (Docker with Ubuntu), which is too heavy for local development.
 
-## Release-процесс (черновик до v1.0)
+## Release process (draft until v1.0)
 
-Автоматизирован командой [`/release`](../../.claude/commands/release.md); вручную — те же шаги:
+Automated by the [`/release`](../../.claude/commands/release.md) command; manually — the same steps:
 
-1. Все коммиты для релиза влиты в master.
-2. `CHANGELOG.md`: переименовать `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, добавить пустую `[Unreleased]`.
-3. Bump версию в `CMakeLists.txt` (`project(... VERSION X.Y.Z)`).
-4. Коммит: `chore(release): bump to X.Y.Z`.
-5. Тег: `git tag -a vX.Y.Z -m "Release X.Y.Z"`.
+1. All release commits are merged into master.
+2. `CHANGELOG.md`: rename `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, add an empty `[Unreleased]`.
+3. Bump the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z)`).
+4. Commit: `chore(release): bump to X.Y.Z`.
+5. Tag: `git tag -a vX.Y.Z -m "Release X.Y.Z"`.
 6. Push: `git push origin master --follow-tags`.
-7. **GitHub Release создаётся автоматически** — workflow [`release.yml`](../../.github/workflows/release.yml)
-   ловит push тега `vX.Y.Z`, собирает Linux x86_64 binary, пакует
-   `archcheck-X.Y.Z-linux-x86_64.tar.gz` + `.sha256`, публикует Release и
-   прогоняет smoke-job на чистом runner. Вручную трогать не нужно.
+7. **The GitHub Release is created automatically** — the [`release.yml`](../../.github/workflows/release.yml) workflow
+   catches the push of a `vX.Y.Z` tag, builds the Linux x86_64 binary, packs
+   `archcheck-X.Y.Z-linux-x86_64.tar.gz` + `.sha256`, publishes the Release and
+   runs a smoke job on a clean runner. No manual touch needed.
 
-Dry-run: запушить временный тег (`vX.Y.Z-rc1` → помечается prerelease),
-проверить asset, потом удалить тег и release.
+Dry-run: push a temporary tag (`vX.Y.Z-rc1` → marked prerelease),
+check the asset, then delete the tag and release.

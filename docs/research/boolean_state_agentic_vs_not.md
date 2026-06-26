@@ -1,61 +1,61 @@
-# Boolean-State Drift: агентские vs обычные репо (по коммитам)
+# Boolean-State Drift: agentic vs ordinary repos (by commits)
 
-**Дата:** 2026-06-07 · **Задача:** #089
-**Метод:** per-struct drift по git-истории (depth-0 поля → git blame → группировка по структуре; дрейф = bool-поля одной content-структуры пришли через ≥4 разных коммита). Прогон по **787 репо** корпуса, тег agentic (73) / non-agentic (714).
+**Date:** 2026-06-07 · **Task:** #089
+**Method:** per-struct drift over git history (depth-0 fields → git blame → grouping by struct; drift = bool fields of one content struct arrived through ≥4 distinct commits). Run over the **787 repos** of the corpus, tagged agentic (73) / non-agentic (714).
 
-## Результат
+## Result
 
-| Группа | Репо | Структур-кандидатов (≥4 bool) | Дрейф (content) | **drift / examined** | Репо с дрейфом |
+| Group | Repos | Candidate structs (≥4 bool) | Drift (content) | **drift / examined** | Repos with drift |
 |---|---|---|---|---|---|
 | **AGENTIC** | 73 | 518 | 51 | **9.8%** | 27/73 (**36%**) |
 | **NON-AGENTIC** | 714 | 5046 | 304 | **6.0%** | 126/714 (**17%**) |
 
-**Агентские репо дрейфуют булами заметно чаще:**
-- на структуру: **9.8% vs 6.0% ≈ 1.6×**
-- на репо: **36% vs 17% ≈ 2.1×**
+**Agentic repos drift on bools noticeably more often:**
+- per struct: **9.8% vs 6.0% ≈ 1.6×**
+- per repo: **36% vs 17% ≈ 2.1×**
 
-## Конфаунд проверен — это НЕ «агентские активнее»
+## Confound checked — this is NOT "agentic repos are more active"
 
-Естественное возражение: агентские отбирались по высокой активности (>300 коммитов с мая 2025), а больше коммитов в окне = больше шансов накопить ≥4 add-коммита. Проверил медианную глубину (shallow) клона:
+The natural objection: agentic repos were selected for high activity (>300 commits since May 2025), and more commits in the window = more chances to accumulate ≥4 add-commits. I checked the median (shallow) clone depth:
 
-| | медиана коммитов | среднее |
+| | median commits | mean |
 |---|---|---|
 | AGENTIC | 1013 | 1659 |
 | NON-AGENTIC | 940 | 1505 |
 
-Отношение медиан — **1.08×**, т.е. активность практически равная. Разницу в дрейфе (1.6-2.1×) объёмом коммитов **не объяснить**. Сигнал держится.
+The ratio of medians is **1.08×**, i.e. activity is practically equal. The difference in drift (1.6-2.1×) **cannot be explained** by commit volume. The signal holds.
 
-## Что это значит
+## What it means
 
-Согласуется с основной темой проекта (агентский хвост, `experiments/AGENTIC_CODE_REPORT.md`): код, написанный с ИИ-ассистентами, **накапливает boolean-state в одной структуре заметно чаще** — ровно паттерн «добавь ещё один флаг под новую фичу», который агенты воспроизводят охотнее (каждая итерация = новый bool, без рефакторинга в enum/State).
+Consistent with the project's main theme (the agentic tail, `experiments/AGENTIC_CODE_REPORT.md`): code written with AI assistants **accumulates boolean-state within a single struct noticeably more often** — exactly the "add one more flag for the new feature" pattern that agents reproduce more eagerly (each iteration = a new bool, without refactoring into enum/State).
 
-## Верификация оговорки про config-bag (eye-check обеих групп)
+## Verification of the config-bag caveat (eye-check of both groups)
 
-Прогнал ручную классификацию выборок обеих групп (рубрика 🟢 реальный дрейф / 🟡 config-bag / 🔴 FP):
+I ran a manual classification of samples from both groups (rubric 🟢 real drift / 🟡 config-bag / 🔴 FP):
 
-| Группа | выборка | 🟢 реальный | 🟡 config-bag | 🔴 FP |
+| Group | sample | 🟢 real | 🟡 config-bag | 🔴 FP |
 |---|---|---|---|---|
 | AGENTIC | 14 | **57%** | 43% | **0%** |
 | NON-AGENTIC | 15 | **40%** | 40% | **20%** |
 
-Доля config-bag сопоставима (~40-43%), но **FP-доля у non-agentic выше** (20% vs 0%): в их топ-выборку попали гиганты-вендор-хедеры (hostap `wpa_supplicant`, freebsd `amdgpu_device`) и генерёнка (EVerest `Conf`) — у агентских таких меньше (репо моложе/мельче).
+The config-bag share is comparable (~40-43%), but the **FP share is higher for non-agentic** (20% vs 0%): their top sample included giant vendor headers (hostap `wpa_supplicant`, freebsd `amdgpu_device`) and generated code (EVerest `Conf`) — agentic repos have fewer of those (repos are younger/smaller).
 
-**Коррекция на реальный дрейф (drift/examined × 🟢-доля):**
+**Correction to real drift (drift/examined × 🟢-share):**
 
-| Группа | flagged | × 🟢-доля | = реальный дрейф |
+| Group | flagged | × 🟢-share | = real drift |
 |---|---|---|---|
 | AGENTIC | 9.8% | 57% | **5.6%** |
 | NON-AGENTIC | 6.0% | 40% | **2.4%** |
 
-→ ratio **растёт с 1.6× до ~2.3×**. Оговорка №3 не просто снята — коррекция **усиливает** сигнал (у non-agentic больше FP-разбавления, поэтому его реальный дрейф падает сильнее).
+→ ratio **grows from 1.6× to ~2.3×**. Caveat #3 is not just removed — the correction **strengthens** the signal (non-agentic has more FP dilution, so its real drift falls more).
 
-## Честные оговорки
+## Honest caveats
 
-1. **Оба shallow** → нижняя граница для обеих групп (одинаковое смещение, ratio честный; абсолют занижен).
-2. **n=73 агентских — скромно.** 51 дрейф-структура; per-repo 36% на 73 репо → доверительный интервал шире, чем у non-agentic (714).
-3. ~~Предполагаю, что доля config-bag сопоставима в обеих группах~~ → **ПРОВЕРЕНО** (см. секцию выше): config-bag сопоставим, FP у non-agentic выше; коррекция усиливает ratio до ~2.3×. Абсолютные 9.8/6.0 — «кандидаты»; подтверждённый дрейф ≈ 5.6% vs 2.4%.
-4. **Не доказывает причинность** ИИ→дрейф; показывает корреляцию при контроле на активность.
+1. **Both shallow** → lower bound for both groups (same bias, ratio is fair; absolute is understated).
+2. **n=73 agentic is modest.** 51 drift structs; per-repo 36% over 73 repos → confidence interval wider than for non-agentic (714).
+3. ~~I assume the config-bag share is comparable in both groups~~ → **CHECKED** (see section above): config-bag is comparable, FP is higher for non-agentic; the correction strengthens the ratio to ~2.3×. The absolute 9.8/6.0 are "candidates"; confirmed drift ≈ 5.6% vs 2.4%.
+4. **Does not prove causation** AI→drift; it shows correlation while controlling for activity.
 
-## Вывод
+## Conclusion
 
-При равной коммит-активности агентские C++ репо показывают больше boolean-state дрейфа: **~1.6× на сырых флагах, ~2.3× после коррекции на верифицированный реальный дрейф** (5.6% vs 2.4% структур). Сигнал устойчив к двум проверкам — конфаунд активности (1.08×, снят) и состав FP/config (eye-check обеих групп, ratio усилился). В отличие от статического счётчика, он temporal. Самостоятельный нормированный вклад в «агентский хвост». Данные: `experiments/boolean_state/perstruct_drift_all.csv`.
+At equal commit activity, agentic C++ repos show more boolean-state drift: **~1.6× on raw flags, ~2.3× after correction for verified real drift** (5.6% vs 2.4% of structs). The signal is robust to two checks — the activity confound (1.08×, removed) and FP/config composition (eye-check of both groups, ratio strengthened). Unlike a static counter, it is temporal. A standalone normalized contribution to the "agentic tail". Data: `experiments/boolean_state/perstruct_drift_all.csv`.

@@ -1,184 +1,184 @@
-# Drift signal validation — имеет ли право быть drift-чекер (corpus evidence)
+# Drift signal validation — does a drift checker have a right to exist (corpus evidence)
 
 _2026-06-06_
 
-Цель документа — ответить **данными**, а не мнением, на вопрос: detection
-архитектурного дрейфа в archcheck — это реальная ниша или бесполезная побочка.
-Вывод: **узкие drift-правила (циклы, god-header shortcuts, взаимная связность)
-— реальная ниша; сырая cross-area связность как gate — шум.** Ценность продукта
-ровно в том, чтобы оставаться узким.
+The goal of this document is to answer **with data**, not opinion, the question:
+is architectural-drift detection in archcheck a real niche or a useless side feature.
+Conclusion: **narrow drift rules (cycles, god-header shortcuts, mutual coupling)
+are a real niche; raw cross-area coupling as a gate is noise.** The product's value
+lies precisely in staying narrow.
 
-## Данные
+## Data
 
-- **Корпус:** 310 C++ репозиториев (`~/oss/`), окно ~13 мес
-  (май 2025 → июнь 2026), **135 092 коммита** проанализировано per-commit
+- **Corpus:** 310 C++ repositories (`~/oss/`), ~13-month window
+  (May 2025 → June 2026), **135,092 commits** analyzed per-commit
   (`experiments/ai_repo_run/*_graph_drift.{jsonl,md}`,
-  генератор `generate_per_commit_graph_drift.py`).
-- **Метрики на коммит:** `added_edges`, `removed_edges`, `grown_cycles`,
+  generator `generate_per_commit_graph_drift.py`).
+- **Per-commit metrics:** `added_edges`, `removed_edges`, `grown_cycles`,
   `new_cross_area_dependencies`.
-- **Боевая валидация shipped-правила DRIFT.1** — отдельный прогон
-  `archcheck --drift-baseline` на LibreSprite PR #581 (см. ниже).
+- **Live validation of the shipped DRIFT.1 rule** — a separate run of
+  `archcheck --drift-baseline` on LibreSprite PR #581 (see below).
 
-### Сырое распределение
+### Raw distribution
 
-| Сигнал | Коммитов | Объём | Доля коммитов |
+| Signal | Commits | Volume | Share of commits |
 |---|---|---|---|
-| `added_edges>0` | 13 036 | 232 262 рёбер | 9.6% |
-| `new_area_deps>0` | 855 | 1903 cross-area события | 0.63% |
-| **`grown_cycles>0`** | **72** | **136 циклов** | **0.05%** |
+| `added_edges>0` | 13,036 | 232,262 edges | 9.6% |
+| `new_area_deps>0` | 855 | 1903 cross-area events | 0.63% |
+| **`grown_cycles>0`** | **72** | **136 cycles** | **0.05%** |
 
-`added_edges` — почти весь бенайн (новый `.cpp` включает свой `.h` — нормальный
-рост, не дрейф). Поэтому ниже разбираются только cross-area и циклы.
+`added_edges` is almost entirely benign (a new `.cpp` includes its own `.h` — normal
+growth, not drift). So below we discuss only cross-area and cycles.
 
-## Классификация 1903 cross-area событий
+## Classification of the 1903 cross-area events
 
-Эвристика: NOISE = build/vendor/test/header/codeql + артефакты переименований;
-STRUCT = parent→child подкаталог; LEGIT = `→core/engine/common` (нормальная база);
-ACTIONABLE = bidirectional `A↔B` (взаимная связь = smell цикла/связности);
-REVIEW = distinct-area однонаправленные.
+Heuristic: NOISE = build/vendor/test/header/codeql + rename artifacts;
+STRUCT = parent→child subdirectory; LEGIT = `→core/engine/common` (normal base);
+ACTIONABLE = bidirectional `A↔B` (mutual coupling = cycle/coupling smell);
+REVIEW = distinct-area unidirectional.
 
-| Корзина | Кол-во | % | Интерпретация |
+| Bucket | Count | % | Interpretation |
 |---|---|---|---|
-| NOISE | 622 | 32% | шум (build/vendor/test/header + renames типа `src/elab`→`src/elaboration`) |
-| STRUCT | 178 | 9% | `src→src/ui` — нормальная структура |
-| LEGIT | 182 | 9% | `→core/engine` — нормальная база, не дрейф |
-| REVIEW | 627 | 33% | «человек глянет»; потенциал при лучшем area-партишене |
-| **ACTIONABLE** | **294** | **15%** | **bidirectional — реальный layering-smell** |
+| NOISE | 622 | 32% | noise (build/vendor/test/header + renames like `src/elab`→`src/elaboration`) |
+| STRUCT | 178 | 9% | `src→src/ui` — normal structure |
+| LEGIT | 182 | 9% | `→core/engine` — normal base, not drift |
+| REVIEW | 627 | 33% | "a human glances at it"; potential with a better area partition |
+| **ACTIONABLE** | **294** | **15%** | **bidirectional — a real layering smell** |
 
-**Ключевой вывод:** сырая cross-area-метрика как gate дала бы **~50%+ false-alarm**
-(NOISE + STRUCT + LEGIT = 50% — это нормальная разработка). Гейтить на ней нельзя.
-Это объясняет, почему archcheck шипит **узкие** правила, а cross-area держит
-research-пробой, не shipped-гейтом. Это правильная дисциплина, не недоработка.
+**Key conclusion:** the raw cross-area metric as a gate would yield **~50%+ false alarm**
+(NOISE + STRUCT + LEGIT = 50% — that's normal development). You can't gate on it.
+This explains why archcheck ships **narrow** rules, while cross-area stays a
+research probe, not a shipped gate. This is the right discipline, not a shortcoming.
 
-## Где ценность реальна
+## Where the value is real
 
-### 1. DRIFT.2 (циклы) — gate-grade
+### 1. DRIFT.2 (cycles) — gate-grade
 
-72 из 135 092 коммитов = **0.05%**. Срабатывает исключительно редко → почти нулевой
-false-alarm. Новый цикл объективно плох (Lakos physical design). Примеры из корпуса:
-«Refactor CodeGen to classical header/implementation split» (+1), японский
-«ファイル分割» / split файлов (+1), «Fix build: add ESP8266WebServer.h guard» (+7),
-«Restructured all source files» (+1). Это ровно класс регрессий, который хочется
-ловить в PR.
+72 of 135,092 commits = **0.05%**. Fires exceptionally rarely → near-zero
+false alarm. A new cycle is objectively bad (Lakos physical design). Examples from the corpus:
+"Refactor CodeGen to classical header/implementation split" (+1), the Japanese
+"ファイル分割" / file split (+1), "Fix build: add ESP8266WebServer.h guard" (+7),
+"Restructured all source files" (+1). This is exactly the class of regressions you want
+to catch in a PR.
 
-### 2. DRIFT.1 (god-header shortcut) — точный, линтер-невидимый
+### 2. DRIFT.1 (god-header shortcut) — precise, linter-invisible
 
-Боевой прогон, LibreSprite PR #581 (Claude Opus 4.5 серия коммитов):
+Live run, LibreSprite PR #581 (Claude Opus 4.5 commit series):
 
-- before `60eed0f` → `--save-graph-baseline` (граф 1207 узлов) →
+- before `60eed0f` → `--save-graph-baseline` (graph of 1207 nodes) →
   after `276fdbd` → `--drift-baseline`.
-- Результат: **DRIFT.1 = 1** — `app/ui/toolbar.cpp -> app/pref/preferences.h`
-  (UI-виджет полез в god-header настроек, fan-in 74, ради одного `bool`
+- Result: **DRIFT.1 = 1** — `app/ui/toolbar.cpp -> app/pref/preferences.h`
+  (a UI widget reached into the settings god-header, fan-in 74, for a single `bool`
   `showToolShortcuts()`); DRIFT.2 = 0.
-- Из 260 нарушений 259 — pre-existing legacy (ChainLength/GodHeader/SF.8),
-  drift-режим их игнорирует. **Сигнал отделён от шума.**
-- Скептик-проверка (тремя `git`): ребро (re)introduced AI-коммитом `0aa57ad`,
-  не унаследовано из upstream Aseprite. Вердикт CONFIRMED. Зафиксировано
-  hermetic-фикстурой `fixtures/drift_real_world/libresprite_pr581/`
-  (тест `drift_fixtures_test.cpp`). Подробно: [ai_drift_cases.md](ai_drift_cases.md),
-  [../milestones.md](../milestones.md) §«Прогон 10».
+- Of 260 violations, 259 are pre-existing legacy (ChainLength/GodHeader/SF.8),
+  which drift mode ignores. **The signal is separated from the noise.**
+- Skeptic check (with three `git` runs): the edge was (re)introduced by AI commit `0aa57ad`,
+  not inherited from upstream Aseprite. Verdict CONFIRMED. Locked down with a
+  hermetic fixture `fixtures/drift_real_world/libresprite_pr581/`
+  (test `drift_fixtures_test.cpp`). Details: [ai_drift_cases.md](ai_drift_cases.md),
+  [../milestones.md](../milestones.md) §"Run 10".
 
-Обычные линтеры этот класс не ловят — diff чистый, код компилируется.
+Ordinary linters don't catch this class — the diff is clean, the code compiles.
 
-### 3. Bidirectional coupling — 15% сигнала, в основном НЕ покрыто
+### 3. Bidirectional coupling — 15% of the signal, mostly NOT covered
 
-294 события `A↔B` — настоящие layering-нарушения. Примеры из корпуса:
-`src/hal ↔ src/ui` (HAL — низкоуровневый leaf — не должен взаимно зависеть от UI),
-`Source/Game ↔ Source/Renderer` (игра и рендер сцепились), `core ↔ inspect`,
+294 `A↔B` events are genuine layering violations. Examples from the corpus:
+`src/hal ↔ src/ui` (HAL — a low-level leaf — must not mutually depend on UI),
+`Source/Game ↔ Source/Renderer` (game and renderer entangled), `core ↔ inspect`,
 `editor ↔ engine`, `src/hal ↔ {input,math,ui,display}`.
 
-**Важно — это НЕ то же, что цикл (DRIFT.2).** На уровне файлов `A↔B` = 2-node цикл и
-ловится SF.9/DRIFT.2. Но bidirectional здесь — **аггрегатный (area) уровень**: разные
-файлы в каждом модуле, циклического include нет. Проверка по корпусу: из **65 коммитов**
-с bidirectional area-парой лишь **9** имели реальный file-cycle (`grown_cycles>0` →
-домен DRIFT.2); остальные **56 (86%)** — area-coupling без цикла, **которое DRIFT.2 не
-видит**. Это Lakos «не-levelizable design» (модули нельзя собрать раздельно). Кандидат
-на отдельное узкое правило DRIFT.3 (задача #087), строго не перекрывающее DRIFT.2.
+**Important — this is NOT the same as a cycle (DRIFT.2).** At the file level `A↔B` = a 2-node cycle and
+is caught by SF.9/DRIFT.2. But bidirectional here is at the **aggregate (area) level**: different
+files in each module, no include cycle. Corpus check: of the **65 commits**
+with a bidirectional area pair, only **9** had a real file cycle (`grown_cycles>0` →
+DRIFT.2 domain); the other **56 (86%)** are area coupling without a cycle, **which DRIFT.2 does
+not see**. This is Lakos "non-levelizable design" (modules can't be built separately). A candidate
+for a separate narrow rule DRIFT.3 (task #087), strictly not overlapping DRIFT.2.
 
-## DRIFT.3 — ручной разбор хитов (eyeball, 2026-06-06)
+## DRIFT.3 — manual review of hits (eyeball, 2026-06-06)
 
-Прогон реализованного DRIFT.3 по выборке из 56 corpus-коммитов с bidirectional
-area-парой, с ручной проверкой каждого хита:
+A run of the implemented DRIFT.3 over a sample of 56 corpus commits with a bidirectional
+area pair, with manual verification of each hit:
 
-**Шум фильтруется корректно (silent):** `subdir↔src` (vibe-requirements split),
-`<root>`-каша (Decodium «Initial commit»), born-at-empty initial structure
-(NeoCalculator). Area-функция (strip `src/include/..`, ignore root/noise) убирает
-артефакты, на которых тонула сырая cross-area проба.
+**Noise is filtered correctly (silent):** `subdir↔src` (vibe-requirements split),
+`<root>` mush (Decodium "Initial commit"), born-at-empty initial structure
+(NeoCalculator). The area function (strip `src/include/..`, ignore root/noise) removes
+artifacts on which the raw cross-area probe drowned.
 
-**Ловит реальные smell'ы (TP):**
-- `hal ↔ ui/apps/math/display/input` (NeoCalculator) — дырявый abstraction layer:
-  HAL должен быть leaf, а он взаимно зависит от UI. Сильнейший сигнал.
-- `common ↔ duckdb`, `common ↔ sqlite` (gizmosql) — «база» зависит обратно от бэкенда.
+**Catches real smells (TP):**
+- `hal ↔ ui/apps/math/display/input` (NeoCalculator) — a leaky abstraction layer:
+  HAL should be a leaf, but it mutually depends on UI. The strongest signal.
+- `common ↔ duckdb`, `common ↔ sqlite` (gizmosql) — the "base" depends back on the backend.
 - `game ↔ render` (Standard-of-Iron), `terrain ↔ world` (bakabakaband),
   `engine ↔ game` (teaching engine), `core ↔ semantic` (mantra-lang) — entanglement
-  на **feature-коммитах** (настоящий инкрементальный дрейф).
-- `model/persistence ↔ ui` (MaximumTrainer) — layering-нарушения (persistence не
-  должен зависеть от ui).
+  on **feature commits** (genuine incremental drift).
+- `model/persistence ↔ ui` (MaximumTrainer) — layering violations (persistence should
+  not depend on ui).
 
-**Найденные глазами проблемы → одна пофикшена:**
-1. **FP `build_overrides`** (UnleashedRecomp) — exact-noise-set не ловил `build_overrides`.
-   **Исправлено** prefix-фильтром (`build_*`/`mock*`/`*override*`) → стало silent.
-2. **Шумит на больших restructure-коммитах** (MaximumTrainer — 8 пар разом, UE5 «Refactor
-   scene» — 3). Когда коммит реорганизует модули, много мутуальностей всплывает разом.
-   Семантически отделить «намеренный рефактор» от «дрейф» нельзя → **подтверждает: DRIFT.3
-   должен быть advisory, не blocking gate.**
-3. **Грубая гранулярность area** (Lightpad `App/ui↔App/core` — silent): «первый сегмент»
-   схлопывает всё под одним top-dir (`App`). Это under-reporting (miss), не FP; уточнение
-   до 2 уровней — отдельная итерация (риск нового шума).
+**Problems found by eye → one fixed:**
+1. **FP `build_overrides`** (UnleashedRecomp) — the exact-noise-set didn't catch `build_overrides`.
+   **Fixed** with a prefix filter (`build_*`/`mock*`/`*override*`) → became silent.
+2. **Noisy on large restructure commits** (MaximumTrainer — 8 pairs at once, UE5 "Refactor
+   scene" — 3). When a commit reorganizes modules, many mutualities surface at once.
+   You can't semantically separate "intentional refactor" from "drift" → **confirms: DRIFT.3
+   should be advisory, not a blocking gate.**
+3. **Coarse area granularity** (Lightpad `App/ui↔App/core` — silent): "first segment"
+   collapses everything under one top-dir (`App`). This is under-reporting (a miss), not an FP;
+   refining to 2 levels is a separate iteration (risk of new noise).
 
-Итог eyeball: DRIFT.3 ловит реальную связность с приемлемой precision после area-фильтра;
-основной FP (build dirs) закрыт; остаток (restructure-шум, грубая гранулярность) —
-осознанные trade-off'ы, оправдывающие advisory-режим.
+Eyeball bottom line: DRIFT.3 catches real coupling with acceptable precision after the area filter;
+the main FP (build dirs) is closed; the remainder (restructure noise, coarse granularity) are
+deliberate trade-offs that justify the advisory mode.
 
-## Грань польза / бесполезность
+## The useful / useless boundary
 
 ```
-УЗКО (циклы + god-header shortcuts + bidirectional)
-   → редко, объективно, линтер-невидимо               → ПОЛЕЗНО
-ШИРОКО (любая cross-area dependency как gate)
-   → ~50% false-alarm, тонет в норме                  → БЕСПОЛЕЗНО
+NARROW (cycles + god-header shortcuts + bidirectional)
+   → rare, objective, linter-invisible               → USEFUL
+BROAD (any cross-area dependency as a gate)
+   → ~50% false alarm, drowns in normal              → USELESS
 ```
 
-archcheck сейчас на правильной стороне грани. Бесполезным он станет только если
-погнаться за широтой.
+archcheck is currently on the right side of the boundary. It becomes useless only if it
+chases breadth.
 
-## Рекомендации → статус реализации
+## Recommendations → implementation status
 
-1. **DRIFT.2 (циклы) → default blocking-gate** — ✅ **сделано** (#086). `--drift-baseline`
-   теперь regression-gate: exit определяется только DRIFT.1/DRIFT.2; legacy intrinsic
-   (SF/Lakos) и advisory DRIFT.3 репортятся, но не гейтят. Live-верификация на LibreSprite:
-   реальный дрейф (DRIFT.1=1) → exit 1; та же версия (259 legacy, 0 дрейфа) → exit 0
-   (раньше падал на legacy).
-2. **DRIFT.3 (bidirectional coupling)** — ✅ **реализован** (#087): узкое правило,
-   ловит мутуальную связь модулей `A↔B` (через разные файлы, без file-cycle), которой
-   не было в baseline; не перекрывает DRIFT.2. Провалидирован на `danielraffel/pulp`
-   @ `705f86e` (`core ↔ inspect`) + ручной разбор 56 corpus-коммитов (см. eyeball-секцию).
-   Остаётся **advisory** (шумит на restructure-коммитах).
-3. **Cross-area raw — НЕ гейтить**, держать advisory/research (как duplication
-   после #082). Перед любым «area»-правилом — чинить area-detection (renames,
-   build/output-dirs, `src↔include` дают половину шума).
-4. **Категория REVIEW (33%)** — резерв: при лучшем area-партишене часть станет
+1. **DRIFT.2 (cycles) → default blocking gate** — ✅ **done** (#086). `--drift-baseline`
+   is now a regression gate: exit is determined only by DRIFT.1/DRIFT.2; legacy intrinsic
+   (SF/Lakos) and advisory DRIFT.3 are reported but don't gate. Live verification on LibreSprite:
+   real drift (DRIFT.1=1) → exit 1; the same version (259 legacy, 0 drift) → exit 0
+   (previously failed on legacy).
+2. **DRIFT.3 (bidirectional coupling)** — ✅ **implemented** (#087): a narrow rule that
+   catches mutual coupling of modules `A↔B` (through different files, without a file cycle) that
+   wasn't in the baseline; doesn't overlap DRIFT.2. Validated on `danielraffel/pulp`
+   @ `705f86e` (`core ↔ inspect`) + manual review of 56 corpus commits (see the eyeball section).
+   Remains **advisory** (noisy on restructure commits).
+3. **Cross-area raw — do NOT gate**, keep advisory/research (like duplication
+   after #082). Before any "area" rule — fix area detection (renames,
+   build/output dirs, `src↔include` produce half the noise).
+4. **The REVIEW category (33%)** — a reserve: with a better area partition, part of it becomes
    ACTIONABLE.
 
-### Итог: drift-ядро как CI-gate (2026-06-06)
+### Bottom line: drift core as a CI gate (2026-06-06)
 
-Три узких правила с явной, corpus-обоснованной gating-политикой:
+Three narrow rules with an explicit, corpus-grounded gating policy:
 
-| Правило | Сигнал | Режим | Обоснование |
+| Rule | Signal | Mode | Rationale |
 |---|---|---|---|
-| **DRIFT.1** | shortcut к god-header | **gate** | точный, линтер-невидимый (LibreSprite) |
-| **DRIFT.2** | новый/выросший цикл | **gate** | редкий (0.05%), объективный (Lakos) |
-| **DRIFT.3** | взаимная связность модулей | advisory | реальный, но шумит на restructure |
+| **DRIFT.1** | shortcut to a god-header | **gate** | precise, linter-invisible (LibreSprite) |
+| **DRIFT.2** | new/grown cycle | **gate** | rare (0.05%), objective (Lakos) |
+| **DRIFT.3** | mutual coupling of modules | advisory | real, but noisy on restructure |
 
-Это и есть ответ на вопрос «имеет ли право быть чекер»: **да** — он гейтит ровно то, что
-данные назвали gate-grade (редкие объективные регрессии), и не тонет в legacy-долге и
-шуме нормальной разработки. Бесполезным он стал бы только при попытке гейтить сырую
-cross-area связность (~50% FP) — этого сознательно не делаем.
+This is the answer to "does a checker have a right to exist": **yes** — it gates exactly what
+the data called gate-grade (rare objective regressions), and doesn't drown in legacy debt and
+the noise of normal development. It would become useless only if it tried to gate raw
+cross-area coupling (~50% FP) — which we deliberately don't do.
 
-## Границы этого анализа
+## Boundaries of this analysis
 
-- Cross-area/cycle метрики — из python-пробы `generate_per_commit_graph_drift.py`,
-  не 1:1 shipped-правила. `grown_cycles` ≈ DRIFT.2; DRIFT.1 (god-header shortcut)
-  валидирован отдельно (LibreSprite).
-- Бакетизация 1903 событий — эвристическая (калибрована ручным чтением выборок,
-  не полная ручная разметка всех). Порядки величин надёжны; точные проценты ±неск.
+- Cross-area/cycle metrics come from the python probe `generate_per_commit_graph_drift.py`,
+  not 1:1 the shipped rules. `grown_cycles` ≈ DRIFT.2; DRIFT.1 (god-header shortcut)
+  was validated separately (LibreSprite).
+- Bucketing of the 1903 events is heuristic (calibrated by manual reading of samples,
+  not a full manual labeling of all). The orders of magnitude are reliable; the exact percentages ±a few.

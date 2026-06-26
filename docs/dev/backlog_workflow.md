@@ -1,283 +1,283 @@
-# Бэклог в ИИ-разработке
+# Backlog in AI-driven development
 
-Как вести задачи, когда основной исполнитель — LLM-ассистент (Claude Code или аналог), а человек — постановщик / ревьюер / последний голос.
+How to manage tasks when the primary executor is an LLM assistant (Claude Code or equivalent), and the human is the author / reviewer / final voice.
 
-Документ описывает **два рабочих режима**:
+The document describes **two working modes**:
 
-- **Режим A — без внешнего трекера.** Source of truth — файловая система. ID `NNN` в имени файла. Состояние = папка. Используется в этом репо (cpparch).
-- **Режим B — с внешним трекером** (Jira / GitHub Issues / Bitbucket / Linear). Source of truth — внешний. Локальные файлы — _depth-layer_ под каждую активную задачу: контекст, план, прогресс для следующей сессии ассистента. ID — внешний (`PROJ-123`), `NNN` опционально как локальный якорь.
+- **Mode A — without an external tracker.** Source of truth is the filesystem. ID `NNN` in the filename. State = folder. Used in this repo (cpparch).
+- **Mode B — with an external tracker** (Jira / GitHub Issues / Bitbucket / Linear). Source of truth is external. Local files are a _depth-layer_ for each active task: context, plan, progress for the assistant's next session. ID is external (`PROJ-123`), `NNN` optional as a local anchor.
 
-Большая часть принципов и ритуалов общая. Различия — в _source of truth_, переходах состояний и формате ID.
+Most of the principles and rituals are shared. The differences are in the _source of truth_, state transitions, and ID format.
 
-Канон жизненного цикла для режима A — [`../../backlog/README.md`](../../backlog/README.md).
+The lifecycle canon for mode A is [`../../backlog/README.md`](../../backlog/README.md).
 
-## Зачем файлы (общее для обоих режимов)
+## Why files (shared across both modes)
 
-ИИ-ассистент теряет контекст между сессиями. Локальный файл задачи — это **внешний носитель состояния**, которому можно доверять больше, чем своей памяти. Даже когда есть Jira:
+An AI assistant loses context between sessions. A local task file is an **external state carrier** that can be trusted more than its own memory. Even when Jira is available:
 
-1. **Передача контекста новой сессии.** Файл задачи в `wip/` — это вход для следующего разговора: ассистент читает шапку + «Сделано» + «Следующие шаги» и продолжает. Один файл влезает в контекст. Jira-тикет так не читается — там комментарии, шум, статусы в боковой панели.
-2. **Документация по факту.** Закрытая задача в `completed/` с секциями **Как работает / Чем управляется / С чем связана / Диагностика** — лучшая возможная документация модуля: объясняет _решение_. Jira-комментарии этим обычно не становятся — там переписка, а не док.
-3. **Стабильные якоря.** `#NNN` или `PROJ-123` — вечный ID. Коммит `feat(rules): add SF.9 (PROJ-123)` через год по-прежнему читается.
-4. **Защита от регрессий памяти.** ИИ охотно «доделывает» то, что уже сделано. Поиск по `backlog/completed/` + `git log --grep="<id>"` — дешёвая проверка независимо от внешнего трекера.
-5. **Состояние видно `ls`-ом.** Что прямо сейчас идёт — это `backlog/wip/`. Jira-фильтры расходятся с реальностью чаще, чем папка.
+1. **Handing context to a new session.** A task file in `wip/` is the input for the next conversation: the assistant reads the header + "Done" + "Next steps" and continues. A single file fits in context. A Jira ticket doesn't read that way — there are comments, noise, statuses in the side panel.
+2. **Documentation as a byproduct.** A closed task in `completed/` with the sections **How it works / What controls it / What it relates to / Diagnostics** is the best possible module documentation: it explains the _decision_. Jira comments usually don't become that — they hold a conversation, not a doc.
+3. **Stable anchors.** `#NNN` or `PROJ-123` is a permanent ID. The commit `feat(rules): add SF.9 (PROJ-123)` still reads a year later.
+4. **Protection against memory regressions.** An AI eagerly "finishes" what is already done. A search over `backlog/completed/` + `git log --grep="<id>"` is a cheap check independent of any external tracker.
+5. **State is visible via `ls`.** What is going on right now is `backlog/wip/`. Jira filters diverge from reality more often than a folder does.
 
-## Когда какой режим
+## When to use which mode
 
-| Сценарий | Режим |
+| Scenario | Mode |
 |---|---|
-| Solo + ИИ, фича-ориентированная разработка с нуля | **A** (без трекера) |
-| Открытый OSS-проект, GitHub Issues для внешних репортов | **B** (GitHub Issues) |
-| Команда, корпоративный процесс, Jira/Bitbucket | **B** |
-| Поток багов от заказчика, релизные пачки | **B** + (опционально) сводный `TASK_TRACKER.md` под пачку |
+| Solo + AI, feature-oriented greenfield development | **A** (no tracker) |
+| Open OSS project, GitHub Issues for external reports | **B** (GitHub Issues) |
+| Team, corporate process, Jira/Bitbucket | **B** |
+| Stream of customer bugs, release batches | **B** + (optionally) a summary `TASK_TRACKER.md` per batch |
 
-Можно начать с A и переключиться на B, когда заводится внешний трекер. ID `NNN` в существующих файлах сохраняется и продолжает работать как локальный якорь — параллельно с внешним.
+You can start with A and switch to B once an external tracker is introduced. The `NNN` ID in existing files is preserved and keeps working as a local anchor — in parallel with the external one.
 
-## Общие принципы
+## Shared principles
 
-### Один файл — одна задача
+### One file — one task
 
-Каждая задача живёт в собственном `.md`. Файл — это _весь_ контекст задачи: цель, контекст, план, прогресс, решения, изменённые файлы, fixtures. Распухает — разбить, поставить `Related:`. Идёт пачкой — каждой подзадаче свой ID.
+Each task lives in its own `.md`. The file is the _entire_ context of the task: goal, context, plan, progress, decisions, changed files, fixtures. Getting bloated — split it, add `Related:`. Coming as a batch — each subtask gets its own ID.
 
-### Состояние = папка
+### State = folder
 
 ```
 backlog/
-  new/        — заведено, не начато
-  wip/        — в работе (есть Дата старта)
-  future/     — отложено в более поздний релиз
-  completed/  — done + полная документация решения
-  pending/    — парковка (НЕ очередь, не трогать без явной команды)
+  new/        — created, not started
+  wip/        — in progress (has a Start date)
+  future/     — deferred to a later release
+  completed/  — done + full documentation of the solution
+  pending/    — parking lot (NOT a queue, don't touch without an explicit command)
 ```
 
-Переход состояния = `git mv`. _Папка_ — единственная локальная правда о состоянии. Ловится `ls`, `find`, `Glob`. В режиме B папка дублирует статус внешнего трекера для активных задач (см. ниже про синхронизацию).
+A state transition = `git mv`. The _folder_ is the only local truth about state. Caught by `ls`, `find`, `Glob`. In mode B the folder mirrors the external tracker's status for active tasks (see below on synchronization).
 
-`new/` vs `future/` — это _timing_, не приоритет.
+`new/` vs `future/` is _timing_, not priority.
 
-### Даты обязательны
+### Dates are mandatory
 
-- **Дата создания** — всегда. Ловит протухшее в `new/`.
-- **Дата старта** — при переезде в `wip/`. Ловит «висит без движения».
-- **Дата завершения** — при переезде в `completed/`.
+- **Creation date** — always. Catches what has gone stale in `new/`.
+- **Start date** — when moving to `wip/`. Catches "stuck without movement".
+- **Completion date** — when moving to `completed/`.
 
-Без дат ассистент не отличит «недавнее» от «забытого». Время для него — внешнее.
+Without dates the assistant can't tell "recent" from "forgotten". Time is external to it.
 
-### `completed/` — это документация
+### `completed/` is documentation
 
-Перед `git mv` в `completed/` дописываются четыре секции:
+Before `git mv` into `completed/`, four sections are added:
 
-- **Как работает** — принцип, алгоритм, поток данных.
-- **Чем управляется** — флаги CLI, env vars, поля конфига.
-- **С чем связана** — модули, зависимости, какие задачи следующие.
-- **Диагностика** — логи, метрики, ключевые места отладки.
+- **How it works** — principle, algorithm, data flow.
+- **What controls it** — CLI flags, env vars, config fields.
+- **What it relates to** — modules, dependencies, which tasks come next.
+- **Diagnostics** — logs, metrics, key debugging spots.
 
-Цель: код можно стереть и восстановить по содержимому `completed/`. Пример — [`008b_blk_include_scanner_naive_extraction.md`](../../backlog/completed/008b_blk_include_scanner_naive_extraction.md).
+The goal: the code could be wiped and reconstructed from the contents of `completed/`. Example — [`008b_blk_include_scanner_naive_extraction.md`](../../backlog/completed/008b_blk_include_scanner_naive_extraction.md).
 
-Эти секции пишутся **локально** в обоих режимах. Внешний трекер на это место не претендует — он про статус и обсуждение, не про устройство решения.
+These sections are written **locally** in both modes. The external tracker doesn't claim this space — it's about status and discussion, not about how the solution is built.
 
-### Ссылки между задачами
+### Links between tasks
 
 ```markdown
-**Блокирует:** #004 (project_skeleton)
-**Заблокирован:** PROJ-123 (auth_refactor)
+**Blocks:** #004 (project_skeleton)
+**Blocked by:** PROJ-123 (auth_refactor)
 **Related:** #008 (dependency_graph_foundation)
 ```
 
-ID — устойчивый якорь, имя в скобках — для читаемости. В режиме B можно смешивать локальные `#NNN` и внешние `PROJ-123`.
+The ID is a stable anchor, the name in parentheses is for readability. In mode B you can mix local `#NNN` and external `PROJ-123`.
 
-### Fixtures (для archcheck)
+### Fixtures (for archcheck)
 
-Это инструмент-проект: «если фичу нельзя протестировать на fixtures — не реализуем» ([`docs/MVP.md`](../MVP.md)). Каждое правило → `fixtures/<rule>/pass/` + `fixtures/<rule>/fail_*/`. Шаблон `/create-task` добавляет чек-лист fixtures.
+This is a tool project: "if a feature can't be tested with fixtures — we don't implement it" ([`docs/MVP.md`](../MVP.md)). Each rule → `fixtures/<rule>/pass/` + `fixtures/<rule>/fail_*/`. The `/create-task` template adds a fixtures checklist.
 
 ---
 
-## Режим A — без внешнего трекера
+## Mode A — without an external tracker
 
-Source of truth — файловая система. Применяется в cpparch.
+Source of truth is the filesystem. Used in cpparch.
 
 ### ID
 
-3-значный `NNN` в имени файла: `NNN_<priority>_<slug>.md`. Присваивается `/create-task` (max существующих + 1). **Никогда не меняется** — это якорь в коммитах, ссылках, памяти ассистента.
+A 3-digit `NNN` in the filename: `NNN_<priority>_<slug>.md`. Assigned by `/create-task` (max existing + 1). **Never changes** — it's the anchor in commits, links, and the assistant's memory.
 
-Меняется приоритет → переименовать файл (`maj` → `crt`), ID остаётся.
+Priority changes → rename the file (`maj` → `crt`), the ID stays.
 
-### Жизненный цикл
+### Lifecycle
 
-1. **Создание** — `/create-task <name>` → файл в `backlog/new/NNN_<priority>_<slug>.md`, статус `new`.
-2. **Старт** — `git mv backlog/new/NNN_*.md backlog/wip/`, проставить `**Дата старта:**`, статус `wip`. Значимая задача → feature-ветка `<type>/<NNN>-<slug>` (см. [`git_workflow.md`](git_workflow.md)). Мелкая → direct push в master.
-3. **Прогресс** — `/checkpoint` обновляет файл (Сделано / Следующие шаги / Изменённые файлы).
-4. **Коммиты** — `/commit` использует Conventional Commits и `(#NNN)`.
-5. **Завершение** — `git mv backlog/wip/NNN_*.md backlog/completed/`, статус `done`, дописать DoD-секции.
-6. **Ревью** — `/backlog-review` и `/status-review` периодически сверяют состояние.
+1. **Creation** — `/create-task <name>` → file in `backlog/new/NNN_<priority>_<slug>.md`, status `new`.
+2. **Start** — `git mv backlog/new/NNN_*.md backlog/wip/`, set `**Start date:**`, status `wip`. A significant task → feature branch `<type>/<NNN>-<slug>` (see [`git_workflow.md`](git_workflow.md)). A small one → direct push to master.
+3. **Progress** — `/checkpoint` updates the file (Done / Next steps / Changed files).
+4. **Commits** — `/commit` uses Conventional Commits and `(#NNN)`.
+5. **Completion** — `git mv backlog/wip/NNN_*.md backlog/completed/`, status `done`, add the DoD sections.
+6. **Review** — `/backlog-review` and `/status-review` periodically reconcile the state.
 
-### Сильные стороны
+### Strengths
 
-- Нулевая зависимость от внешних систем. Работает offline, в самолёте, в репо без сетевого выхода.
-- ID и файл всегда вместе — нечему рассинхронизироваться.
-- Простой grep / git log по `#NNN` — полный анамнез задачи.
+- Zero dependency on external systems. Works offline, on a plane, in a repo with no network access.
+- The ID and the file are always together — nothing to drift out of sync.
+- A simple grep / git log over `#NNN` gives the full history of the task.
 
-### Слабые стороны
+### Weaknesses
 
-- Не виден людям, у которых нет доступа к репо.
-- Нет нативного multi-assignee / SLA / эскалаций.
-- На потоке > 30 одновременно открытых задач теряется обзор.
+- Not visible to people who have no repo access.
+- No native multi-assignee / SLA / escalations.
+- With a stream of > 30 simultaneously open tasks you lose the overview.
 
 ---
 
-## Режим B — с внешним трекером
+## Mode B — with an external tracker
 
-Source of truth — Jira / GitHub Issues / Bitbucket / Linear / etc. Локальные файлы — _depth-layer_: то, что не помещается в тикет и нужно ассистенту между сессиями.
+Source of truth is Jira / GitHub Issues / Bitbucket / Linear / etc. Local files are a _depth-layer_: what doesn't fit in the ticket and is needed by the assistant between sessions.
 
-### Что живёт где
+### What lives where
 
-| Где | Что |
+| Where | What |
 |---|---|
-| **Внешний трекер** | официальный статус, assignee, приоритет, SLA, обсуждение с заказчиком/командой, ссылки на PR |
-| **Локальный файл** | план реализации, контекст из кода, прогресс между сессиями ассистента, **DoD-секции при закрытии**, fixtures |
-| **Коммит** | ссылка на внешний ID (формат — см. ниже), AI-трейлеры, локальный hash |
+| **External tracker** | official status, assignee, priority, SLA, discussion with customer/team, links to PRs |
+| **Local file** | implementation plan, context from the code, progress between assistant sessions, **DoD sections at closing**, fixtures |
+| **Commit** | link to the external ID (format — see below), AI trailers, local hash |
 
-Принцип: **внешний трекер — что и зачем; локальный файл — как и где**. Они не дублируют друг друга, а дополняют.
+The principle: **external tracker — what and why; local file — how and where**. They don't duplicate each other, they complement.
 
 ### ID
 
-Имя файла — `<EXTERNAL_KEY>_<slug>.md` или `<NNN>_<EXTERNAL_KEY>_<slug>.md`. Примеры:
+The filename is `<EXTERNAL_KEY>_<slug>.md` or `<NNN>_<EXTERNAL_KEY>_<slug>.md`. Examples:
 
 - Jira: `PROJ-123_auth_refactor.md`
-- GitHub Issues: `gh-42_metric_regression.md` или просто `042_metric_regression.md` (если `NNN == issue number`)
+- GitHub Issues: `gh-42_metric_regression.md` or just `042_metric_regression.md` (if `NNN == issue number`)
 - Bitbucket (gm): `521_rmi_crash.md` (NNN = Bitbucket issue ID).
 
-Локальный `NNN` опционален. Если используется — `NNN` неизменен (как в режиме A); внешний ID может прийти позже (тикет завели на следующий день) — тогда вписывается в шапку:
+The local `NNN` is optional. If used — `NNN` is immutable (as in mode A); the external ID may come later (the ticket was created the next day) — then it's recorded in the header:
 
 ```markdown
-**Внешний ID:** PROJ-123
-**Локальный ID:** #042
+**External ID:** PROJ-123
+**Local ID:** #042
 ```
 
-### Жизненный цикл
+### Lifecycle
 
-1. **Заведение тикета** во внешнем трекере (вручную или через `/gh-issues` для GitHub). У задачи появляется внешний ID.
-2. **Импорт в локальный бэклог** — [`/gh-issues`](../../.claude/commands/gh-issues.md) или аналог: создать файл в `backlog/new/` со ссылкой на тикет в шапке. Если задача мелкая и план очевиден — этап можно пропустить, локального файла не заводить вовсе.
-3. **Старт работы:**
-   - Внешний трекер: статус → «In Progress», assignee → себе.
-   - Локально: `git mv` в `backlog/wip/`, `**Дата старта:**`.
-4. **Прогресс** — `/checkpoint` обновляет _локальный_ файл. Во внешний трекер уходят только осмысленные апдейты (раз в день / по достижению вехи), а не каждый шаг.
-5. **Коммиты** — формат ссылки зависит от трекера:
-   - Jira **Smart Commits**: `feat(auth): refactor session store (PROJ-123)` — Jira автоматически прицепит коммит к тикету.
-   - GitHub Issues: `fix(rules): handle empty config (#42)` — `#42` автоматически линкуется.
+1. **Creating the ticket** in the external tracker (manually or via `/gh-issues` for GitHub). The task gets an external ID.
+2. **Import into the local backlog** — [`/gh-issues`](../../.claude/commands/gh-issues.md) or equivalent: create a file in `backlog/new/` with a link to the ticket in the header. If the task is small and the plan is obvious — this step can be skipped, no local file at all.
+3. **Starting work:**
+   - External tracker: status → "In Progress", assignee → yourself.
+   - Locally: `git mv` into `backlog/wip/`, `**Start date:**`.
+4. **Progress** — `/checkpoint` updates the _local_ file. Only meaningful updates go to the external tracker (once a day / on reaching a milestone), not every step.
+5. **Commits** — the link format depends on the tracker:
+   - Jira **Smart Commits**: `feat(auth): refactor session store (PROJ-123)` — Jira automatically attaches the commit to the ticket.
+   - GitHub Issues: `fix(rules): handle empty config (#42)` — `#42` is linked automatically.
    - Bitbucket: `fix(rmi): vnc reentrancy guard (#521)`.
-   - Дополнительные кейворды: `Closes PROJ-123`, `Fixes #42` в теле коммита / PR закрывают тикет при merge.
-6. **PR** — ссылка на тикет в описании PR; PR закрывает тикет автоматически через кейворд `Closes`/`Fixes`.
-7. **Завершение:**
-   - Внешний трекер: статус → «Done» / «Closed» (автоматически после merge, если есть `Closes`).
-   - Локально: `git mv` в `backlog/completed/`, `**Дата завершения:**`, **DoD-секции**.
-8. **Ревью** — `/status-review` сверяет git+файлы с локальными документами. Внешний трекер ревьюится средствами трекера (его собственные фильтры).
+   - Extra keywords: `Closes PROJ-123`, `Fixes #42` in the commit/PR body close the ticket on merge.
+6. **PR** — a link to the ticket in the PR description; the PR closes the ticket automatically via the `Closes`/`Fixes` keyword.
+7. **Completion:**
+   - External tracker: status → "Done" / "Closed" (automatically after merge if there is a `Closes`).
+   - Locally: `git mv` into `backlog/completed/`, `**Completion date:**`, **DoD sections**.
+8. **Review** — `/status-review` reconciles git+files with the local documents. The external tracker is reviewed with the tracker's own tools (its own filters).
 
-### Сильные стороны
+### Strengths
 
-- Видимость для команды и стейкхолдеров.
-- Стандартные процессы (SLA, эскалации, отчётность) бесплатно.
-- Smart Commits / GitHub linking — связка коммитов с тикетами без ручной работы.
+- Visibility for the team and stakeholders.
+- Standard processes (SLA, escalations, reporting) for free.
+- Smart Commits / GitHub linking — tying commits to tickets without manual work.
 
-### Слабые стороны
+### Weaknesses
 
-- Двойной учёт, если небрежно: статус во внешнем «Done», локально файл в `wip/`. Лечится `/status-review`.
-- Зависимость от сети / внешнего сервиса.
-- Соблазн «писать всё в Jira» — после чего никакой документации решения не остаётся в репо.
+- Double bookkeeping if sloppy: status "Done" in the external one, the local file still in `wip/`. Cured by `/status-review`.
+- Dependency on the network / external service.
+- The temptation to "write everything in Jira" — after which no documentation of the solution remains in the repo.
 
-### Что _не_ делегировать в трекер
+### What _not_ to delegate to the tracker
 
-- **DoD-секции** (Как работает / Чем управляется / С чем связана / Диагностика) — только в локальном файле. Внешний трекер их хоронит в комментариях.
-- **План реализации с пометками для следующей сессии ассистента** — только локально. Jira-комментарий ассистент перечитывать не будет.
-- **Изменённые файлы + hash** — только локально, в шапке завершённой задачи. В Jira это есть, но недоступно ассистенту offline.
+- **DoD sections** (How it works / What controls it / What it relates to / Diagnostics) — only in the local file. The external tracker buries them in comments.
+- **Implementation plan with notes for the assistant's next session** — only locally. The assistant won't re-read a Jira comment.
+- **Changed files + hash** — only locally, in the header of the completed task. It's in Jira, but inaccessible to the assistant offline.
 
-### Правила синхронизации
+### Synchronization rules
 
-- Внешний статус ↔ папка `backlog/`: `In Progress` ⇔ `wip/`, `Done`/`Closed` ⇔ `completed/`, `Backlog`/`To Do` ⇔ `new/` или `future/`. Сверяется `/status-review` (или его расширенной версией).
-- Расхождение → правда у того, кто свежее. Обычно: тикет закрыли merge-ом, локальный файл ещё в `wip/` → переезд + DoD-секции.
-- Внешний трекер _не_ диктует приоритет имени файла. Если используется локальный `NNN`, приоритет в имени (`blk`/`crt`/`maj`/`min`) живёт по правилам режима A.
+- External status ↔ `backlog/` folder: `In Progress` ⇔ `wip/`, `Done`/`Closed` ⇔ `completed/`, `Backlog`/`To Do` ⇔ `new/` or `future/`. Reconciled by `/status-review` (or its extended version).
+- Divergence → the truth is with whoever is fresher. Usually: the ticket was closed by a merge, the local file is still in `wip/` → move + DoD sections.
+- The external tracker does _not_ dictate the filename priority. If a local `NNN` is used, the priority in the name (`blk`/`crt`/`maj`/`min`) lives by mode A's rules.
 
-### Пример: gm (Bitbucket Issues)
+### Example: gm (Bitbucket Issues)
 
-См. [`~/projects/gm/docs/wip/521_rmi_crash.md`](~/projects/gm/docs/wip/521_rmi_crash.md) — `521` это Bitbucket issue ID, файл — depth-layer: таймлайн, стек-трейсы, гипотезы, «следующие шаги». В Bitbucket-тикете только статус + краткий апдейт.
+See [`~/projects/gm/docs/wip/521_rmi_crash.md`](~/projects/gm/docs/wip/521_rmi_crash.md) — `521` is the Bitbucket issue ID, the file is the depth-layer: timeline, stack traces, hypotheses, "next steps". The Bitbucket ticket holds only status + a short update.
 
 ---
 
-## Ритуалы (slash-commands)
+## Rituals (slash-commands)
 
-Все живут в [`.claude/commands/`](../../.claude/commands/). Применимы в обоих режимах, если не помечено иначе.
+All live in [`.claude/commands/`](../../.claude/commands/). Applicable in both modes unless marked otherwise.
 
 ### [`/create-task <name>`](../../.claude/commands/create-task.md)
 
-Считает `NNN`, проверяет дубли, ищет связанные, создаёт файл из шаблона в `backlog/new/`.
+Computes `NNN`, checks for duplicates, looks for related ones, creates a file from the template in `backlog/new/`.
 
-В режиме B — после создания: завести тикет во внешнем трекере (или наоборот: завести тикет → импортировать).
+In mode B — after creation: create the ticket in the external tracker (or the other way around: create the ticket → import).
 
-### [`/gh-issues`](../../.claude/commands/gh-issues.md) _(режим B, GitHub)_
+### [`/gh-issues`](../../.claude/commands/gh-issues.md) _(mode B, GitHub)_
 
-Импорт открытых GitHub issues в `backlog/new/` как обычных задач. Канал «внешний поток» → «локальный бэклог», без двойного учёта.
+Imports open GitHub issues into `backlog/new/` as ordinary tasks. The channel "external stream" → "local backlog", without double bookkeeping.
 
-Для Jira аналога нет — пишется ad-hoc через MCP или вручную.
+There is no Jira equivalent — it's done ad-hoc via MCP or manually.
 
 ### [`/checkpoint`](../../.claude/commands/checkpoint.md)
 
-Обновляет активный файл в `wip/`: «Сделано», «Следующие шаги», «Изменённые файлы».
+Updates the active file in `wip/`: "Done", "Next steps", "Changed files".
 
-**Зачем:** записка следующей сессии ассистента, не отчёт человеку. Запускать после осмысленного блока работы, не после каждого мелочного действия.
+**Why:** a note to the assistant's next session, not a report to a human. Run it after a meaningful block of work, not after every trivial action.
 
 ### [`/commit`](../../.claude/commands/commit.md)
 
-Conventional Commits, ссылка на ID, AI-трейлеры (`AI-Assisted`, `Verified: build+tests`, `Risk`, `Co-Authored-By`). Показывает сообщение _до_ создания — человек подтверждает.
+Conventional Commits, link to the ID, AI trailers (`AI-Assisted`, `Verified: build+tests`, `Risk`, `Co-Authored-By`). Shows the message _before_ creating it — the human confirms.
 
-В режиме B — использовать формат ссылки трекера (Smart Commits / `#N` / `Closes`).
+In mode B — use the tracker's link format (Smart Commits / `#N` / `Closes`).
 
 ### [`/fix-issue`](../../.claude/commands/fix-issue.md) / [`/issue`](../../.claude/commands/issue.md)
 
-Заставляет ассистента _сначала прочитать файл задачи_ и сверить «Сделано» с git-реальностью, а не вспоминать.
+Forces the assistant to _first read the task file_ and reconcile "Done" with the git reality, rather than recall from memory.
 
 ### [`/backlog-review`](../../.claude/commands/backlog-review.md)
 
-Отчёт по протухшим в `new/`, висящим в `wip/`, быстрым победам, заблокированным. Игнорирует `pending/`.
+A report on what's stale in `new/`, hanging in `wip/`, quick wins, blocked. Ignores `pending/`.
 
-В режиме B — дополнительно сверять с активными тикетами трекера: «есть в трекере, нет локально» / «закрыто в трекере, открыто локально».
+In mode B — additionally reconcile against the tracker's active tickets: "in the tracker, not local" / "closed in the tracker, open locally".
 
 ### [`/status-review`](../../.claude/commands/status-review.md)
 
-Идёт по git+файлам и сверяет с `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Ловит расхождения документов с реальностью.
+Walks over git+files and reconciles against `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Catches divergences of the documents from reality.
 
-В режиме B — расширить проверкой «локальное состояние ↔ внешний трекер» (если есть MCP/API).
+In mode B — extend it with a "local state ↔ external tracker" check (if MCP/API is available).
 
 ### [`/findings`](../../.claude/commands/findings.md)
 
-В конце сессии: вытащить из разговора то, что стоит положить в memory. Перенос знаний между сессиями ассистента.
+At the end of a session: extract from the conversation what's worth putting into memory. Transfer of knowledge between assistant sessions.
 
 ---
 
-## Анти-паттерны
+## Anti-patterns
 
-### Общие
+### General
 
-- **Менять `NNN` при переименовании.** Никогда. ID — это якорь, не метаданные.
-- **Класть всё в `wip/`** «потому что я об этом думаю». `wip/` = есть `**Дата старта:**`, идёт работа.
-- **`completed/` без DoD-секций.** Без секций — задача не закрыта. Ловится `/status-review`.
-- **Использовать `pending/` без явной команды.** В этом репо `pending/` — парковка, не очередь (memory `feedback_pending_folder.md`).
-- **Заводить новую задачу, не поискав дубль.** `/create-task` сам ищет — не обходить.
-- **Коммит без ID** при работе над задачей. Тогда не связать факт и причину через `git log --grep`.
-- **«Закрытие чекбоксом».** Чекбокса мало — нужен `git mv` + DoD + коммит, упоминающий ID.
-- **Распихать одну задачу по нескольким `wip/`-файлам.** Один файл — одна задача.
-- **Коммитить без явной команды.** Завершил задачу — жди `/commit` или «сделай коммит» (см. CLAUDE.md).
+- **Changing `NNN` on rename.** Never. The ID is an anchor, not metadata.
+- **Putting everything in `wip/`** "because I'm thinking about it". `wip/` = has a `**Start date:**`, work is in progress.
+- **`completed/` without DoD sections.** Without the sections the task isn't closed. Caught by `/status-review`.
+- **Using `pending/` without an explicit command.** In this repo `pending/` is a parking lot, not a queue (memory `feedback_pending_folder.md`).
+- **Creating a new task without searching for a duplicate.** `/create-task` searches itself — don't bypass it.
+- **A commit without an ID** while working on a task. Then you can't link the fact to the cause via `git log --grep`.
+- **"Closing with a checkbox".** A checkbox isn't enough — you need `git mv` + DoD + a commit mentioning the ID.
+- **Scattering one task across several `wip/` files.** One file — one task.
+- **Committing without an explicit command.** Finished the task — wait for `/commit` or "make a commit" (see CLAUDE.md).
 
-### Специфичные для режима B
+### Specific to mode B
 
-- **Писать DoD-секции в комментариях тикета.** Они там пропадут под слоем переписки. Решение остаётся в репо.
-- **Дублировать каждый `/checkpoint` в Jira.** Внешний трекер не любит шум — апдейт раз в день/по вехе, а не на каждый коммит.
-- **Закрывать локально без `Closes`/`Fixes` в PR.** Тикет останется висеть открытым — расхождение со внешним трекером.
-- **Доверять только внешнему ID, не заводя локальный файл для нетривиальной задачи.** Тогда следующая сессия ассистента начинает с нуля.
-- **Заводить локальный файл на каждый чих, если задача — однострочный фикс.** Лишний шум. Локальный файл — для задач, где есть _что_ передать между сессиями.
+- **Writing DoD sections in ticket comments.** They'll get lost there under a layer of conversation. The solution stays in the repo.
+- **Duplicating every `/checkpoint` into Jira.** The external tracker doesn't like noise — an update once a day / per milestone, not on every commit.
+- **Closing locally without `Closes`/`Fixes` in the PR.** The ticket will stay hanging open — a divergence from the external tracker.
+- **Trusting only the external ID, not creating a local file for a non-trivial task.** Then the assistant's next session starts from scratch.
+- **Creating a local file for every little thing when the task is a one-line fix.** Extra noise. A local file is for tasks where there's _something_ to pass between sessions.
 
 ---
 
-## Связанные документы
+## Related documents
 
-- [`backlog/README.md`](../../backlog/README.md) — короткий канон жизненного цикла и формата.
-- [`docs/dev/git_workflow.md`](git_workflow.md) — GitHub Flow, Conventional Commits, SemVer, теги.
-- [`docs/code_quality.md`](../code_quality.md) — пороги на размер изменения (≤ 50 строк, ≤ 2 файла на коммит).
-- [`.claude/commands/`](../../.claude/commands/) — исходники всех slash-команд.
+- [`backlog/README.md`](../../backlog/README.md) — the short canon of the lifecycle and format.
+- [`docs/dev/git_workflow.md`](git_workflow.md) — GitHub Flow, Conventional Commits, SemVer, tags.
+- [`docs/code_quality.md`](../code_quality.md) — thresholds on change size (≤ 50 lines, ≤ 2 files per commit).
+- [`.claude/commands/`](../../.claude/commands/) — sources of all slash-commands.

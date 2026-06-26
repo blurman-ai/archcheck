@@ -1,7 +1,7 @@
 # Tooling Survey: Boolean-State Drift Detection
 
-**Дата:** 2026-06-07  
-**Методология:** review existing tools for boolean-state & state-machine detection capabilities
+**Date:** 2026-06-07  
+**Methodology:** review existing tools for boolean-state & state-machine detection capabilities
 
 ## Surveyed Tools
 
@@ -138,7 +138,7 @@ Searched: "boolean field accumulation", "implicit state machine", "state explosi
 - ✓ Fast: regex-based heuristic (no semantic backend required)
 - ⚠ Some false positives (ChordCombo-style bitmasks)
 - ⚠ Moderate false negatives (config-heavy structs missed)
-- ✓ Suitable for Level 4 ("несомненные практики") — not Core Guidelines authority, but defensible
+- ✓ Suitable for Level 4 ("undisputed practices") — not Core Guidelines authority, but defensible
 
 ---
 

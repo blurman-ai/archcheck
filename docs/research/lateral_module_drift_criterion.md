@@ -1,161 +1,167 @@
-# Критерий бокового межмодульного дрейфа (lateral drift)
+# Lateral cross-module drift criterion (lateral drift)
 
-_2026-06-12. Дизайн критерия по итогам: (а) корпусной проверки сигнал/шум на 21 736
-per-commit рёбрах (481 репа), (б) веб-литобзора (2 агентские разведки, ключевые источники
-VERIFIED). Статус: дизайн; валидация на корпусе — следующий шаг._
+_2026-06-12. Criterion design based on: (a) a corpus signal/noise check on 21,736
+per-commit edges (481 repos), (b) a web literature review (2 agentic recon passes, key
+sources VERIFIED). Status: design; corpus validation is the next step._
 
 ---
 
-## 1. Проблема: `added_edges` меряет активность, а не дрейф
+## 1. The problem: `added_edges` measures activity, not drift
 
-Корпусные числа (все `*_graph_drift.jsonl`, окно с 2025-05-01):
+Corpus numbers (all `*_graph_drift.jsonl`, window since 2025-05-01):
 
-| | записей | доля |
+| | records | share |
 |---|---|---|
-| Всего коммитов с `added_edges > 0` | 21 736 | 100% |
-| Просто рёбра (0 циклов, 0 cross-area) | 20 549 | **95%** |
-| Сформировали цикл | 200 | 1% |
-| — из них в небольших коммитах (≤30 рёбер, не вендор-дамп) | 94 | **0.4%** |
-| Cross-area (`new_area_deps`) | 1 049 | 5% |
+| Total commits with `added_edges > 0` | 21,736 | 100% |
+| Just edges (0 cycles, 0 cross-area) | 20,549 | **95%** |
+| Formed a cycle | 200 | 1% |
+| — of those, in small commits (≤30 edges, not a vendor dump) | 94 | **0.4%** |
+| Cross-area (`new_area_deps`) | 1,049 | 5% |
 
-Типичная запись — `foo.cpp → Log.hpp / utils/x.h`: файл начал использовать общий слой.
-Это здоровая разработка. Существующий `new_area_deps` ловит «первое ребро между
-top-level областями», но не отличает peer-модуль от общего слоя — шумит на «впервые
-сослался на util».
+A typical record is `foo.cpp → Log.hpp / utils/x.h`: a file started using a shared layer.
+That's healthy development. The existing `new_area_deps` catches "the first edge between
+top-level areas", but doesn't distinguish a peer module from a shared layer — it's noisy on
+"referenced util for the first time".
 
-**Нужен критерий, выделяющий третий тип ребра:**
+**We need a criterion that singles out the third type of edge:**
 
-1. ребро в общий слой (`util/`, `common/`, `log`) — НЕ дрейф;
-2. ребро внутри своего модуля — НЕ дрейф;
-3. **боковое ребро между параллельными peer-модулями** (`EngineImpl → EngineKernels`,
-   `llui → llxml`) — дрейф: первая связь двух прежде независимых сиблингов, со временем
-   превращающая набор модулей в клубок.
+1. an edge into a shared layer (`util/`, `common/`, `log`) — NOT drift;
+2. an edge inside one's own module — NOT drift;
+3. **a lateral edge between parallel peer modules** (`EngineImpl → EngineKernels`,
+   `llui → llxml`) — drift: the first link between two previously independent siblings,
+   over time turning a set of modules into a tangle.
 
-Ключевое требование: «общий слой» определяется **структурной ролью, а не именем** —
-regex по `log|util|common` не годится (в конкретном проекте общим слоем может быть
+The key requirement: a "shared layer" is defined by **structural role, not by name** —
+a regex over `log|util|common` won't do (in a given project the shared layer might be
 `EngineKernels`).
 
-## 2. Что даёт литература (выжимка двух разведок)
+## 2. What the literature gives us (digest of two recon passes)
 
-| Блок | Источник | Что берём |
+| Block | Source | What we take |
 |---|---|---|
-| «Де-факто общий слой» | Baldwin/MacCormack/Rusnak (HBS WP 10-059 VERIFIED; Hidden Structure 2014) | **Shared** = высокий fan-in при низком fan-out; порог *относительный* — 50% максимума по системе (или относительно крупнейшей SCC). **Core** = членство в крупнейшей циклической группе — Shared это НЕ core |
-| — уточнение | Wen/Tzerpos 2005, omnipresent modules (clustering) | Решающий признак — не сырой fan-in, а **fan-in diversity**: число *разных* модулей-потребителей (cluster degree), с равномерностью использования |
-| — направление ребра | Martin 1994 (VERIFIED): I = Ce/(Ca+Ce); SDP | Ребро A→B легитимно, если I(B) < I(A); общий слой имеет I→0. Arcan Unstable Dependency: smell при I(x) > I(y)+δ, DoUD > 30% |
-| «Боковое» = один уровень | Lakos levelization; Structure101 LSM (VERIFIED docs): «items in the same row do not depend on each other»; Mo/Cai WICSA 2015 (VERIFIED): Implicit Cross-module Dependency определён для «independent modules **within the same layer**» | Вертикальная координата выводится без конфига: Lakos-level (longest path в сконденсированном DAG). Сиблинги = одинаковый/близкий уровень |
-| «Новое ребро = событие» | **ArchLint** (Maffort et al., EMSE 2016, диссертация VERIFIED) — единственный конфиг-фри прецедент | Ребро подозрительно если: (i) нетипично для модуля A (DepScaRate низкий), (ii) такие рёбра исторически удалялись (DepDelRate — сигнал намерения), (iii) у B есть доминирующий потребитель ≠ A (HeavyUser) |
-| Персистентность | Li/Liang/Avgeriou mapping study 2022 (VERIFIED) | Erosion ≠ «temporary violations in one or two versions», это устойчивая тенденция → алёрт только на пережившее k коммитов ребро |
-| Авто-калибровка порогов | Arcan docs (VERIFIED) | Threshold = Max(система, бенчмарк) — частотный анализ вместо констант |
-| Худший случай | Mo/Cai Cross-Module Cycle (чисто структурный); Lakos | Боковое ребро, замыкающее модульный цикл — высшая severity |
+| "De-facto shared layer" | Baldwin/MacCormack/Rusnak (HBS WP 10-059 VERIFIED; Hidden Structure 2014) | **Shared** = high fan-in at low fan-out; threshold is *relative* — 50% of the system maximum (or relative to the largest SCC). **Core** = membership in the largest cyclic group — Shared is NOT core |
+| — refinement | Wen/Tzerpos 2005, omnipresent modules (clustering) | The decisive sign is not raw fan-in but **fan-in diversity**: the number of *distinct* consumer modules (cluster degree), with uniformity of usage |
+| — edge direction | Martin 1994 (VERIFIED): I = Ce/(Ca+Ce); SDP | An edge A→B is legitimate if I(B) < I(A); a shared layer has I→0. Arcan Unstable Dependency: a smell when I(x) > I(y)+δ, DoUD > 30% |
+| "Lateral" = same level | Lakos levelization; Structure101 LSM (VERIFIED docs): "items in the same row do not depend on each other"; Mo/Cai WICSA 2015 (VERIFIED): Implicit Cross-module Dependency defined for "independent modules **within the same layer**" | The vertical coordinate is derived without config: Lakos level (longest path in the condensed DAG). Siblings = identical/close level |
+| "A new edge = an event" | **ArchLint** (Maffort et al., EMSE 2016, dissertation VERIFIED) — the only config-free precedent | An edge is suspicious if: (i) atypical for module A (DepScaRate low), (ii) such edges have historically been removed (DepDelRate — a signal of intent), (iii) B has a dominant consumer ≠ A (HeavyUser) |
+| Persistence | Li/Liang/Avgeriou mapping study 2022 (VERIFIED) | Erosion ≠ "temporary violations in one or two versions", it's a sustained trend → alert only on an edge that survives k commits |
+| Threshold auto-calibration | Arcan docs (VERIFIED) | Threshold = Max(system, benchmark) — frequency analysis instead of constants |
+| Worst case | Mo/Cai Cross-Module Cycle (purely structural); Lakos | A lateral edge that closes a module cycle — the highest severity |
 
-**Ниша открыта:** mapping study 2022 подтверждает — edge-level операционализация erosion
-существует только как reflexion divergence (требует заданной intended-модели). Lattix/
-Sonargraph/NDepend различают utility от боковых только ручным can-use/public-конфигом;
-Structure101 автоматически ловит лишь циклы. Конфиг-фри связку никто не собрал.
+**The niche is open:** the 2022 mapping study confirms — edge-level operationalization of
+erosion exists only as reflexion divergence (requires a given intended model). Lattix/
+Sonargraph/NDepend distinguish utility from lateral only via a manual can-use/public config;
+Structure101 automatically catches only cycles. Nobody has assembled the config-free
+combination.
 
-Предостережение из разведки: visibility у MacCormack транзитивна — на include-графе C++
-транзитивное замыкание даст «заражение» через цепочки заголовков. Используем **прямой**
-fan-in diversity, транзитивность — только для уровня (longest path).
+A caution from the recon: MacCormack's visibility is transitive — on a C++ include graph the
+transitive closure would give "contamination" through header chains. We use **direct**
+fan-in diversity; transitivity only for the level (longest path).
 
-## 3. Критерий
+## 3. The criterion
 
-### Подготовка (на репу, без конфига)
+### Preparation (per repo, no config)
 
-- **Модули**: каталоги на глубине k; автовыбор k — самая мелкая глубина, где ≥3 сиблингов
-  содержат исходники (пропуская каталоги-обёртки: `src/` с единственным потомком).
-  Vendor/third_party/test-пути исключены (правила как в `file_classification.h`).
-- **Граф состояния** G(t) — include-граф на момент *до* коммита c; модульный граф M(t) —
-  агрегация файловых рёбер до пар модулей.
+- **Modules**: directories at depth k; auto-selecting k — the shallowest depth where ≥3
+  siblings contain sources (skipping wrapper directories: `src/` with a single child).
+  Vendor/third_party/test paths are excluded (rules as in `file_classification.h`).
+- **State graph** G(t) — the include graph at the moment *before* commit c; the module graph
+  M(t) — aggregation of file edges into module pairs.
 
-### Определения (всё на состоянии до коммита)
+### Definitions (everything at the pre-commit state)
 
-- **FID(B)** — fan-in diversity: число разных модулей ≠ B, имеющих ≥1 прямое ребро в B.
-- **FOD(B)** — число разных модулей, от которых зависит B.
-- **B — де-факто общий слой**, если:
-  `FID(B) ≥ 0.5 · max_M FID(M)` **и** FOD(B) ≤ медиана FOD по модулям
-  (MacCormack Shared: high-in/low-out, относительный порог; high-in/high-out — это
-  Hub/Core, легитимной целью НЕ считается).
-- **Level(M)** — Lakos-уровень в сконденсированном (SCC → узел) модульном DAG.
-- **I(M)** = Ce/(Ca+Ce) — instability Мартина на модульном уровне.
+- **FID(B)** — fan-in diversity: the number of distinct modules ≠ B that have ≥1 direct edge
+  into B.
+- **FOD(B)** — the number of distinct modules that B depends on.
+- **B — a de-facto shared layer**, if:
+  `FID(B) ≥ 0.5 · max_M FID(M)` **and** FOD(B) ≤ the median FOD across modules
+  (MacCormack Shared: high-in/low-out, a relative threshold; high-in/high-out is a
+  Hub/Core, NOT considered a legitimate target).
+- **Level(M)** — the Lakos level in the condensed (SCC → node) module DAG.
+- **I(M)** = Ce/(Ca+Ce) — Martin's instability at the module level.
 
-### Событие LATERAL: коммит c добавляет файловое ребро из A в B, где
+### LATERAL event: commit c adds a file edge from A into B, where
 
-1. A ≠ B, ни один не вложен в другой (сиблинги);
-2. **B не де-факто общий слой** на момент до c;
-3. **пары A→B не существовало** ни в каком виде до c (первая связь модулей —
-   иначе снова меряем активность);
-4. коммит не mass-touch (≤150 добавленных рёбер) и не vendor;
-5. **персистентность**: ребро живо через k коммитов / на конце окна
-   (Li/Liang: erosion — тенденция, не однодневка). Оценивается ретроспективно;
-   в CI-режиме продукта условие 5 не нужно — там гейт стоит *до* вливания.
+1. A ≠ B, neither is nested in the other (siblings);
+2. **B is not a de-facto shared layer** at the moment before c;
+3. **the pair A→B did not exist** in any form before c (the first link of the modules —
+   otherwise we're again measuring activity);
+4. the commit is not a mass-touch (≤150 added edges) and not vendor;
+5. **persistence**: the edge is alive through k commits / at the end of the window
+   (Li/Liang: erosion is a trend, not a one-day event). Assessed retrospectively;
+   in the product's CI mode condition 5 isn't needed — there the gate stands *before* merge.
 
-### Severity (по убыванию авторитетности)
+### Severity (in descending order of authority)
 
-| Грейд | Условие | Авторитет |
+| Grade | Condition | Authority |
 |---|---|---|
-| **LATERAL.CYCLE** | B→A уже существовало: ребро замыкает модульный цикл | Lakos; Mo/Cai Cross-Module Cycle (чисто структурный) |
-| **LATERAL.SDP** | I(B) > I(A) + δ: зависимость на менее стабильное | Martin SDP; Arcan UD (δ и DoUD>30% — их калибровка) |
-| **LATERAL.NEW** | Просто первая боковая связь одноуровневых сиблингов | Structure101 LSM; Mo/Cai same-layer |
+| **LATERAL.CYCLE** | B→A already existed: the edge closes a module cycle | Lakos; Mo/Cai Cross-Module Cycle (purely structural) |
+| **LATERAL.SDP** | I(B) > I(A) + δ: a dependency on something less stable | Martin SDP; Arcan UD (δ and DoUD>30% — their calibration) |
+| **LATERAL.NEW** | Just the first lateral link of same-level siblings | Structure101 LSM; Mo/Cai same-layer |
 
-### Усилители уверенности (опциональные, по ArchLint)
+### Confidence amplifiers (optional, per ArchLint)
 
-- HeavyUser(B) ≠ A — основной трафик в B идёт из другого модуля;
-- рёбра A→B (или похожие) уже удалялись в истории — прямой сигнал намерения держать
-  модули раздельными (DepDelRate).
+- HeavyUser(B) ≠ A — the main traffic into B comes from another module;
+- A→B edges (or similar) have already been removed in history — a direct signal of intent to
+  keep the modules separate (DepDelRate).
 
-## 4. Проблема монотонного FID — решение из литературы
+## 4. The monotonic-FID problem — a solution from the literature
 
-FID растёт со временем: когда третий-четвёртый модуль полез в B — дрейф или B легитимно
-*становится* общим слоем? Ответ собрался из трёх кусков:
+FID grows over time: when the third or fourth module reaches into B — is it drift, or is B
+legitimately *becoming* a shared layer? The answer assembled from three pieces:
 
-1. **Порог относительный**, не абсолютный (MacCormack 50% max): B признаётся shared,
-   когда догоняет *самый разделяемый* модуль проекта, а не магическое число потребителей.
-2. **Двумерность**: shared = high-in **и low-out**. Если B при росте fan-in сам начинает
-   зависеть от соседей — это Hub/tangle, не слой, и рёбра в него остаются подозрительными.
-3. **Персистентность и тренд** (Li/Liang): серия новых боковых пар в B за короткое окно —
-   либо рождение нового слоя (FOD стабилен, потребители разнообразны, обратных рёбер нет),
-   либо формирование клубка (появляются встречные рёбра). Разводится автоматически
-   условием LATERAL.CYCLE.
+1. **The threshold is relative**, not absolute (MacCormack 50% max): B is recognized as
+   shared when it catches up with the project's *most shared* module, not with a magic
+   number of consumers.
+2. **Two-dimensionality**: shared = high-in **and low-out**. If, as its fan-in grows, B
+   itself starts depending on neighbors — that's a Hub/tangle, not a layer, and edges into it
+   remain suspicious.
+3. **Persistence and trend** (Li/Liang): a series of new lateral pairs in B over a short
+   window — either the birth of a new layer (FOD stable, consumers diverse, no back edges),
+   or the formation of a tangle (back edges appear). They are separated automatically by the
+   LATERAL.CYCLE condition.
 
-## 5. Известные слабости / классы FP
+## 5. Known weaknesses / FP classes
 
-- **Переезды файлов** (`git mv` между модулями) создают ложные «новые пары».
-  Проверено (2026-06-12): `--no-renames` сидит в самом `archcheck --diff`
-  (`src/git/git_state.cpp`) и поставлен там осознанно — rename обязан дать обе
-  стороны A+D, иначе LCX-пул переездов теряет функции (#109). Чинить надо не в C++,
-  а на стороне анализа: в `lateral_drift_scan.py` работает эвристика сигнатуры
-  (basename(from), to) — «новое» ребро, чей basename+цель уже встречались из другого
-  модуля, считается переездом и не рождает событие.
-- **Мелкие репы**: N < 4 модулей — критерий вырождается, не применять.
-- **Выбор глубины k**: один уровень на репу может быть груб для смешанных layout'ов
-  (`src/` + `libs/<lib>/src/`); возможно, k надо выбирать на поддерево.
-- **Заголовки-мосты**: A включает заголовок B, который форвардит в C — прямое ребро A→B
-  маскирует фактическую связь A→C. Include-граф этого не видит, clang-бэкенд (#042) увидит.
-- **Новорожденные модули**: первые рёбра нового модуля во все стороны — это его
-  становление, не дрейф; грейс-период первых m коммитов модуля.
+- **File moves** (`git mv` between modules) create false "new pairs".
+  Verified (2026-06-12): `--no-renames` sits inside `archcheck --diff` itself
+  (`src/git/git_state.cpp`) and was put there deliberately — a rename must yield both
+  sides A+D, otherwise the LCX move pool loses functions (#109). The fix has to be not in C++
+  but on the analysis side: in `lateral_drift_scan.py` a signature heuristic works
+  (basename(from), to) — a "new" edge whose basename+target has already been seen from
+  another module is treated as a move and does not generate an event.
+- **Small repos**: N < 4 modules — the criterion degenerates, don't apply it.
+- **Choice of depth k**: a single level per repo can be coarse for mixed layouts
+  (`src/` + `libs/<lib>/src/`); k may need to be chosen per subtree.
+- **Bridge headers**: A includes B's header, which forwards into C — the direct edge A→B
+  masks the actual link A→C. The include graph doesn't see this; the clang backend (#042)
+  will.
+- **Newborn modules**: a new module's first edges in every direction — that's its
+  formation, not drift; a grace period for a module's first m commits.
 
-## 6. План валидации на корпусе
+## 6. Corpus validation plan
 
-1. Прототип `lateral_drift_scan.py`: модульная агрегация + FID/level/I по состоянию
-   «до коммита». Реализовано (2026-06-12): состояние = baseline-снимок на старте окна
+1. Prototype `lateral_drift_scan.py`: module aggregation + FID/level/I at the "before
+   commit" state. Implemented (2026-06-12): state = a baseline snapshot at the window start
    (`make_window_baselines.py`: `git ls-tree`+`cat-file` → `archcheck
-   --save-graph-baseline`, по одному прогону на репу) + прямой replay полных списков
-   `added` из jsonl. Списки `removed` в jsonl не сохранялись (потеря ≤5.6% рёбер —
-   фантомы в replay-графе); следствие: условие персистентности (5) выполняется
-   тривиально и реально не проверяется. Baseline возможен только для реп, оставшихся
-   на диске (~184 из 481; остальные удалены после регена).
-2. Прогнать по 481 jsonl-репе: сколько LATERAL.{CYCLE,SDP,NEW} остаётся от 21 736 —
-   ожидание: сотни, не тысячи.
-3. Eyeball топ-30: доля TP ≥ 70% (планка как в #103).
-4. Разрез agentic vs human внутри смешанных реп (repo fixed effects — дизайн как у
+   --save-graph-baseline`, one run per repo) + a direct replay of the full `added` lists
+   from the jsonl. The `removed` lists weren't saved in the jsonl (a loss of ≤5.6% of edges —
+   phantoms in the replay graph); consequence: the persistence condition (5) is satisfied
+   trivially and isn't really checked. A baseline is possible only for repos remaining on
+   disk (~184 of 481; the rest were deleted after regeneration).
+2. Run over the 481 jsonl repos: how many LATERAL.{CYCLE,SDP,NEW} remain out of 21,736 —
+   expectation: hundreds, not thousands.
+3. Eyeball top-30: TP share ≥ 70% (the bar as in #103).
+4. Slice agentic vs human within mixed repos (repo fixed effects — design as for
    boolean-drift).
-5. Перегенерить секцию A в `EXAMPLES_50.md` по новому критерию.
+5. Regenerate section A in `EXAMPLES_50.md` per the new criterion.
 
-## 7. Путь в продукт
+## 7. Path into the product
 
-Кандидат **DRIFT.4 (Lateral)** для `--diff`-режима: всё считается на include-графе,
-zero-config (модули и слои выводятся), атрибуция готова: Lakos (циклы/levelization),
-Martin (SDP/instability), MacCormack/Baldwin (shared-классификация), Mo/Cai
-(cross-module patterns). LATERAL.CYCLE — кандидат в gate; SDP/NEW — advisory
-(сквозное правило: вероятностное = advisory). В CI-режиме условие персистентности
-выпадает естественно: гейт срабатывает до вливания, «временных» рёбер не бывает.
+Candidate **DRIFT.4 (Lateral)** for `--diff` mode: everything is computed on the include
+graph, zero-config (modules and layers are derived), attribution is ready: Lakos
+(cycles/levelization), Martin (SDP/instability), MacCormack/Baldwin (shared classification),
+Mo/Cai (cross-module patterns). LATERAL.CYCLE — a gate candidate; SDP/NEW — advisory
+(the cross-cutting rule: probabilistic = advisory). In CI mode the persistence condition
+drops out naturally: the gate fires before merge, there are no "temporary" edges.
+</content>

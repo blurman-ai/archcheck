@@ -1,28 +1,28 @@
 # god-namespace
 
 - **Category:** G (graph metrics)
-- **Authority:** medium — расширение Lakos fan-in + Martin Ce/Ca
-- **Source:** Lakos *LSCSD* §3.10 (fan-in/fan-out), Martin OODQM (Ce/Ca). Конкретное правило — наша агрегация.
+- **Authority:** medium — extension of Lakos fan-in + Martin Ce/Ca
+- **Source:** Lakos *LSCSD* §3.10 (fan-in/fan-out), Martin OODQM (Ce/Ca). The specific rule is our aggregation.
 
 ## Rule
 
-> "Namespace с afferent coupling (Ca) > 50 ИЛИ efferent coupling (Ce) > 30 — кандидат на расщепление."
+> "A namespace with afferent coupling (Ca) > 50 OR efferent coupling (Ce) > 30 is a candidate for splitting."
 
 ## Why for archcheck
 
-god-headers уже в спеке (in-degree > 30 — split). Это правило поднимает идею на уровень неймспейса: «бог-namespace» — это пакет, от которого зависят все (`Ca` зашкаливает) или который зависит от всех (`Ce` зашкаливает). Первое означает «слишком много чужого кода привязано к этому слою» (хрупкий стабильный модуль), второе — «слой не умеет работать без всех остальных» (модуль-агрегатор). Оба — архитектурные smell-ы, ловимые с помощью уже считаемых метрик.
+god-headers are already in the spec (in-degree > 30 — split). This rule lifts the idea to the namespace level: a "god namespace" is a package that everything depends on (`Ca` off the charts) or that depends on everything (`Ce` off the charts). The former means "too much foreign code is bound to this layer" (a fragile stable module), the latter means "the layer can't work without all the others" (an aggregator module). Both are architectural smells, catchable using metrics that are already computed.
 
-Не требует новых данных: Ce/Ca уже считаются для Martin metrics.
+Requires no new data: Ce/Ca are already computed for Martin metrics.
 
 ## Detection
 
-После построения namespace-уровневого графа:
-- Для каждого namespace вычислить `Ce` и `Ca`.
-- Флагать если `Ca > threshold_ca` (default 50) **или** `Ce > threshold_ce` (default 30).
-- Оба порога настраиваемы.
+After building the namespace-level graph:
+- For each namespace, compute `Ce` and `Ca`.
+- Flag if `Ca > threshold_ca` (default 50) **or** `Ce > threshold_ce` (default 30).
+- Both thresholds are configurable.
 
 ## Fixtures
 
-- `pass_balanced/` — namespace с `Ca=10, Ce=5`.
-- `fail_high_ca/` — `utils::` с `Ca=80` (все зависят).
-- `fail_high_ce/` — `application::` с `Ce=40` (зависит от всего).
+- `pass_balanced/` — a namespace with `Ca=10, Ce=5`.
+- `fail_high_ca/` — `utils::` with `Ca=80` (everything depends on it).
+- `fail_high_ce/` — `application::` with `Ce=40` (depends on everything).

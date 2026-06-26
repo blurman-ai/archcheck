@@ -1,8 +1,8 @@
 # forward-decl-of-std
 
-- **Category:** S (AST) или R (text pattern)
-- **Authority:** high — стандарт C++ (`[namespace.std]`)
-- **Source:** C++ standard §16.4.5.7 [namespace.std]; в спеке archcheck упомянуто как «несомненная практика» без явного rule ID.
+- **Category:** S (AST) or R (text pattern)
+- **Authority:** high — C++ standard (`[namespace.std]`)
+- **Source:** C++ standard §16.4.5.7 [namespace.std]; mentioned in the archcheck spec as an "indisputable practice" without an explicit rule ID.
 
 ## Rule
 
@@ -10,19 +10,19 @@
 
 ## Why for archcheck
 
-Forward-decl типов из `std::` — формальный UB по стандарту. Часто пишут `namespace std { class string; }` чтобы избежать `#include <string>` в заголовке, но это нарушение `[namespace.std]`: реализация может объявить `string` как typedef, шаблон, или находящийся в inline-namespace, и линковка тихо отвалится или поведение поедет. archcheck обязан это ловить как security-critical паттерн, потому что компилятор обычно молчит.
+Forward-declaring types from `std::` is formal UB per the standard. People often write `namespace std { class string; }` to avoid `#include <string>` in a header, but this violates `[namespace.std]`: the implementation may declare `string` as a typedef, a template, or something inside an inline namespace, and linking silently breaks or behavior drifts. archcheck must catch this as a security-critical pattern, because the compiler usually stays silent.
 
 ## Detection
 
-Два варианта:
-1. **AST (надёжно):** найти `NamespaceDecl` с `getName() == "std"` в файле проекта (не в STL header), внутри которого есть любые декларации. Флагать всё, что находится внутри. Исключение: template specializations через `template<> ...` — допустимо стандартом.
-2. **Text pattern (быстро):** regex `\bnamespace\s+std\s*\{` в файлах проекта. Дёшево, может давать false negatives на `namespace ::std`.
+Two options:
+1. **AST (reliable):** find a `NamespaceDecl` with `getName() == "std"` in a project file (not in an STL header) that contains any declarations. Flag everything inside it. Exception: template specializations via `template<> ...` — allowed by the standard.
+2. **Text pattern (fast):** regex `\bnamespace\s+std\s*\{` in project files. Cheap, may produce false negatives on `namespace ::std`.
 
-В fast backend — R (regex), в clang backend — S (AST, точнее).
+In the fast backend — R (regex); in the clang backend — S (AST, more precise).
 
 ## Fixtures
 
-- `pass_specialization/` — `template<> struct std::hash<MyKey> { ... };` (допустимо).
-- `pass_no_std/` — никаких объявлений в `std`.
-- `fail_forward_class/` — `namespace std { class string; }` в `foo.h`.
+- `pass_specialization/` — `template<> struct std::hash<MyKey> { ... };` (allowed).
+- `pass_no_std/` — no declarations in `std`.
+- `fail_forward_class/` — `namespace std { class string; }` in `foo.h`.
 - `fail_forward_struct/` — `namespace std { struct vector; }`.

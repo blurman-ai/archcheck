@@ -1,122 +1,122 @@
-# C++ копипаст в агентских репах — реальный код, пара к паре
+# C++ copy-paste in agentic repos — real code, pair by pair
 
-> Прогон `archcheck --duplication` по корпусу `experiments/ai_repo_run/structural_census.tsv`.
-> Цель — не числа, а **реальные пары дублей**: оригинал ↔ копия, рядом, с кликабельными
-> ссылками на GitHub на **каждый** фрагмент. Каждая пара честно размечена:
-> ✅ настоящий копипаст (extractable — можно было вынести в общую функцию) /
-> ⚠️ легитимный или FP (генерёнка, вендоринг, платформенные интринсики, параллельные порты).
+> A run of `archcheck --duplication` over the corpus `experiments/ai_repo_run/structural_census.tsv`.
+> The goal isn't the numbers but the **real duplicate pairs**: original ↔ copy, side by side, with
+> clickable GitHub links to **every** fragment. Each pair is honestly labeled:
+> ✅ genuine copy-paste (extractable — could have been pulled into a shared function) /
+> ⚠️ legitimate or FP (codegen, vendoring, platform intrinsics, parallel ports).
 
 ---
 
 ## Intro
 
-- **Реп с непустым копипастом:** 763 (строки `verdict==VIOLATION_KEPT`, `dup_pairs>0` из census).
-- **Метод:** census считал `dup_pairs` через быстрый токеновый проход archcheck v0.1. Отсортировал по
-  `dup_per100f` (плотность дублей на 100 файлов) — самые «копипастные» сверху. Топ-20 разобрал руками:
-  взял клон `~/oss/<owner_repo>`, зафиксировал `sha` (12 симв.), прогнал
-  `archcheck --duplication`, прочитал **оба** фрагмента каждой яркой пары verbatim из клона.
-- **Классы дублей** (формат вывода archcheck): `EXACT` (токены совпали 1:1), `LITERAL` (совпали с
-  точностью до литералов/строк), `RENAMED` (совпали с точностью до имён), `STRUCTURAL` (совпал каркас,
-  расходятся детали). `weighted` — взвешенная схожесть, `line` — построчная.
-- **Честная рамка.** archcheck v0.1 сырой. Высокая плотность дублей часто означает не «грязный код
-  агента», а **вендоринг** (втянутая в дерево чужая библиотека), **генерёнку** (SWIG/Cython/амальгамация
-  одним файлом) или **параллельные платформенные порты** (linux/macosx, SSE/AVX/NEON). Это видно прямо
-  по топу: №1 по плотности — вендорный `argparse.hpp`, №2 — сгенерированный компилятором `bootstrap.c`.
-  Настоящий копипаст (один и тот же кусок логики продублирован вручную внутри проекта) — отдельный,
-  меньший класс. Я его не раздуваю.
+- **Repos with non-empty copy-paste:** 763 (rows with `verdict==VIOLATION_KEPT`, `dup_pairs>0` from census).
+- **Method:** census computed `dup_pairs` via the fast token pass of archcheck v0.1. I sorted by
+  `dup_per100f` (duplicate density per 100 files) — the most "copy-paste-heavy" on top. I went through the
+  top 20 by hand: took the clone at `~/oss/<owner_repo>`, pinned the `sha` (12 chars), ran
+  `archcheck --duplication`, and read **both** fragments of each notable pair verbatim from the clone.
+- **Duplicate classes** (archcheck output format): `EXACT` (tokens match 1:1), `LITERAL` (match up to
+  literals/strings), `RENAMED` (match up to names), `STRUCTURAL` (skeleton matches, details diverge).
+  `weighted` — weighted similarity, `line` — line-by-line.
+- **An honest frame.** archcheck v0.1 is raw. High duplicate density often means not "messy agent code"
+  but **vendoring** (a third-party library pulled into the tree), **codegen** (SWIG/Cython/single-file
+  amalgamation), or **parallel platform ports** (linux/macosx, SSE/AVX/NEON). You can see it right at the
+  top of the list: #1 by density is the vendored `argparse.hpp`, #2 is the compiler-generated `bootstrap.c`.
+  Genuine copy-paste (the same chunk of logic duplicated by hand within the project) is a separate, smaller
+  class. I don't inflate it.
 
 ---
 
-## Корпус-уровень: разделяем дублирование на природу (и главный вывод)
+## Corpus level: separating duplication by nature (and the main finding)
 
-Ручной топ-20 ниже надёжен, но не масштабируется. Чтобы получить ответ по всему корпусу, каждую
-фрагмент-пару разметили по **трём ортогональным осям** (скрипт `experiments/ai_repo_run/classify_dup.py`,
-отчётный уровень — тул не трогали):
+The manual top 20 below is reliable but doesn't scale. To get an answer across the whole corpus, every
+fragment pair was labeled along **three orthogonal axes** (script `experiments/ai_repo_run/classify_dup.py`,
+report level — the tool itself was untouched):
 
-- **generated** — кодогенерёнка (`.pb.`, `moc_`, SWIG `_wrap`, lex/yacc) — никто не правит;
-- **vendored** — чужой код: путь (BSP/HAL/`drivers/net/wireless/`/known-libs) **или копирайт на
-  вендора** (STMicroelectronics, MediaTek, Clounix…), причём только если это **не** владелец репы
-  (личное имя автора `Copyright by Sukchan Lee` в open5gs ложно не метит — капкан #081 закрыт);
-- **file_dup** — тот же файл скопирован целиком: совпал basename **или** структурный twin
-  (`xr819s↔xr829`, `stm32l5↔stm32u5`, `linux↔windows`). Это «дублирование файла», **не** копипаст куска;
-- **authored** — фрагмент в **разноимённом не-вендорном** файле = чистый авторский копипаст.
+- **generated** — codegen (`.pb.`, `moc_`, SWIG `_wrap`, lex/yacc) — nobody edits it;
+- **vendored** — third-party code: by path (BSP/HAL/`drivers/net/wireless/`/known-libs) **or by a vendor
+  copyright** (STMicroelectronics, MediaTek, Clounix…), but only if it is **not** the repo owner
+  (a personal author name `Copyright by Sukchan Lee` in open5gs is correctly not flagged — trap #081 closed);
+- **file_dup** — the same file copied whole: matching basename **or** a structural twin
+  (`xr819s↔xr829`, `stm32l5↔stm32u5`, `linux↔windows`). This is "file duplication", **not** copy-paste of a chunk;
+- **authored** — a fragment in a **differently named non-vendored** file = pure authored copy-paste.
 
-**Распределение по корпусу (764 репы, 25 284 пары):**
+**Distribution across the corpus (764 repos, 25,284 pairs):**
 
-| корзина | пар | доля |
+| bucket | pairs | share |
 |---|---|---|
 | generated | 101 | 0.4% |
-| vendored | 5 944 | 23.5% |
-| **file_dup** (целый файл) | **13 905** | **55.0%** |
-| **authored** (кусок логики) | **5 334** | **21.1%** |
+| vendored | 5,944 | 23.5% |
+| **file_dup** (whole file) | **13,905** | **55.0%** |
+| **authored** (chunk of logic) | **5,334** | **21.1%** |
 
-**Вывод №1 — «копипаст у 99% реп» был иллюзией смешивания.** Больше половины «дублирования» — это
-копирование **целых файлов**, ещё ~24% — вендоринг. Настоящего авторского копипаста фрагмента — 21%,
-он есть у 77% реп, но **тонкий**: у 39% таких реп всего 1–3 пары, у 23% реп — вовсе ноль.
+**Finding #1 — "copy-paste in 99% of repos" was an illusion of conflation.** More than half of "duplication"
+is copying of **whole files**, another ~24% is vendoring. Genuine authored fragment copy-paste is 21%; it
+exists in 77% of repos but is **thin**: 39% of such repos have just 1–3 pairs, and 23% of repos have none at all.
 
-### Главный тест: agentic vs control (чистый authored)
+### The main test: agentic vs control (pure authored)
 
-Гипотезу «агентский C++ копипастнее / ИИ создаёт дрейф» проверили прямо: 50 дисциплинированных
-control-реп (`group==control` из `cpp_ai_drift_metrics.tsv`: simc, dxvk, fmt, QuantLib…) склонировали
-тем же конвейером и разметили тем же классификатором. Метрика — authored-пар на 100 файлов
-(репы с ≥20 файлов).
+The hypothesis "agentic C++ is more copy-paste-prone / AI creates drift" was tested directly: 50 disciplined
+control repos (`group==control` from `cpp_ai_drift_metrics.tsv`: simc, dxvk, fmt, QuantLib…) were cloned via
+the same pipeline and labeled with the same classifier. The metric is authored pairs per 100 files
+(repos with ≥20 files).
 
-| authored / 100 файлов | agentic (n=749) | control (n=46) |
+| authored / 100 files | agentic (n=749) | control (n=46) |
 |---|---|---|
-| медиана | 0.78 | 1.00 |
-| среднее | 1.52 | 1.53 |
+| median | 0.78 | 1.00 |
+| mean | 1.52 | 1.53 |
 | p90 | 3.24 | 2.86 |
 
-**Mann-Whitney U: z=−1.46, p=0.144 → разница НЕзначима.**
+**Mann-Whitney U: z=−1.46, p=0.144 → the difference is NOT significant.**
 
-**Вывод №2 — сигнала ИИ-копипаст-дрейфа в C++ нет.** Авторский копипаст в агентских репах **не выше**,
-чем в control (медиана даже чуть ниже). Гипотеза «агенты насорили копипастом» не подтверждается. И
-«слабая надежда, что C++-комьюнити дисциплинированнее» — тоже: для неё нужна была бы разница
-agentic<control, а её нет — группы одинаковые.
+**Finding #2 — there is no AI copy-paste-drift signal in C++.** Authored copy-paste in agentic repos is **not
+higher** than in control (the median is even slightly lower). The hypothesis "agents littered with copy-paste"
+is not confirmed. Nor is the "faint hope that the C++ community is more disciplined": that would require an
+agentic<control difference, and there is none — the groups are the same.
 
-Где агентские реально отличаются — это **file_dup** (2.19 vs 1.41 на 100 файлов) и состав корпуса
-(firmware/BSP, копирование целых драйверов по платам), а **не** авторский стиль. Сырые `dup_pairs`,
-смешивавшие всё в кучу, и создавали ложное «агентские грязнее».
+Where agentic repos really differ is in **file_dup** (2.19 vs 1.41 per 100 files) and corpus composition
+(firmware/BSP, copying whole drivers across boards), **not** in authored style. The raw `dup_pairs`, which
+lumped everything together, are what created the false "agents are messier".
 
-**Усиление:** агентский набор — это *нарушители* (предотобраны за `dup_pairs>0`), control — все 50
-подряд. Отбор играл **против** нуля — и всё равно ноль. Оговорки: снимок «сейчас», не before/after
-(прошлый diff-in-diff тоже не нашёл дрейфа в 90-дн окне — сходится); control n=46 мал; в authored
-остаётся платформенный шум (intel `linux↔windows`), который если что **завышает** агентские.
+**Reinforcement:** the agentic set consists of *violators* (pre-selected for `dup_pairs>0`), control is all 50
+straight. The selection worked **against** zero — and still zero. Caveats: this is a "now" snapshot, not
+before/after (an earlier diff-in-diff also found no drift in a 90-day window — consistent); control n=46 is
+small; authored still carries platform noise (intel `linux↔windows`), which if anything **inflates** the agentic side.
 
-Данные: `experiments/ai_repo_run/classified_dup.tsv` (агентские), `control_classified.tsv` (control).
+Data: `experiments/ai_repo_run/classified_dup.tsv` (agentic), `control_classified.tsv` (control).
 
 ---
 
-## Топ-20 — глубокий разбор
+## Top 20 — deep dive
 
-### 1. msoos/cryptominisat — `dup_pairs=25`, плотность **416.7** ⚠️
+### 1. msoos/cryptominisat — `dup_pairs=25`, density **416.7** ⚠️
 
-Лидер по плотности — артефакт: в дереве лежат **две копии** хедера CLI-парсера `argparse.hpp`
-(основная и под `src/oracle/`). Все 25 пар — `EXACT` между ними. Это вендоринг одной библиотеки в
-двух местах, не рукотворный копипаст логики проекта.
+The density leader is an artifact: the tree holds **two copies** of the CLI-parser header `argparse.hpp`
+(the main one and one under `src/oracle/`). All 25 pairs are `EXACT` between them. This is vendoring of one
+library in two places, not hand-written copy-paste of project logic.
 
 ```cpp
-// src/argparse.hpp:95-129  — class ArgumentParser, тот же файл
-// (полностью идентичен src/oracle/argparse.hpp:95-129)
+// src/argparse.hpp:95-129  — class ArgumentParser, same file
+// (fully identical to src/oracle/argparse.hpp:95-129)
 ```
 - A: https://github.com/msoos/cryptominisat/blob/78b3244c84ab/src/argparse.hpp#L95-L129
 - B: https://github.com/msoos/cryptominisat/blob/78b3244c84ab/src/oracle/argparse.hpp#L95-L129
 
-**Вердикт: ⚠️ FP** — вендорённая сторонняя библиотека, втянутая дважды. Лечится симлинком/одним include,
-но это не «агент насорил».
+**Verdict: ⚠️ FP** — a vendored third-party library pulled in twice. Cured with a symlink/single include,
+but this isn't "the agent made a mess".
 
 ---
 
-### 2. c2lang/c2compiler — `dup_pairs=2`, плотность **200.0** ⚠️
+### 2. c2lang/c2compiler — `dup_pairs=2`, density **200.0** ⚠️
 
-Весь проект в census свёлся к одному файлу — `bootstrap/bootstrap.c`, это **сгенерированный**
-самим компилятором C2 моноблоб (~40k строк). Обе пары — повторяющиеся `switch` по enum'у внутри
-генерёнки.
+The whole project in census boils down to one file — `bootstrap/bootstrap.c`, a **generated**
+monoblob (~40k lines) produced by the C2 compiler itself. Both pairs are repeated `switch` statements over
+an enum inside the codegen.
 
 ```cpp
 // bootstrap/bootstrap.c:18413-18425        // bootstrap/bootstrap.c:38592-38604
-switch (k) {                                 // тот же каркас switch по build_target_Kind,
-case build_target_Kind_Image:                // сгенерирован транслятором, не написан руками
+switch (k) {                                 // same switch skeleton over build_target_Kind,
+case build_target_Kind_Image:                // generated by the translator, not hand-written
   return false;
 case build_target_Kind_Executable:
   return true;
@@ -125,14 +125,14 @@ case build_target_Kind_Executable:
 - A: https://github.com/c2lang/c2compiler/blob/80dcf3d7f9a4/bootstrap/bootstrap.c#L18413-L18425
 - B: https://github.com/c2lang/c2compiler/blob/80dcf3d7f9a4/bootstrap/bootstrap.c#L38592-L38604
 
-**Вердикт: ⚠️ FP** — машинно-сгенерированный код. Дублирование тут — свойство кодогенератора.
+**Verdict: ⚠️ FP** — machine-generated code. The duplication here is a property of the code generator.
 
 ---
 
-### 3. Seagate/openSeaChest — `dup_pairs=24`, плотность **109.1** ✅
+### 3. Seagate/openSeaChest — `dup_pairs=24`, density **109.1** ✅
 
-А вот это уже настоящий копипаст. Семейство CLI-утилит (`openSeaChest_Basics`, `_Info`, `_SMART`,
-`_Configure`, …) — каждая копирует целые блоки обработки опций друг у друга. `EXACT`, длинные блоки.
+Now this is genuine copy-paste. A family of CLI utilities (`openSeaChest_Basics`, `_Info`, `_SMART`,
+`_Configure`, …) — each copies whole option-handling blocks from one another. `EXACT`, long blocks.
 
 ```cpp
 // openSeaChest_Basics.c:1376-1399          // openSeaChest_Info.c:1376-1399  (EXACT, 1:1)
@@ -154,20 +154,20 @@ case NOT_SUPPORTED:
 - A: https://github.com/Seagate/openSeaChest/blob/c8dc7b9e39bb/utils/C/openSeaChest/openSeaChest_Basics.c#L1376-L1399
 - B: https://github.com/Seagate/openSeaChest/blob/c8dc7b9e39bb/utils/C/openSeaChest/openSeaChest_Info.c#L1376-L1399
 
-Ещё одна, 55 строк подряд `LITERAL` (отличаются только строки сообщений):
+Another one, 55 consecutive lines of `LITERAL` (only the message strings differ):
 - A: https://github.com/Seagate/openSeaChest/blob/c8dc7b9e39bb/utils/C/openSeaChest/openSeaChest_Info.c#L1114-L1168
 - B: https://github.com/Seagate/openSeaChest/blob/c8dc7b9e39bb/utils/C/openSeaChest/openSeaChest_SMART.c#L1451-L1505
 
-**Вердикт: ✅ настоящий копипаст.** Каждая опция-хендлер размножена по всем утилитам. Extractable:
-блок `--concurrentRanges` просится в общий `handle_concurrent_ranges_option()` в shared-модуле.
+**Verdict: ✅ genuine copy-paste.** Each option handler is replicated across all the utilities. Extractable:
+the `--concurrentRanges` block is begging to become a shared `handle_concurrent_ranges_option()` in a shared module.
 
 ---
 
-### 4. ocornut/imgui — `dup_pairs=28`, плотность **75.7** ⚠️
+### 4. ocornut/imgui — `dup_pairs=28`, density **75.7** ⚠️
 
-Все пары — между `examples/example_<platform>_<backend>/main.cpp`: GLFW/SDL2/SDL3/Win32 × Vulkan/WGPU.
-Это намеренно **самодостаточные** примеры: каждый backend — отдельный компилируемый main, и Vulkan
-setup/teardown в них одинаков by design.
+All pairs are between `examples/example_<platform>_<backend>/main.cpp`: GLFW/SDL2/SDL3/Win32 × Vulkan/WGPU.
+These are deliberately **self-contained** examples: each backend is a separate compilable main, and Vulkan
+setup/teardown in them is identical by design.
 
 ```cpp
 // example_glfw_vulkan/main.cpp:247-256      // example_sdl3_vulkan/main.cpp:240-249  (EXACT)
@@ -183,15 +183,15 @@ vkDestroyInstance(g_Instance, g_Allocator);
 - A: https://github.com/ocornut/imgui/blob/6acba3b47d2a/examples/example_glfw_vulkan/main.cpp#L247-L256
 - B: https://github.com/ocornut/imgui/blob/6acba3b47d2a/examples/example_sdl3_vulkan/main.cpp#L240-L249
 
-**Вердикт: ⚠️ легитимно.** Примеры должны быть копипастой — пользователь берёт один файл целиком.
-Выносить в общий хелпер противоречит цели «один self-contained пример».
+**Verdict: ⚠️ legitimate.** The examples are supposed to be copy-paste — a user takes one file whole.
+Pulling things into a shared helper contradicts the goal of "one self-contained example".
 
 ---
 
-### 5. ender672/liboil — `dup_pairs=13`, плотность **52.0** ⚠️ / частично ✅
+### 5. ender672/liboil — `dup_pairs=13`, density **52.0** ⚠️ / partly ✅
 
-Смешанный случай. Часть пар — платформенные SIMD-реализации (`oil_resample_sse2.c` ↔
-`oil_resample_avx2.c` ↔ `_neon.c`), где scalar-хелпер физически одинаков:
+A mixed case. Some pairs are platform SIMD implementations (`oil_resample_sse2.c` ↔
+`oil_resample_avx2.c` ↔ `_neon.c`), where the scalar helper is physically identical:
 
 ```cpp
 // oil_resample_sse2.c:24-28                 // oil_resample_avx2.c:22-26  (EXACT)
@@ -204,36 +204,36 @@ return _mm_shuffle_ps(smp, hi, _MM_SHUFFLE(2, 0, 1, 0));
 - A: https://github.com/ender672/liboil/blob/156736708a49/oil_resample_sse2.c#L24-L28
 - B: https://github.com/ender672/liboil/blob/156736708a49/oil_resample_avx2.c#L22-L26
 
-Но есть и честные внутрифайловые дубли в `imgscale.c` (один и тот же блок на L390/L501/L701):
+But there are also genuine in-file duplicates in `imgscale.c` (the same block at L390/L501/L701):
 - A: https://github.com/ender672/liboil/blob/156736708a49/imgscale.c#L390-L394
 - B: https://github.com/ender672/liboil/blob/156736708a49/imgscale.c#L501-L505
 
-**Вердикт: ⚠️ SIMD-варианты легитимны** (идиома платформенных интринсиков), но **✅ внутри `imgscale.c`**
-один блок повторён трижды — это уже extractable.
+**Verdict: ⚠️ SIMD variants are legitimate** (the platform-intrinsics idiom), but **✅ inside `imgscale.c`**
+one block is repeated three times — that is extractable.
 
 ---
 
-### 6. etlegacy/etlegacy — `dup_pairs=235`, плотность **51.9** ⚠️ / частично ✅
+### 6. etlegacy/etlegacy — `dup_pairs=235`, density **51.9** ⚠️ / partly ✅
 
-Три рендер-бэкенда живут параллельно: `src/renderer/` (OpenGL), `src/rendererGLES/`, `src/renderer_vk/`
-(Vulkan). Огромные `EXACT`-блоки между ними — это форк рендерера под три API.
+Three render backends live in parallel: `src/renderer/` (OpenGL), `src/rendererGLES/`, `src/renderer_vk/`
+(Vulkan). The huge `EXACT` blocks between them are a fork of the renderer across three APIs.
 
 ```cpp
-// src/rendererGLES/tr_backend.c:250-325 ↔ src/renderer_vk/tr_backend.c:250-325  (EXACT, 76 строк)
+// src/rendererGLES/tr_backend.c:250-325 ↔ src/renderer_vk/tr_backend.c:250-325  (EXACT, 76 lines)
 ```
 - A: https://github.com/etlegacy/etlegacy/blob/5715d01fabf0/src/rendererGLES/tr_backend.c#L250-L325
 - B: https://github.com/etlegacy/etlegacy/blob/5715d01fabf0/src/renderer_vk/tr_backend.c#L250-L325
 
-**Вердикт: ⚠️ форк бэкендов / частично ✅.** Дублирование между API-бэкендами — осознанный приём
-(разные шейдерные пути), но размер копий (десятки строк tr_shade/tr_backend) намекает, что общую
-математику можно было вынести в `renderercommon/`.
+**Verdict: ⚠️ backend fork / partly ✅.** Duplication between API backends is a deliberate technique
+(different shader paths), but the size of the copies (dozens of lines of tr_shade/tr_backend) hints that the
+shared math could have been pulled into `renderercommon/`.
 
 ---
 
-### 7. DanielXMoore/Civet — `dup_pairs=4`, плотность **50.0** ⚠️
+### 7. DanielXMoore/Civet — `dup_pairs=4`, density **50.0** ⚠️
 
-Две копии **вендорённого tree-sitter runtime** (`lsp/tree-sitter/` и `lsp/tree-sitter-hera/`).
-`array.h`/`parser.h` совпадают `EXACT`.
+Two copies of the **vendored tree-sitter runtime** (`lsp/tree-sitter/` and `lsp/tree-sitter-hera/`).
+`array.h`/`parser.h` match `EXACT`.
 
 ```cpp
 // lsp/tree-sitter-hera/src/tree_sitter/parser.h:155-169 ↔ lsp/tree-sitter/.../parser.h:155-169
@@ -241,56 +241,56 @@ return _mm_shuffle_ps(smp, hi, _MM_SHUFFLE(2, 0, 1, 0));
 - A: https://github.com/DanielXMoore/Civet/blob/4097b9324a7a/lsp/tree-sitter-hera/src/tree_sitter/parser.h#L155-L169
 - B: https://github.com/DanielXMoore/Civet/blob/4097b9324a7a/lsp/tree-sitter/src/tree_sitter/parser.h#L155-L169
 
-**Вердикт: ⚠️ вендоринг** двух генерёных tree-sitter-грамматик, тянущих идентичный runtime.
+**Verdict: ⚠️ vendoring** of two generated tree-sitter grammars that pull in an identical runtime.
 
 ---
 
-### 8. yhirose/culebra — `dup_pairs=10`, плотность **45.5** ⚠️
+### 8. yhirose/culebra — `dup_pairs=10`, density **45.5** ⚠️
 
-Дубли между `include/stdlib_interp.h` и `include/stdlib_jit.h` — это **амальгамации**
-(single-header сборки одного и того же кода под два режима: интерпретатор и JIT), плюс
-внутрифайловые повторы в `jit.h`.
+The duplicates between `include/stdlib_interp.h` and `include/stdlib_jit.h` are **amalgamations**
+(single-header builds of the same code for two modes: interpreter and JIT), plus
+in-file repeats in `jit.h`.
 
 - A: https://github.com/yhirose/culebra/blob/8230eb1fe494/include/stdlib_interp.h#L2374-L2382
 - B: https://github.com/yhirose/culebra/blob/8230eb1fe494/include/stdlib_jit.h#L1077-L1085
 
-**Вердикт: ⚠️ генерёнка** (амальгамированные хедеры) — дубль присущ упаковке single-header.
+**Verdict: ⚠️ codegen** (amalgamated headers) — the duplicate is inherent to single-header packaging.
 
 ---
 
-### 9. unum-cloud/USearch — `dup_pairs=8`, плотность **44.4** ✅
+### 9. unum-cloud/USearch — `dup_pairs=8`, density **44.4** ✅
 
-Честный случай. В JNI-биндинге три почти идентичных метода подряд (`STRUCTURAL ~0.71-0.73`,
-50 строк каждый) — копипаст под разные типы скаляров.
+A clean case. In the JNI binding there are three almost identical methods in a row (`STRUCTURAL ~0.71-0.73`,
+50 lines each) — copy-paste for different scalar types.
 
 ```cpp
-// cloud_unum_usearch_Index.cpp:796-845 ↔ :851-900 ↔ :906-954  (три копии одного тела)
+// cloud_unum_usearch_Index.cpp:796-845 ↔ :851-900 ↔ :906-954  (three copies of one body)
 ```
 - A: https://github.com/unum-cloud/USearch/blob/9fd6b0115dcd/java/cloud/unum/usearch/cloud_unum_usearch_Index.cpp#L796-L845
 - B: https://github.com/unum-cloud/USearch/blob/9fd6b0115dcd/java/cloud/unum/usearch/cloud_unum_usearch_Index.cpp#L851-L900
 
-**Вердикт: ✅ настоящий копипаст.** Три JNI-обёртки отличаются типом — просится шаблон/макрос.
+**Verdict: ✅ genuine copy-paste.** The three JNI wrappers differ by type — a template/macro is begging to be used.
 
 ---
 
-### 10. sailfishos-mirror/protobuf — `dup_pairs=472`, плотность **42.9** ⚠️
+### 10. sailfishos-mirror/protobuf — `dup_pairs=472`, density **42.9** ⚠️
 
-Зеркало protobuf. Дубли — между **амальгамациями upb** (`php-upb.c`, `ruby-upb.c`, `ruby-upb.h`) и
-исходными `upb/...` хедерами. Это сгенерированные one-file сборки runtime для PHP/Ruby.
+A protobuf mirror. The duplicates are between the **upb amalgamations** (`php-upb.c`, `ruby-upb.c`, `ruby-upb.h`)
+and the original `upb/...` headers. These are generated one-file runtime builds for PHP/Ruby.
 
 - A: https://github.com/sailfishos-mirror/protobuf/blob/54b62411d722/php/ext/google/protobuf/php-upb.c#L4290-L4305
 - B: https://github.com/sailfishos-mirror/protobuf/blob/54b62411d722/ruby/ext/google/protobuf_c/ruby-upb.c#L3096-L3111
 
-**Вердикт: ⚠️ генерёнка/вендоринг.** Амальгамации upb по определению дублируют исходники.
+**Verdict: ⚠️ codegen/vendoring.** The upb amalgamations duplicate the sources by definition.
 
 ---
 
-### 11. shafferjohn/Prime95 — `dup_pairs=85`, плотность **40.5** ⚠️
+### 11. shafferjohn/Prime95 — `dup_pairs=85`, density **40.5** ⚠️
 
-Два слоя. (1) Дублированное дерево `gwnum/prime95/` ↔ `prime95/`. (2) Платформенные порты:
-`linux64/`, `macosx/`, `macosx64/` держат **идентичные** `os_routines.c`/`menu.c`/`prime.c`, причём
-внутри уже стоят `#ifdef __linux__ / __APPLE__` — то есть один и тот же мультиплатформенный файл
-скопирован в три каталога.
+Two layers. (1) A duplicated tree `gwnum/prime95/` ↔ `prime95/`. (2) Platform ports:
+`linux64/`, `macosx/`, `macosx64/` hold **identical** `os_routines.c`/`menu.c`/`prime.c`, and
+inside they already have `#ifdef __linux__ / __APPLE__` — that is, the same multiplatform file
+copied into three directories.
 
 ```c
 // linux64/os_routines.c:64-84              // macosx/os_routines.c:64-84  (EXACT)
@@ -307,16 +307,16 @@ return _mm_shuffle_ps(smp, hi, _MM_SHUFFLE(2, 0, 1, 0));
 - A: https://github.com/shafferjohn/Prime95/blob/bd6969fa5e70/linux64/os_routines.c#L64-L84
 - B: https://github.com/shafferjohn/Prime95/blob/bd6969fa5e70/macosx/os_routines.c#L64-L84
 
-**Вердикт: ⚠️ параллельные порты / borderline ✅.** Поскольку `#ifdef` уже покрывает все платформы,
-три копии одного файла избыточны — мог быть один общий `os_routines.c`. Но это «исторический» приём
-сборки, не агентский мусор.
+**Verdict: ⚠️ parallel ports / borderline ✅.** Since the `#ifdef` already covers all platforms,
+three copies of one file are redundant — there could have been a single shared `os_routines.c`. But this is a
+"historical" build technique, not agent garbage.
 
 ---
 
-### 12. rapastranac/gempba — `dup_pairs=13`, плотность **39.4** ✅✅ (самый чистый кейс)
+### 12. rapastranac/gempba — `dup_pairs=13`, density **39.4** ✅✅ (the cleanest case)
 
-Эталонный настоящий копипаст. Два класса-шедулера — `mpi_centralized_scheduler` и
-`mpi_semi_centralized_scheduler` — делят **дословно одинаковые** блоки сбора статистики по MPI.
+A reference example of genuine copy-paste. Two scheduler classes — `mpi_centralized_scheduler` and
+`mpi_semi_centralized_scheduler` — share **verbatim identical** blocks of MPI statistics collection.
 
 ```cpp
 // mpi_centralized_scheduler.hpp:122-141     // mpi_semi_centralized_scheduler.hpp:106-125 (EXACT)
@@ -344,20 +344,20 @@ for (int v_src_rank = 1; v_src_rank < m_world_size; ++v_src_rank) {
 - A: https://github.com/rapastranac/gempba/blob/89a2629b6887/private/impl/schedulers/mpi_centralized_scheduler.hpp#L122-L141
 - B: https://github.com/rapastranac/gempba/blob/89a2629b6887/private/impl/schedulers/mpi_semi_centralized_scheduler.hpp#L106-L125
 
-Таких пар между двумя шедулерами — целая дюжина (`EXACT` и `STRUCTURAL` 0.88–0.96).
+There are a whole dozen such pairs between the two schedulers (`EXACT` and `STRUCTURAL` 0.88–0.96).
 
-**Вердикт: ✅✅ хрестоматийный копипаст.** Два шедулера обязаны делить общий базовый класс или
-свободную функцию `gather_stats()`. Это extractable на 100%.
+**Verdict: ✅✅ textbook copy-paste.** The two schedulers ought to share a common base class or a
+free function `gather_stats()`. This is 100% extractable.
 
 ---
 
-### 13. ChristianGaser/CAT-Surface — `dup_pairs=87`, плотность **39.9** ⚠️
+### 13. ChristianGaser/CAT-Surface — `dup_pairs=87`, density **39.9** ⚠️
 
-Дубли в `cat_surface_cython/cat_surf/_bbreg.c` ↔ `_volume.c` ↔ `_surf.c`. Это **Cython-генерёнка**:
-`__Pyx_*` boilerplate (CPython list/refcount-обвязка), одинаковый в каждом скомпилированном модуле.
+Duplicates in `cat_surface_cython/cat_surf/_bbreg.c` ↔ `_volume.c` ↔ `_surf.c`. This is **Cython codegen**:
+`__Pyx_*` boilerplate (CPython list/refcount plumbing), identical in every compiled module.
 
 ```c
-// _bbreg.c:2727-2739 ↔ _volume.c:2730-2742  (__Pyx_PyList_Append helper, генерёнка Cython)
+// _bbreg.c:2727-2739 ↔ _volume.c:2730-2742  (__Pyx_PyList_Append helper, Cython codegen)
 PyListObject* L = (PyListObject*) list;
 Py_ssize_t len = Py_SIZE(list);
 if (likely(L->allocated > len)) { Py_INCREF(x); ... }
@@ -365,26 +365,26 @@ if (likely(L->allocated > len)) { Py_INCREF(x); ... }
 - A: https://github.com/ChristianGaser/CAT-Surface/blob/e778f1c079ca/cat_surface_cython/cat_surf/_bbreg.c#L2727-L2739
 - B: https://github.com/ChristianGaser/CAT-Surface/blob/e778f1c079ca/cat_surface_cython/cat_surf/_volume.c#L2730-L2742
 
-**Вердикт: ⚠️ FP** — сгенерированный Cython runtime.
+**Verdict: ⚠️ FP** — generated Cython runtime.
 
 ---
 
-### 14. canmeng12/packages — `dup_pairs=507`, плотность **34.5** ⚠️
+### 14. canmeng12/packages — `dup_pairs=507`, density **34.5** ⚠️
 
-OpenWRT-зеркало пакетов. Дубли — между вендорёнными драйверами Wi-Fi MediaTek
-(`mt7603e/` ↔ `mt7612e/` ↔ `mt7615d/`): параллельные форки одного SDK драйвера на разные чипы.
+An OpenWRT package mirror. The duplicates are between vendored MediaTek Wi-Fi drivers
+(`mt7603e/` ↔ `mt7612e/` ↔ `mt7615d/`): parallel forks of one SDK driver for different chips.
 
 - A: https://github.com/canmeng12/packages/blob/8a28a6ca3edd/packages/mt/drivers/mt7603e/src/mt7603_wifi/os/linux/bb_soc.c#L36-L92
 - B: https://github.com/canmeng12/packages/blob/8a28a6ca3edd/packages/mt/drivers/mt7612e/src/mt76x2/os/linux/bb_soc.c#L36-L92
 
-**Вердикт: ⚠️ вендоринг** чужих драйверов, форкнутых по чипам. Не код проекта.
+**Verdict: ⚠️ vendoring** of third-party drivers forked per chip. Not project code.
 
 ---
 
-### 15. wolfSSL/wolfssh — `dup_pairs=28`, плотность **33.3** ✅ / частично ⚠️
+### 15. wolfSSL/wolfssh — `dup_pairs=28`, density **33.3** ✅ / partly ⚠️
 
-Честный копипаст внутри проекта: хелпер именованного семафора скопирован из `apps/wolfssh/wolfssh.c`
-в `examples/client/client.c`.
+Genuine copy-paste within the project: a named-semaphore helper copied from `apps/wolfssh/wolfssh.c`
+into `examples/client/client.c`.
 
 ```c
 // apps/wolfssh/wolfssh.c:289-300            // examples/client/client.c:257-268  (EXACT)
@@ -402,42 +402,42 @@ return (s != NULL && s->s != SEM_FAILED);
 - A: https://github.com/wolfSSL/wolfssh/blob/aa04eca815a2/apps/wolfssh/wolfssh.c#L289-L300
 - B: https://github.com/wolfSSL/wolfssh/blob/aa04eca815a2/examples/client/client.c#L257-L268
 
-Отдельный класс — `examples/echoserver/echoserver.c` ↔ `ide/Espressif/ESP-IDF/.../echoserver.c`:
-ESP32-вариант примера — это вендорная копия (⚠️).
+A separate class — `examples/echoserver/echoserver.c` ↔ `ide/Espressif/ESP-IDF/.../echoserver.c`:
+the ESP32 variant of the example is a vendored copy (⚠️).
 
-**Вердикт: ✅ для app↔client** (хелпер просится в общий util), **⚠️ для Espressif-копии** (платформенный
-порт примера).
+**Verdict: ✅ for app↔client** (the helper is begging for a shared util), **⚠️ for the Espressif copy** (a platform
+port of the example).
 
 ---
 
-### 16. ShimmerResearch/shimmer3-firmware — `dup_pairs=20`, плотность **32.3** ⚠️
+### 16. ShimmerResearch/shimmer3-firmware — `dup_pairs=20`, density **32.3** ⚠️
 
-Все пары — между `LogAndStream_Shimmer3/Shimmer_Driver/FatFs/` и `S3_Sleep/shimmer3_common_source/FatFs/`:
-два firmware-приложения тащат **идентичную копию вендорной FatFs** (ChaN).
+All pairs are between `LogAndStream_Shimmer3/Shimmer_Driver/FatFs/` and `S3_Sleep/shimmer3_common_source/FatFs/`:
+two firmware applications carry an **identical copy of vendored FatFs** (ChaN).
 
 - A: https://github.com/ShimmerResearch/shimmer3-firmware/blob/db65e6c9f0c3/LogAndStream_Shimmer3/Shimmer_Driver/FatFs/ff.c#L1925-L1972
 - B: https://github.com/ShimmerResearch/shimmer3-firmware/blob/db65e6c9f0c3/S3_Sleep/shimmer3_common_source/FatFs/ff.c#L1924-L1971
 
-**Вердикт: ⚠️ вендоринг** одной библиотеки в двух прошивках (общий драйвер мог бы жить в shared-каталоге).
+**Verdict: ⚠️ vendoring** of one library in two firmwares (a shared driver could have lived in a shared directory).
 
 ---
 
-### 17. RuleWorld/bionetgen — `dup_pairs=145`, плотность **31.4** ⚠️
+### 17. RuleWorld/bionetgen — `dup_pairs=145`, density **31.4** ⚠️
 
-Несколько источников: дублированное дерево `bng-graph/BNGcore/` ↔ `src/core/`, SWIG-генерёнка
-(`BNGcore_wrap.cxx`), и вендорная `nauty` в двух версиях.
+Several sources: a duplicated tree `bng-graph/BNGcore/` ↔ `src/core/`, SWIG codegen
+(`BNGcore_wrap.cxx`), and vendored `nauty` in two versions.
 
 - A: https://github.com/RuleWorld/bionetgen/blob/2abaf75d6e75/bng-graph/BNGcore/BNGcore_wrap.cxx#L1740-L1764
 - B: https://github.com/RuleWorld/bionetgen/blob/2abaf75d6e75/src/core/BNGcore_wrap.cxx#L1740-L1764
 
-**Вердикт: ⚠️ генерёнка + дублированное дерево.** SWIG-`_wrap.cxx` дублируется механически.
+**Verdict: ⚠️ codegen + duplicated tree.** The SWIG `_wrap.cxx` is duplicated mechanically.
 
 ---
 
-### 18. sysprog21/rv32emu — `dup_pairs=14`, плотность **28.0** ✅
+### 18. sysprog21/rv32emu — `dup_pairs=14`, density **28.0** ✅
 
-Хороший настоящий кейс. Логика записи store-инструкций RISC-V продублирована между **интерпретатором**
-(`src/emulate.c`) и **JIT fallback** (`src/jit.c`) — выровненный/невыровненный store слово в слово.
+A good genuine case. The logic for RISC-V store instructions is duplicated between the **interpreter**
+(`src/emulate.c`) and the **JIT fallback** (`src/jit.c`) — aligned/unaligned store, word for word.
 
 ```c
 // src/emulate.c:120-152                     // src/jit.c:1587-1609  (STRUCTURAL 0.93)
@@ -454,85 +454,85 @@ case rv_insn_sw:
 - A: https://github.com/sysprog21/rv32emu/blob/c5e8819ada69/src/emulate.c#L120-L152
 - B: https://github.com/sysprog21/rv32emu/blob/c5e8819ada69/src/jit.c#L1587-L1609
 
-**Вердикт: ✅ настоящий копипаст.** Интерпретатор и JIT разъехались на одной и той же misaligned-store
-логике — просится общий `static inline emit_store(...)`. Плюс внутрифайловые дубли в `cache.c`
-(L421↔L445) и `rv32_v_template.c`.
+**Verdict: ✅ genuine copy-paste.** The interpreter and JIT diverged on the same misaligned-store
+logic — a shared `static inline emit_store(...)` is begging to be used. Plus in-file duplicates in `cache.c`
+(L421↔L445) and `rv32_v_template.c`.
 
 ---
 
-### 19. ossappscollective/OSS-DocumentScanner — `dup_pairs=22`, плотность **28.6** ✅ / частично ⚠️
+### 19. ossappscollective/OSS-DocumentScanner — `dup_pairs=22`, density **28.6** ✅ / partly ⚠️
 
-Чистый копипаст: `WhitePaperTransform.cpp` ↔ `WhitePaperTransform2.cpp` — функция размножена с
-суффиксом `2` без единого изменения тела.
+Pure copy-paste: `WhitePaperTransform.cpp` ↔ `WhitePaperTransform2.cpp` — a function replicated with a
+`2` suffix without a single change to the body.
 
 ```cpp
 // WhitePaperTransform.cpp:210-214           // WhitePaperTransform2.cpp:116-120  (EXACT)
 void fastGaussianBlur(const cv::Mat &img, const cv::Mat &res, int kSize, double sigma) {
-    cv::Mat kernel1D = cv::getGaussianKernel(kSize, sigma);   // fastGaussianBlur2 — то же тело
+    cv::Mat kernel1D = cv::getGaussianKernel(kSize, sigma);   // fastGaussianBlur2 — same body
     cv::sepFilter2D(img, res, -1, kernel1D, kernel1D);
 }
 ```
 - A: https://github.com/ossappscollective/OSS-DocumentScanner/blob/8d9ef9a91cf8/cpp/src/WhitePaperTransform.cpp#L210-L214
 - B: https://github.com/ossappscollective/OSS-DocumentScanner/blob/8d9ef9a91cf8/cpp/src/WhitePaperTransform2.cpp#L116-L120
 
-Остальные пары — вендорный `jsoncons` (header-only JSON-библиотека в `cpp/src/include/jsoncons/`), ⚠️.
+The remaining pairs are the vendored `jsoncons` (a header-only JSON library in `cpp/src/include/jsoncons/`), ⚠️.
 
-**Вердикт: ✅ для WhitePaperTransform** (`fastGaussianBlur` vs `fastGaussianBlur2` — копия с суффиксом,
-классический агентский «сделай ещё один такой же»), **⚠️ для jsoncons** (вендоринг).
-
----
-
-### 20. zephyrproject-rtos/trusted-firmware-m — `dup_pairs=966`, плотность **27.8** ⚠️
-
-Самый большой `dup_pairs` в топе. TF-M — security firmware с множеством платформенных
-портов (`platform/ext/target/<vendor>/<board>/`), где HAL/драйверы копируются по бордам. Это
-параллельные платформенные деревья, а не рукотворный копипаст одной логики.
-
-**Вердикт: ⚠️ платформенные порты.** Высокий счётчик — следствие десятков target-каталогов.
-(детальные пары не выношу — однотипны: один HAL-драйвер размножен по бордам.)
+**Verdict: ✅ for WhitePaperTransform** (`fastGaussianBlur` vs `fastGaussianBlur2` — a suffixed copy, the
+classic agentic "make one more just like it"), **⚠️ for jsoncons** (vendoring).
 
 ---
 
-## Итоговая разметка топ-20
+### 20. zephyrproject-rtos/trusted-firmware-m — `dup_pairs=966`, density **27.8** ⚠️
 
-| # | репо | плотность | вердикт | класс |
+The largest `dup_pairs` in the top. TF-M is security firmware with many platform
+ports (`platform/ext/target/<vendor>/<board>/`), where HAL/drivers are copied per board. These are
+parallel platform trees, not hand-written copy-paste of one piece of logic.
+
+**Verdict: ⚠️ platform ports.** The high count is a consequence of dozens of target directories.
+(I don't break out the detailed pairs — they're all alike: one HAL driver replicated across boards.)
+
+---
+
+## Final labeling of the top 20
+
+| # | repo | density | verdict | class |
 |---|---|---|---|---|
-| 1 | msoos/cryptominisat | 416.7 | ⚠️ | вендорный argparse ×2 |
-| 2 | c2lang/c2compiler | 200.0 | ⚠️ | сгенерированный bootstrap.c |
-| 3 | Seagate/openSeaChest | 109.1 | ✅ | копипаст опций между CLI-утилитами |
-| 4 | ocornut/imgui | 75.7 | ⚠️ | self-contained примеры backends |
-| 5 | ender672/liboil | 52.0 | ⚠️/✅ | SIMD-варианты + дубли в imgscale.c |
-| 6 | etlegacy/etlegacy | 51.9 | ⚠️/✅ | форк 3 рендер-бэкендов |
-| 7 | DanielXMoore/Civet | 50.0 | ⚠️ | вендорный tree-sitter ×2 |
-| 8 | yhirose/culebra | 45.5 | ⚠️ | амальгамации interp/jit |
-| 9 | unum-cloud/USearch | 44.4 | ✅ | 3 JNI-обёртки копией |
-| 10 | sailfishos-mirror/protobuf | 42.9 | ⚠️ | амальгамации upb |
-| 11 | shafferjohn/Prime95 | 40.5 | ⚠️ | копии файлов по платформам |
-| 12 | rapastranac/gempba | 39.4 | ✅✅ | 2 MPI-шедулера дословно |
-| 13 | ChristianGaser/CAT-Surface | 39.9 | ⚠️ | Cython-генерёнка |
-| 14 | canmeng12/packages | 34.5 | ⚠️ | вендорные MTK Wi-Fi драйверы |
-| 15 | wolfSSL/wolfssh | 33.3 | ✅/⚠️ | app↔client хелпер + ESP-копия |
-| 16 | ShimmerResearch/shimmer3-firmware | 32.3 | ⚠️ | вендорная FatFs ×2 |
-| 17 | RuleWorld/bionetgen | 31.4 | ⚠️ | SWIG + дубл. дерево + nauty |
-| 18 | sysprog21/rv32emu | 28.0 | ✅ | interp↔JIT store-логика |
+| 1 | msoos/cryptominisat | 416.7 | ⚠️ | vendored argparse ×2 |
+| 2 | c2lang/c2compiler | 200.0 | ⚠️ | generated bootstrap.c |
+| 3 | Seagate/openSeaChest | 109.1 | ✅ | option copy-paste across CLI utilities |
+| 4 | ocornut/imgui | 75.7 | ⚠️ | self-contained backend examples |
+| 5 | ender672/liboil | 52.0 | ⚠️/✅ | SIMD variants + duplicates in imgscale.c |
+| 6 | etlegacy/etlegacy | 51.9 | ⚠️/✅ | fork of 3 render backends |
+| 7 | DanielXMoore/Civet | 50.0 | ⚠️ | vendored tree-sitter ×2 |
+| 8 | yhirose/culebra | 45.5 | ⚠️ | interp/jit amalgamations |
+| 9 | unum-cloud/USearch | 44.4 | ✅ | 3 JNI wrappers by copy |
+| 10 | sailfishos-mirror/protobuf | 42.9 | ⚠️ | upb amalgamations |
+| 11 | shafferjohn/Prime95 | 40.5 | ⚠️ | file copies across platforms |
+| 12 | rapastranac/gempba | 39.4 | ✅✅ | 2 MPI schedulers verbatim |
+| 13 | ChristianGaser/CAT-Surface | 39.9 | ⚠️ | Cython codegen |
+| 14 | canmeng12/packages | 34.5 | ⚠️ | vendored MTK Wi-Fi drivers |
+| 15 | wolfSSL/wolfssh | 33.3 | ✅/⚠️ | app↔client helper + ESP copy |
+| 16 | ShimmerResearch/shimmer3-firmware | 32.3 | ⚠️ | vendored FatFs ×2 |
+| 17 | RuleWorld/bionetgen | 31.4 | ⚠️ | SWIG + duplicated tree + nauty |
+| 18 | sysprog21/rv32emu | 28.0 | ✅ | interp↔JIT store logic |
 | 19 | ossappscollective/OSS-DocumentScanner | 28.6 | ✅/⚠️ | WhitePaperTransform2 + jsoncons |
-| 20 | zephyrproject-rtos/trusted-firmware-m | 27.8 | ⚠️ | платформенные HAL-порты |
+| 20 | zephyrproject-rtos/trusted-firmware-m | 27.8 | ⚠️ | platform HAL ports |
 
-**Разметка пар (по ярким примерам, не по полному dup_pairs):**
-- ✅ чистый копипаст: **3** (openSeaChest, gempba, rv32emu)
-- ✅ преимущественно копипаст с примесью: **2** (USearch — ✅; OSS-DocumentScanner — ✅ WhitePaper)
-- ⚠️/✅ смешанные (платформенный форк + extractable хвост): **3** (liboil, etlegacy, Prime95, wolfssh частично)
-- ⚠️ легитимные/FP: **остальные ~12** (вендоринг, генерёнка, self-contained примеры, платформенные порты)
+**Pair labeling (by notable examples, not by full dup_pairs):**
+- ✅ pure copy-paste: **3** (openSeaChest, gempba, rv32emu)
+- ✅ predominantly copy-paste with admixture: **2** (USearch — ✅; OSS-DocumentScanner — ✅ WhitePaper)
+- ⚠️/✅ mixed (platform fork + extractable tail): **3** (liboil, etlegacy, Prime95, wolfssh partly)
+- ⚠️ legitimate/FP: **the remaining ~12** (vendoring, codegen, self-contained examples, platform ports)
 
-Грубая доля: **~7/20 содержат настоящий extractable копипаст**, **~13/20 — легитимный шум**
-(вендоринг/генерёнка/платформа). Это ровно то, что и ожидаешь от сырого токенового детектора:
-плотность дублей сама по себе НЕ равна «грязному коду» — лидеры топа это вендоринг и генерёнка.
+Rough share: **~7/20 contain genuine extractable copy-paste**, **~13/20 are legitimate noise**
+(vendoring/codegen/platform). This is exactly what you'd expect from a raw token detector:
+duplicate density by itself does NOT equal "messy code" — the leaders of the top are vendoring and codegen.
 
 ---
 
-## Сводная таблица всех реп с копипастом (763, по убыванию плотности)
+## Summary table of all repos with copy-paste (763, by descending density)
 
-| repo | dup_pairs | dup_per100f | ссылка |
+| repo | dup_pairs | dup_per100f | link |
 |---|---|---|---|
 | msoos/cryptominisat | 25 | 416.7 | [↗](https://github.com/msoos/cryptominisat) |
 | c2lang/c2compiler | 2 | 200.0 | [↗](https://github.com/c2lang/c2compiler) |
@@ -545,12 +545,12 @@ void fastGaussianBlur(const cv::Mat &img, const cv::Mat &res, int kSize, double 
 | yhirose/culebra | 10 | 45.5 | [↗](https://github.com/yhirose/culebra) |
 | unum-cloud/USearch | 8 | 44.4 | [↗](https://github.com/unum-cloud/USearch) |
 
-> Полная таблица всех 763 реп (с `dup_pairs`, `dup_per100f` и ссылкой на репо) — ниже одним блоком.
-> Источник: `experiments/ai_repo_run/structural_census.tsv` (фильтр `verdict==VIOLATION_KEPT && dup_pairs>0`).
+> The full table of all 763 repos (with `dup_pairs`, `dup_per100f`, and a link to the repo) is below in one block.
+> Source: `experiments/ai_repo_run/structural_census.tsv` (filter `verdict==VIOLATION_KEPT && dup_pairs>0`).
 
 <!-- FULL_TABLE_START -->
 
-| repo | dup_pairs | dup_per100f | ссылка |
+| repo | dup_pairs | dup_per100f | link |
 |---|---|---|---|
 | msoos/cryptominisat | 25 | 416.7 | [↗](https://github.com/msoos/cryptominisat) |
 | c2lang/c2compiler | 2 | 200.0 | [↗](https://github.com/c2lang/c2compiler) |

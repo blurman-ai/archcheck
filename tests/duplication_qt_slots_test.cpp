@@ -9,11 +9,11 @@ TEST_CASE("P0.6 joint floor should filter Qt dispatcher slots (33% line overlap)
           "[duplication][p0][guards][qt-slots]")
 {
 
-  // РЕАЛЬНЫЙ СЛУЧАЙ ИЗ CORPUS:
-  // 3 Qt slot-а в AlchemyViewer
-  // Каждый имеет ОДИНАКОВЫЙ guard (2 строки) но РАЗНУЮ операцию (1 строка)
+  // REAL CASE FROM CORPUS:
+  // 3 Qt slots in AlchemyViewer
+  // Each has the SAME guard (2 lines) but a DIFFERENT operation (1 line)
   // Line overlap = 2/6 = 33% < 50% threshold
-  // P0.6 должен отфильтровать, но ловит как дубликат!
+  // P0.6 should filter it out, but catches it as a duplicate!
 
   // EXPANDED: More code to exceed minTokens=30
   std::string slot1 = R"(

@@ -1,59 +1,59 @@
-# Boolean-State — детект по ГРУППОВОМУ ПРИСВАИВАНИЮ (без имён)
+# Boolean-State — detection by GROUP ASSIGNMENT (no names)
 
-**Дата:** 2026-06-07 · **Задача:** #089 / #090
-**Корпус:** все 790 репо, сканированы `.cpp/.cc/.h/.hpp`.
+**Date:** 2026-06-07 · **Task:** #089 / #090
+**Corpus:** all 790 repos, scanned `.cpp/.cc/.h/.hpp`.
 
-## Сигнал (имена не используются)
+## Signal (names are not used)
 
-Ищем места, где **≥3 bool-поля одного объекта** получают `true`/`false` рядом (в пределах 10 строк) с **миксом true+false** — паттерн «один `true`, остальные `false`», т.е. **переход состояния**. Считаем **сайты перехода** — сколько РАЗНЫХ мест делают такой групповой сброс по одному набору полей. ≥2 сайтов = разработчик вручную дублирует «погасить остальные» = явный признак неявной FSM.
+We look for places where **≥3 bool fields of one object** are assigned `true`/`false` near each other (within 10 lines) with a **true+false mix** — the "one `true`, the rest `false`" pattern, i.e. a **state transition**. We count **transition sites** — how many DIFFERENT places perform such a group reset over the same set of fields. ≥2 sites = the developer manually duplicates "clear the others" = a clear sign of an implicit FSM.
 
-## Воронка
+## Funnel
 
-| Метод | Кандидатов | Природа шума |
+| Method | Candidates | Nature of the noise |
 |---|---|---|
-| Счётчик «5+ bool» | 5811 | 78% — конфиг-мешки |
-| Групповое присваивание (сырое) | 3033 | тест-фикстуры, массовый init конфигов |
-| **+ фильтр: не тест, 3-6 полей, ≥2 сайтов** | **283** | остаток — настоящие FSM + немного state-подобного конфига |
+| "5+ bool" counter | 5811 | 78% — config bags |
+| Group assignment (raw) | 3033 | test fixtures, bulk config init |
+| **+ filter: not a test, 3-6 fields, ≥2 sites** | **283** | the remainder — real FSMs + some state-like config |
 
-Малое число полей здесь принципиально: реальная машина = 3-6 взаимоисключающих фаз. 22-46 полей в одном групповом присваивании — это не состояние, а bulk-настройка конфига.
+A small field count is essential here: a real machine = 3-6 mutually exclusive phases. 22-46 fields in a single group assignment is not state, but bulk config setup.
 
-## Подтверждено инспекцией (🟢 реальные FSM, которые нейминг бы НЕ поймал)
+## Confirmed by inspection (🟢 real FSMs that naming would NOT catch)
 
-**ZuluSCSI audio** — [audio_i2s.cpp:824](file://~/oss/ZuluSCSI_ZuluSCSI-firmware/lib/ZuluSCSI_audio_RP2MCU/audio_i2s.cpp#L824): 3 буля `audio_idle/playing/paused`, переходы в 4 местах (824→IDLE, 831→PLAYING, 876→IDLE, 1019→PLAYING). Учебный 3-state автомат. `playing` нет в словаре имён.
+**ZuluSCSI audio** — [audio_i2s.cpp:824](file://~/oss/ZuluSCSI_ZuluSCSI-firmware/lib/ZuluSCSI_audio_RP2MCU/audio_i2s.cpp#L824): 3 bools `audio_idle/playing/paused`, transitions in 4 places (824→IDLE, 831→PLAYING, 876→IDLE, 1019→PLAYING). A textbook 3-state automaton. `playing` is not in the name dictionary.
 
-Другие подтверждённые по виду переходов:
-- **ncnn** `prefer_winograd23/43/63` — взаимоисключающий выбор алгоритма свёртки ([convolution_x86.cpp:418](file://~/oss/Tencent_ncnn/src/layer/x86/convolution_x86.cpp#L418)), продублирован для x86/mips/loongarch.
-- **Lightpad markdown** `inBlockquote/inFencedBlock/inList/inTable…` — состояние парсера ([markdowntools.cpp:1050](file://~/oss/djeada_Lightpad/App/markdown/markdowntools.cpp#L1050)).
-- **OASIS SLAM** — [MonocularInertialSlamNode.cpp:648](file://~/oss/eigendude_OASIS/oasis_perception_cpp/src/nodes/MonocularInertialSlamNode.cpp#L648) (наш ⭐ из usage-разбора).
-- **socnetv** `isCycle/isUp/isDown/isTrans…` — классификация триад ([graph_triad_census.cpp:216](file://~/oss/socnetv_app/src/graph/clustering/graph_triad_census.cpp#L216)).
-- **v4l2** `g_isCaptureOn/PreviewOn/VideoOn` — режим камеры.
+Others confirmed by the look of the transitions:
+- **ncnn** `prefer_winograd23/43/63` — mutually exclusive choice of convolution algorithm ([convolution_x86.cpp:418](file://~/oss/Tencent_ncnn/src/layer/x86/convolution_x86.cpp#L418)), duplicated for x86/mips/loongarch.
+- **Lightpad markdown** `inBlockquote/inFencedBlock/inList/inTable…` — parser state ([markdowntools.cpp:1050](file://~/oss/djeada_Lightpad/App/markdown/markdowntools.cpp#L1050)).
+- **OASIS SLAM** — [MonocularInertialSlamNode.cpp:648](file://~/oss/eigendude_OASIS/oasis_perception_cpp/src/nodes/MonocularInertialSlamNode.cpp#L648) (our ⭐ from the usage analysis).
+- **socnetv** `isCycle/isUp/isDown/isTrans…` — triad classification ([graph_triad_census.cpp:216](file://~/oss/socnetv_app/src/graph/clustering/graph_triad_census.cpp#L216)).
+- **v4l2** `g_isCaptureOn/PreviewOn/VideoOn` — camera mode.
 
-## Остаточные FP этого детектора (🔴, групповое присваивание ≠ всегда FSM)
+## Residual FPs of this detector (🔴, group assignment ≠ always an FSM)
 
-- **Z3** `m_params` (solver-конфиг), **irrlicht** `rasterizerDesc` (D3D11 render-state), **blender** `pass_info` `use_*` — независимые флаги, выставляемые группой при настройке, но не взаимоисключающие.
-- Тест-фикстуры/опции просочились бы без фильтра (`options`/`settings` в `*_test.cpp`).
+- **Z3** `m_params` (solver config), **irrlicht** `rasterizerDesc` (D3D11 render state), **blender** `pass_info` `use_*` — independent flags set as a group during configuration, but not mutually exclusive.
+- Test fixtures/options would leak through without the filter (`options`/`settings` in `*_test.cpp`).
 
-→ Финальное решение всё равно требует проверки взаимоисключения (читается ли набор как «ровно один true»). Но **доля реальных FSM тут несравнимо выше**, чем у нейминга.
+→ The final decision still requires a mutual-exclusion check (does the set read as "exactly one true"). But **the share of real FSMs here is incomparably higher** than with naming.
 
-## Сравнение трёх методов
+## Comparison of the three methods
 
-| | Нейминг (v0.2 rule) | Счётчик 5+ | Групповое присваивание |
+| | Naming (v0.2 rule) | 5+ counter | Group assignment |
 |---|---|---|---|
-| Кандидатов (50/790 репо) | 1 | 59 / 5811 | 283 (filtered) |
-| Реальные FSM в улове | 0 (единственный — FP) | ~19% частичных | подтверждённые 🟢 в топе |
-| Ловит FSM с «нестандартными» именами | ❌ | — | ✅ (winograd, audio_playing, inList) |
-| Зависит от имён | да | нет | **нет** |
-| Нужен AST | нет | нет | нет (regex-прокси) |
+| Candidates (50/790 repos) | 1 | 59 / 5811 | 283 (filtered) |
+| Real FSMs in the catch | 0 (the only one — an FP) | ~19% partial | confirmed 🟢 at the top |
+| Catches FSMs with "non-standard" names | ❌ | — | ✅ (winograd, audio_playing, inList) |
+| Depends on names | yes | no | **no** |
+| Needs AST | no | no | no (regex proxy) |
 
-## Вывод
+## Conclusion
 
-**Групповое присваивание — правильный примитив.** Дешёвый regex-прокси (без AST) уже находит настоящие машины состояний, которые словарь имён принципиально пропускает, и его единственный «улов» (`SimulationData`) был ложным. Это эмпирически обосновывает направление **#042**: полноценный детектор смотрит на *использование* (взаимоисключение + групповой переход + отсутствие уже-готового enum рядом), а не на имена.
+**Group assignment is the right primitive.** A cheap regex proxy (without AST) already finds real state machines that the name dictionary fundamentally misses, and its single "catch" (`SimulationData`) was a false one. This empirically justifies direction **#042**: a full detector looks at *usage* (mutual exclusion + group transition + the absence of an already-ready enum nearby), not at names.
 
-Полный список — `experiments/boolean_state/transition_scan.csv`.
+Full list — `experiments/boolean_state/transition_scan.csv`.
 
-## Топ-40 (не тест, 3-6 полей, ≥2 сайтов; mirror-репо схлопнуты)
+## Top-40 (not a test, 3-6 fields, ≥2 sites; mirror repos collapsed)
 
-| Sites | Fields | Receiver | File | Поля |
+| Sites | Fields | Receiver | File | Fields |
 |---|---|---|---|---|
 | 26 | 3 | `interface_ip` | [core.cc:115](file://~/oss/OpenXiangShan_GEM5/ext/mcpat/core.cc#L115)<br><sub>OpenXiangShan_GEM5/ext/mcpat/core.cc</sub> | `is_cache, pure_cam, pure_ram` |
 | 6 | 5 | `tOpt` | [gtests_filter.cpp:25](file://~/oss/manticoresoftware_manticoresearch/src/gtests/gtests_filter.cpp#L25)<br><sub>manticoresoftware_manticoresearch/src/gtests/gtests_filter.cpp</sub> | `m_bExclude, m_bHasEqualMax, m_bHasEqualMin, m_bOpenLeft, m_bOpenRight` |

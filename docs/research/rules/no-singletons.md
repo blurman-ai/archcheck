@@ -10,20 +10,20 @@
 
 ## Why for archcheck
 
-Singleton — глобал, замаскированный под объект. Создаёт скрытые межмодульные зависимости: `Foo::Instance()` дёргает кто угодно откуда угодно, в графе это не видно. Архитектурный анти-паттерн ровно того типа, который archcheck должен ловить.
+A singleton is a global disguised as an object. It creates hidden inter-module dependencies: `Foo::Instance()` is called by anyone from anywhere, and that is invisible in the graph. An architectural anti-pattern of exactly the kind archcheck should catch.
 
 ## Detection
 
 AST-pattern:
-- класс с приватным/удалённым конструктором,
-- статический метод `Instance()` / `GetInstance()` / `instance()` (имена настраиваемые),
-- внутри метода — `static T instance;` или `static T* instance = new T;`.
+- a class with a private/deleted constructor,
+- a static method `Instance()` / `GetInstance()` / `instance()` (names configurable),
+- inside the method — `static T instance;` or `static T* instance = new T;`.
 
-Уровень уверенности — heuristic, не 100%. Под флагом `--enable=I.3`, не дефолт.
+Confidence level — heuristic, not 100%. Behind the flag `--enable=I.3`, not a default.
 
 ## Fixtures
 
-- `pass/` — обычные классы без статической `Instance()`.
-- `fail_classic/` — каноничный Meyer's singleton.
-- `fail_pointer/` — singleton через `new` в static-local.
-- `pass_false_positive_candidate/` — класс с публичным конструктором и удобной статической `Default()` функцией — не singleton, не флагать.
+- `pass/` — ordinary classes without a static `Instance()`.
+- `fail_classic/` — canonical Meyer's singleton.
+- `fail_pointer/` — singleton via `new` in a static-local.
+- `pass_false_positive_candidate/` — a class with a public constructor and a convenient static `Default()` function — not a singleton, do not flag.

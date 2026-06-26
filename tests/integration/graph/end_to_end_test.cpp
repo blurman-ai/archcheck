@@ -86,7 +86,7 @@ TEST_CASE("fixture: minimal_dag — 3 nodes, 2 edges, acyclic", "[graph][fixture
     REQUIRE(c.size() == 1);
 }
 
-TEST_CASE("fixture: single_scc — 3 nodes форма one SCC", "[graph][fixtures]")
+TEST_CASE("fixture: single_scc — 3 nodes form one SCC", "[graph][fixtures]")
 {
   const auto r = build_graph(graph_fixture("single_scc"));
   REQUIRE(r.graph.nodeCount() == 3);
@@ -98,7 +98,7 @@ TEST_CASE("fixture: single_scc — 3 nodes форма one SCC", "[graph][fixture
   REQUIRE(big == 1);
 }
 
-TEST_CASE("fixture: new_edge — diff показывает одно новое ребро", "[graph][fixtures]")
+TEST_CASE("fixture: new_edge — diff shows one new edge", "[graph][fixtures]")
 {
   const auto base = build_graph(graph_fixture("new_edge/baseline"));
   const auto curr = build_graph(graph_fixture("new_edge/current"));
@@ -108,7 +108,7 @@ TEST_CASE("fixture: new_edge — diff показывает одно новое �
   REQUIRE(curr.graph.pathOf(added[0].to) == "c.h");
 }
 
-TEST_CASE("fixture: shortcut_edge — diff показывает shortcut поверх a->b->c->d", "[graph][fixtures]")
+TEST_CASE("fixture: shortcut_edge — diff shows a shortcut over a->b->c->d", "[graph][fixtures]")
 {
   const auto base = build_graph(graph_fixture("shortcut_edge/baseline"));
   const auto curr = build_graph(graph_fixture("shortcut_edge/current"));
@@ -118,7 +118,7 @@ TEST_CASE("fixture: shortcut_edge — diff показывает shortcut пов�
   REQUIRE(curr.graph.pathOf(added[0].to) == "d.h");
 }
 
-TEST_CASE("fixture: cycle_growth — SCC размер 2 -> 3", "[graph][fixtures]")
+TEST_CASE("fixture: cycle_growth — SCC size 2 -> 3", "[graph][fixtures]")
 {
   const auto base = build_graph(graph_fixture("cycle_growth/baseline"));
   const auto curr = build_graph(graph_fixture("cycle_growth/current"));
@@ -128,7 +128,7 @@ TEST_CASE("fixture: cycle_growth — SCC размер 2 -> 3", "[graph][fixtures
   REQUIRE(grown[0].currentSize == 3);
 }
 
-TEST_CASE("fixture: unresolved_include — попадает в diagnostics, не в edges", "[graph][fixtures]")
+TEST_CASE("fixture: unresolved_include — lands in diagnostics, not in edges", "[graph][fixtures]")
 {
   const auto r = build_graph(graph_fixture("unresolved_include"));
   REQUIRE(r.graph.nodeCount() == 1);
@@ -136,7 +136,7 @@ TEST_CASE("fixture: unresolved_include — попадает в diagnostics, не
   REQUIRE(computeScc(r.graph).size() == 1);
 }
 
-TEST_CASE("fixture: ambiguous_include — 2 кандидата, edge не строится", "[graph][fixtures]")
+TEST_CASE("fixture: ambiguous_include — 2 candidates, edge not built", "[graph][fixtures]")
 {
   const auto r = build_graph(graph_fixture("ambiguous_include"));
   REQUIRE(r.graph.nodeCount() == 3);

@@ -1,33 +1,33 @@
-# Четыре слоя Constraint Decay: архитектура vs состояние (2026)
+# The four layers of Constraint Decay: architecture vs state (2026)
 
-_Обзор комплементарных сигналов дрейфа на корпусе 185 агентских C++ проектов._
-
----
-
-## Введение: почему четыре?
-
-Классические глобальные метрики дупликации **молчат** на AI-дрейфе (CMU diff-in-differences, MSR 2026, arXiv 2511.04427: duplicated lines density +7.03% ±4.79 — незначимо, при этом cognitive complexity +41.6% — стойко). Constraint decay (Dente et al., EURECOM, 2026, arXiv 2605.06445 — это другая работа, не CMU) действует **двойным механизмом**:
-
-1. **Архитектурный дрейф** — new edges в include-графе (cross-module связность растёт)
-2. **Состояние дрейф** — bool-поля в structs накапливаются (локальная сложность растёт)
-
-Оба работают **независимо**. Можно лить архитектуру с чистым состоянием (или наоборот). Поэтому четыре:
-- Graph-drift per-commit (архитектура)
-- Copypaste (метрика поддержки)
-- Boolean-drift per-commit (состояние, временный срез)
-- Boolean-drift per-struct (состояние, накопленный эффект)
+_An overview of complementary drift signals on a corpus of 185 agentic C++ projects._
 
 ---
 
-## Слой 1: Per-Commit Graph-Drift (архитектура)
+## Introduction: why four?
 
-### Что это?
+Classical global duplication metrics are **silent** on AI drift (CMU difference-in-differences, MSR 2026, arXiv 2511.04427: duplicated lines density +7.03% ±4.79 — insignificant, while cognitive complexity +41.6% — robust). Constraint decay (Dente et al., EURECOM, 2026, arXiv 2605.06445 — this is a different work, not CMU) acts via a **dual mechanism**:
 
-Каждый коммит → diff `include/` → парсим рёбра → `archcheck --diff` → фиксируем **новые зависимости** (include-рёбра, которых не было раньше).
+1. **Architectural drift** — new edges in the include graph (cross-module connectivity grows)
+2. **State drift** — bool fields in structs accumulate (local complexity grows)
 
-### Формат
+Both work **independently**. You can pour architecture with clean state (or vice versa). Hence four:
+- Graph-drift per-commit (architecture)
+- Copypaste (a maintenance metric)
+- Boolean-drift per-commit (state, a temporal slice)
+- Boolean-drift per-struct (state, the accumulated effect)
 
-**`*_graph_drift.jsonl`** — строка на коммит:
+---
+
+## Layer 1: Per-Commit Graph-Drift (architecture)
+
+### What is it?
+
+Each commit → diff `include/` → parse edges → `archcheck --diff` → record **new dependencies** (include edges that weren't there before).
+
+### Format
+
+**`*_graph_drift.jsonl`** — a line per commit:
 ```json
 {
   "sha": "3a4a2a525f", "date": "2025-05-04", "subject": "Fix normals",
@@ -37,116 +37,116 @@ _Обзор комплементарных сигналов дрейфа на к
 }
 ```
 
-### Сигналы
+### Signals
 
-- **added_edges > 0** — рядовая зависимость (файл X теперь включает файл Y)
-- **grown_cycles > 0** — 🚨 вырос цикл (раньше был DAG, теперь есть loop)
-- **new_area_deps > 0** — ⚠️ новая cross-area (модульная граница нарушена)
+- **added_edges > 0** — an ordinary dependency (file X now includes file Y)
+- **grown_cycles > 0** — 🚨 a cycle grew (was a DAG before, now there's a loop)
+- **new_area_deps > 0** — ⚠️ a new cross-area (a module boundary was violated)
 
-### Примеры из toplist (EXAMPLES_50.md)
+### Examples from the toplist (EXAMPLES_50.md)
 
-| Репа | Коммит | Сигнал | Ребро |
+| Repo | Commit | Signal | Edge |
 |---|---|---|---|
 | QuartermindGames/ape | `6a602455` | ⟲cycle+1 →13 | gui.c → editor.h |
 | Collabora/online | `7a64768c` | ⟲cycle+1 →2 | TestStubs.cpp → Log.hpp |
 | netdata/netdata | `cc0502ab` | ⟲cycle+1 ⊗area+2 →82 | api_v2_contexts_agents.c → rrd-retention.h |
 
-### Тренд (185 новых реп, окно май 2025)
+### Trend (185 new repos, window May 2025)
 
-- **Топ по graph-errors** (кумулятивно): facebook/react-native (278), AlchemyViewer (256), LegalizeAdulthood/iterated-dynamics (242)
-- **Репы без graph-drift**: ~70 из 185 (чистая архитектура, только copypaste)
-- **Режим**: shallow-since=2025-05-01 (окно ~1 год)
+- **Top by graph-errors** (cumulative): facebook/react-native (278), AlchemyViewer (256), LegalizeAdulthood/iterated-dynamics (242)
+- **Repos with no graph-drift**: ~70 of 185 (clean architecture, copypaste only)
+- **Mode**: shallow-since=2025-05-01 (a ~1-year window)
 
 ---
 
-## Слой 2: Copypaste Clones (поддержка)
+## Layer 2: Copypaste Clones (maintenance)
 
-### Что это?
+### What is it?
 
-Снимок HEAD → сканируем все файлы C/C++ → ищем пары (фрагмент A, фрагмент B) с совпадением 3+ строк → классифицируем: EXACT / RENAMED / LITERAL.
+A HEAD snapshot → scan all C/C++ files → look for pairs (fragment A, fragment B) matching 3+ lines → classify: EXACT / RENAMED / LITERAL.
 
-### Почему это дрейф?
+### Why is this drift?
 
-По Juergens et al. (ICSE 2009): 52% клонов неконсистентны (один изменился, второй нет). Каждый новый клон = техдолг поддержки. Агенты склонны к copy-paste (опорная демография: курсы, бутстрапы), поэтому — проблема.
+Per Juergens et al. (ICSE 2009): 52% of clones are inconsistent (one changed, the other didn't). Each new clone = maintenance tech debt. Agents are prone to copy-paste (the supporting demographics: courses, bootstraps), so it's a problem.
 
-### Примеры (EXAMPLES_50.md, 25 пар)
+### Examples (EXAMPLES_50.md, 25 pairs)
 
-| Репа | Тип | Длина | Фрагмент A | Фрагмент B |
+| Repo | Type | Length | Fragment A | Fragment B |
 |---|---|---|---|---|
-| libvirt | EXACT | 53 строк | bhyve_driver.c:2085 | qemu_driver.c:16657 |
-| postgresql | EXACT | 150 строк | rangetypes_selfuncs.c:858 | multirangetypes_selfuncs.c:969 |
-| apache/arrow | EXACT | 39 строк | c_glib/.../read-stream.c:27 | receive-network.c:57 |
-| sqlite | EXACT | 48 строк | tool/showdb.c:1019 | tool/showtmlog.c:17 |
-| dolphin | EXACT | 90 строк | RangeSet.h:143 | RangeSizeSet.h:242 |
+| libvirt | EXACT | 53 lines | bhyve_driver.c:2085 | qemu_driver.c:16657 |
+| postgresql | EXACT | 150 lines | rangetypes_selfuncs.c:858 | multirangetypes_selfuncs.c:969 |
+| apache/arrow | EXACT | 39 lines | c_glib/.../read-stream.c:27 | receive-network.c:57 |
+| sqlite | EXACT | 48 lines | tool/showdb.c:1019 | tool/showtmlog.c:17 |
+| dolphin | EXACT | 90 lines | RangeSet.h:143 | RangeSizeSet.h:242 |
 
-### Метрики
+### Metrics
 
-- **Per-commit слоя для copypaste пока НЕТ** — есть только HEAD-снимок; закрывается
-  задачей #103 (5514 per-commit записей — это bool_history, слой 3, не клоны)
-- **Среднее dup/repo**: 6–8 пар, max 1288 (AlchemyViewer)
-- **Размер типичного клона**: 20–60 строк (exact), 10–40 (renamed)
+- **A per-commit layer for copypaste does NOT exist yet** — there's only the HEAD snapshot; closed
+  by task #103 (5514 per-commit records — that's bool_history, layer 3, not clones)
+- **Average dup/repo**: 6–8 pairs, max 1288 (AlchemyViewer)
+- **Typical clone size**: 20–60 lines (exact), 10–40 (renamed)
 
 ---
 
-## Слой 3: Boolean-Drift Per-Commit (состояние, временный)
+## Layer 3: Boolean-Drift Per-Commit (state, temporal)
 
-### Что это?
+### What is it?
 
-Каждый коммит → diff всех `*.h` заголовков → ищем `+ bool field;` в объявлениях структур (не в локалях, не в функ-параметрах) → фиксируем **добавление bool-полей в существующие структуры**.
+Each commit → diff of all `*.h` headers → look for `+ bool field;` in struct declarations (not in locals, not in function parameters) → record **additions of bool fields to existing structs**.
 
-### Формат
+### Format
 
-**`bool_history_new185.csv`** — строка на коммит:
+**`bool_history_new185.csv`** — a line per commit:
 ```
 repo,sha,date,author,subject,exist_bools,new_bools,files
 ape,6a602455,2025-05-04,author@,Overhauled profiler,13,3,[file1.h:line,...]
 ```
 
-### Сигналы
+### Signals
 
-- **new_bools > 0** → bool-поле **впервые добавлено** в существующий header
-- **exist_bools > 0** → bool-поле **добавлено к уже существующим** (structure-growing pattern)
+- **new_bools > 0** → a bool field **added for the first time** to an existing header
+- **exist_bools > 0** → a bool field **added to already existing ones** (a structure-growing pattern)
 
-### Тренд (185 новых реп, май 2025)
+### Trend (185 new repos, May 2025)
 
-- **Всего записей**: 5514 коммитов с bool-добавлением
-- **Топ репо**: 
-  - OloEngineBase (207 коммитов)
+- **Total records**: 5514 commits with a bool addition
+- **Top repos**: 
+  - OloEngineBase (207 commits)
   - FastLED (129)
   - llama.cpp (113)
   - Serial-Studio (102)
   - AlchemyViewer (86)
 
-### Интерпретация
+### Interpretation
 
-Высокие числа свидетельствуют о **пошаговом накоплении состояния**. На окне май 2025 – май 2026 (year) — натуральный показатель активности + дизайна.
+High numbers attest to a **step-by-step accumulation of state**. On the May 2025 – May 2026 (year) window — a natural indicator of activity + design.
 
 ---
 
-## Слой 4: Boolean-Drift Per-Struct (состояние, накопленный эффект)
+## Layer 4: Boolean-Drift Per-Struct (state, the accumulated effect)
 
-### Что это?
+### What is it?
 
-Парсим все структуры из заголовков → считаем bool-поля → для каждой структуры с ≥4 bool-полями гоним `git blame` на каждое поле → считаем **сколько разных коммитов** внесли bool в эту структуру. Фильтр: ≥ MIN_COMMITS (по умолчанию 4) = **constraint decay**.
+Parse all structs from the headers → count bool fields → for each struct with ≥4 bool fields run `git blame` on each field → count **how many distinct commits** introduced a bool into this struct. Filter: ≥ MIN_COMMITS (default 4) = **constraint decay**.
 
-### Формат
+### Format
 
-**`perstruct_drift_new185.csv`** — строка на структуру:
+**`perstruct_drift_new185.csv`** — a line per struct:
 ```
 repo,struct,nfields,ncommits,span_days,first,last,is_config,file
 circt,LoweringOptions,22,5,735,2024-06-01,2026-05-26,1,include/.../Options.h
 ```
 
-### Сигналы
+### Signals
 
-- **nfields** — сколько bool-полей в структуре (>= MIN_FIELDS=4)
-- **ncommits** — сколько РАЗНЫХ коммитов их добавляли (>= MIN_COMMITS=4)
-- **span_days** — временной диапазон (первый bool – последний bool)
-- **is_config=1** — структура похожа на конфиг/сумку параметров (имя содержит config/opts/params)
+- **nfields** — how many bool fields in the struct (>= MIN_FIELDS=4)
+- **ncommits** — how many DISTINCT commits added them (>= MIN_COMMITS=4)
+- **span_days** — the time range (first bool – last bool)
+- **is_config=1** — the struct looks like a config/bag of parameters (the name contains config/opts/params)
 
-### Примеры Top Decay (735+ дней = 2+ года)
+### Top Decay examples (735+ days = 2+ years)
 
-| Репа | Структура | Полей | Коммитов | Span, дн | Период |
+| Repo | Struct | Fields | Commits | Span, days | Period |
 |---|---|---|---|---|---|
 | llvm/circt | LoweringOptions | 22 | 5 | 735 | 2024-06-01 → 2026-05-26 |
 | Phobos-dev | ExtData | 22 | 15 | 734 | 2024-06-02 → 2026-06-06 |
@@ -154,74 +154,75 @@ circt,LoweringOptions,22,5,735,2024-06-01,2026-05-26,1,include/.../Options.h
 | sailfishos/qt | QWasmVideoOutput | 11 | 6 | 733 | ? → ? |
 | intel/compute | MockDebugSession | 18 | 4 | 732 | 2024-06-04 → 2026-04-20 |
 
-### Что это значит?
+### What does it mean?
 
-**Constraint decay** (термин Dente et al. — у них это деградация LLM-агентов под накоплением структурных ограничений; применение к контрактам структур — наша экстраполяция): структура хорошо определена (контракт), потом **постепенно размывается** (каждый разработчик добавляет свой bool флажок, потому что:
-- он не хочет рефакторить всю структуру
-- новый флаг «локален» и не ломает старый код
-- через 2 года получается монстр с 20+ флаго́в, из которых половина мёртвая
+**Constraint decay** (the term is Dente et al.'s — for them it's the degradation of LLM agents under the accumulation of structural constraints; applying it to struct contracts is our extrapolation): a struct is well-defined (a contract), then **gradually blurs** (each developer adds their own bool flag, because:
+- they don't want to refactor the whole struct
+- the new flag is "local" and doesn't break old code
+- after 2 years you get a monster with 20+ flags, half of them dead
 
-### Статистика (455 структур с decay)
+### Statistics (455 structs with decay)
 
-- **Средний span**: 400–600 дней (1.5+ года)
-- **Средний nfields**: 8–15 bool-полей
-- **Средний ncommits**: 5–8 разных коммитов
+- **Average span**: 400–600 days (1.5+ years)
+- **Average nfields**: 8–15 bool fields
+- **Average ncommits**: 5–8 distinct commits
 
 ---
 
-## Интеграция: от теории к практике
+## Integration: from theory to practice
 
-### Как они связаны?
+### How are they connected?
 
 ```
-Коммит добавляет:
-├─ Graph-drift (include-ребро) ──→ архитектурная деградация
-├─ Bool-field (в структуру) ──────→ локальная сложность
-├─ Copypaste (клон кода) ─────────→ техдолг поддержки
-└─ Span расширяется ──────────────→ constraint decay накапливается
+A commit adds:
+├─ Graph-drift (an include edge) ──→ architectural degradation
+├─ Bool-field (into a struct) ─────→ local complexity
+├─ Copypaste (a code clone) ───────→ maintenance tech debt
+└─ Span widens ────────────────────→ constraint decay accumulates
 ```
 
-### Одновременное воздействие
+### Simultaneous impact
 
-Пример: **facebook/react-native**
-- Graph-errors: **278** (архитектура заплывает)
-- AI%: **0.3** (старый базовый код, в окне май25–май26 почти нет AI)
-- Bool-commit: **не в топе** (состояние чистое)
-- Copypaste: **104 пары** (клоны есть, но неагентские)
+Example: **facebook/react-native**
+- Graph-errors: **278** (the architecture is silting up)
+- AI%: **0.3** (old base code, almost no AI in the May25–May26 window)
+- Bool-commit: **not in the top** (state is clean)
+- Copypaste: **104 pairs** (clones exist, but they're non-agentic)
 
-→ Вывод: это **чистый architectural drift**, не state/AI-дрейф, а просто большой проект с наследством.
-
----
-
-## Методология: почему именно эти четыре?
-
-1. **Независимость** — каждый слой ловит другой сигнал, невыводимый из остальных
-2. **Объективность** — парсим из git log и заголовков, без семантического анализа
-3. **Масштабируемость** — работают даже на 185 агентских репах без OOM (после стриминг-фикса)
-4. **Окно**: все в shallow-since=2025-05-01 (консистентны по времени)
-5. **Валидность**: рост локальной сложности при AI-разработке подтверждён CMU MSR 2026 (arXiv 2511.04427, +41.6% cognitive complexity); constraint decay — Dente et al., EURECOM (arXiv 2605.06445); bool-drift — собственный результат archcheck (1.6–2.3×, `boolean_state_agentic_vs_not.md`), прямых аналогов в литературе не найдено; copypaste — классика (Juergens, ICSE 2009)
+→ Conclusion: this is **pure architectural drift**, not state/AI drift, just a large project with legacy.
 
 ---
 
-## Ограничения и интерпретация
+## Methodology: why exactly these four?
+
+1. **Independence** — each layer catches a different signal, underivable from the others
+2. **Objectivity** — we parse from git log and headers, no semantic analysis
+3. **Scalability** — they work even on 185 agentic repos without OOM (after the streaming fix)
+4. **Window**: all at shallow-since=2025-05-01 (consistent in time)
+5. **Validity**: the growth of local complexity under AI development is confirmed by CMU MSR 2026 (arXiv 2511.04427, +41.6% cognitive complexity); constraint decay — Dente et al., EURECOM (arXiv 2605.06445); bool-drift — archcheck's own result (1.6–2.3×, `boolean_state_agentic_vs_not.md`), no direct analogs found in the literature; copypaste — a classic (Juergens, ICSE 2009)
+
+---
+
+## Limitations and interpretation
 
 ### Shallow History Bias
-Клоны репы `--shallow-since=2025-05-01` видят только коммиты с мая 2025 → були, добавленные раньше, не видны как отдельные коммиты: per-struct git blame схлопывает их в один граничный коммит (консервативно — занижает ncommits, абсолютные числа = нижняя граница).
+Repo clones with `--shallow-since=2025-05-01` see only commits since May 2025 → bools added earlier aren't visible as separate commits: per-struct git blame collapses them into one boundary commit (conservatively — it understates ncommits, the absolute numbers = a lower bound).
 
-### В окне ≠ вызвано AI
-Окно включает и агентских (с коммитом), и обычных разработчиков. Тенденция: **если bool-drift высокий И ai%>20% ИЛИ copypaste выше baseline** → подозрение на AI-влияние.
+### In the window ≠ caused by AI
+The window includes both agentic (with a commit) and ordinary developers. The tendency: **if bool-drift is high AND ai%>20% OR copypaste is above baseline** → a suspicion of AI influence.
 
-### Контроль
-Для каждого сигнала нужен baseline (старые агентские vs старые неагентские, до мая 2025). CSVы содержат флаг `agentic=1`, поэтому группировка по трудозатратам простая.
-
----
-
-## Файлы и воспроизведение
-
-- **Скрипты**: `experiments/ai_repo_run/generate_per_commit_graph_drift.py`, `experiments/boolean_state/bool_history_scan.py`, `perstruct_drift_all.py`, `experiments/ai_repo_run/make_examples.py`
-- **Данные**: `experiments/ai_repo_run/EXAMPLES_50.md`, `experiments/ai_repo_run/corpus_summary.tsv`, `experiments/boolean_state/bool_history_new185.csv`, `perstruct_drift_new185.csv`
-- **Воспроизведение**: `bash experiments/RESUME_pending.sh` (идемпотентен для недосчитанного)
+### Control
+Each signal needs a baseline (old agentic vs old non-agentic, before May 2025). The CSVs contain an `agentic=1` flag, so grouping by effort is simple.
 
 ---
 
-_Окончательно 2026-06-11 (атрибуция источников поправлена 2026-06-11: CMU ≠ Dente et al.). Эта структура (4 слоя) используется как basis для constraint-decay analysis v1 в исследованиях archcheck._
+## Files and reproduction
+
+- **Scripts**: `experiments/ai_repo_run/generate_per_commit_graph_drift.py`, `experiments/boolean_state/bool_history_scan.py`, `perstruct_drift_all.py`, `experiments/ai_repo_run/make_examples.py`
+- **Data**: `experiments/ai_repo_run/EXAMPLES_50.md`, `experiments/ai_repo_run/corpus_summary.tsv`, `experiments/boolean_state/bool_history_new185.csv`, `perstruct_drift_new185.csv`
+- **Reproduction**: `bash experiments/RESUME_pending.sh` (idempotent for what's not yet counted)
+
+---
+
+_Finalized 2026-06-11 (source attribution corrected 2026-06-11: CMU ≠ Dente et al.). This structure (4 layers) is used as the basis for constraint-decay analysis v1 in archcheck research._
+</content>

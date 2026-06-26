@@ -10,20 +10,20 @@
 
 ## Why for archcheck
 
-Прямое следствие CRP/SDP: если в одном `.h` объявлено пять публичных классов, любой клиент, который хочет использовать один из них, вынужден транзитивно тащить все пять. Это раздувает реальный fan-in модуля и снижает её модульность. Один публичный класс = один header — каноничная BDE-конвенция, заодно поддерживающая SF.5 (парный `.cpp`).
+A direct consequence of CRP/SDP: if one `.h` declares five public classes, any client that wants to use one of them is forced to transitively pull in all five. This inflates the module's real fan-in and lowers its modularity. One public class = one header — a canonical BDE convention that also supports SF.5 (a paired `.cpp`).
 
 ## Detection
 
-AST: для каждого `.h` посчитать `CXXRecordDecl` (классы и структуры) с external linkage и не nested. Если > 1 — флагать.
+AST: for each `.h`, count `CXXRecordDecl`s (classes and structs) with external linkage that are not nested. If > 1 — flag.
 
-Допустимо:
-- nested classes (через `Foo::Inner`),
-- классы в `namespace detail` или `namespace internal` (по convention — приватные импл-детали),
-- forward declarations (только объявление, не определение),
-- POD-структуры без методов (helper data carriers — под флагом).
+Allowed:
+- nested classes (via `Foo::Inner`),
+- classes in `namespace detail` or `namespace internal` (by convention — private implementation details),
+- forward declarations (declaration only, not definition),
+- POD structs without methods (helper data carriers — behind a flag).
 
 ## Fixtures
 
-- `pass_one_class/` — `foo.h` объявляет `class Foo`, всё остальное в `detail`.
-- `pass_nested/` — `foo.h` объявляет `class Foo` с nested `class Foo::Builder`.
-- `fail_two_externals/` — `foo.h` объявляет `class Foo` и `class Bar`, оба external.
+- `pass_one_class/` — `foo.h` declares `class Foo`, everything else in `detail`.
+- `pass_nested/` — `foo.h` declares `class Foo` with nested `class Foo::Builder`.
+- `fail_two_externals/` — `foo.h` declares `class Foo` and `class Bar`, both external.
