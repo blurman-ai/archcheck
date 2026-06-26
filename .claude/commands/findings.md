@@ -1,50 +1,50 @@
-Подвести итог текущей сессии и сохранить полезные знания в проектную память.
+Summarize the current session and save useful knowledge to project memory.
 
-## Что искать в сессии
+## What to look for in the session
 
-Просмотреть всю сессию (с начала, не только последние сообщения) и выделить:
+Review the whole session (from the beginning, not just the last messages) and extract:
 
-1. **Ошибки в том, что я уже должен был знать.** Действия, после которых пользователь поправлял меня по факту, который **уже есть в памяти** или должен был быть очевиден из CLAUDE.md / прошлого опыта. Если я знал и забыл — значит memory недостаточно заметна или сформулирована плохо: усилить формулировку, добавить триггер «когда применять».
-2. **Повторённая в одной сессии ошибка.** Если я два-три раза подряд предложил один и тот же неверный вариант, или пользователь дважды поправил по похожему поводу — это критический сигнал. Зафиксировать с явным **Why:** (что меня запутывало) и **How to apply:** (как заметить ситуацию в будущем).
-3. **Узнал новое.** Скрипты, пути, нетривиальные команды, рабочие процедуры, особенности проекта — то, что не выводится из чтения кода и пропадёт, если не записать.
-4. **Подтверждённые ходы.** Нестандартное решение, которое пользователь принял без возражений (тоже стоит закрепить — это валидация, а не только корректировка).
-5. **Что про пользователя.** Роль, перспектива, новые предпочтения по стилю работы / коммитам / коммуникации.
+1. **Mistakes about things I should already have known.** Actions after which the user corrected me on a fact that **is already in memory** or should have been obvious from CLAUDE.md / past experience. If I knew it and forgot — then the memory isn't visible enough or is poorly worded: strengthen the wording, add a "when to apply" trigger.
+2. **A mistake repeated within one session.** If I proposed the same wrong option two or three times in a row, or the user corrected a similar thing twice — that's a critical signal. Record it with an explicit **Why:** (what confused me) and **How to apply:** (how to notice the situation in the future).
+3. **Learned something new.** Scripts, paths, non-trivial commands, working procedures, project quirks — things that aren't derivable from reading the code and will be lost if not written down.
+4. **Confirmed moves.** A non-standard decision the user accepted without objection (also worth locking in — it's validation, not only correction).
+5. **Things about the user.** Role, perspective, new preferences for working style / commits / communication.
 
-## Что НЕ записывать
+## What NOT to record
 
-- Код-паттерны, файловые пути, архитектура — найдётся через grep
-- Решённые баги и рецепты фиксов — фикс в коде, контекст в коммите
-- Ход текущей задачи, временное состояние — это не для будущих сессий
-- То, что уже есть в `CLAUDE.md` / `CLAUDE.local.md`
-- Дубликаты существующих memory (см. п. «До предложения»)
+- Code patterns, file paths, architecture — findable via grep
+- Solved bugs and fix recipes — the fix is in the code, the context in the commit
+- The progress of the current task, temporary state — not for future sessions
+- Anything already in `CLAUDE.md` / `CLAUDE.local.md`
+- Duplicates of existing memory (see the "Before proposing" section)
 
-## До предложения
+## Before proposing
 
-Прочитать `~/.claude/projects/-home-localadm-projects-cpparch/memory/MEMORY.md`. Для каждого кандидата решить:
+Read `~/.claude/projects/-home-localadm-projects-cpparch/memory/MEMORY.md`. For each candidate decide:
 
-- **новая** memory — если темы нет
-- **обновить X** — если есть похожая memory, но новое наблюдение её уточняет, расширяет или опровергает (обновлять предпочтительнее, чем плодить рядом)
-- **усилить X** — если ошибка случилась из-за того, что я не заметил/не применил существующую memory: переформулировать её так, чтобы в будущем не пропустить
+- **new** memory — if the topic doesn't exist
+- **update X** — if there's a similar memory but the new observation refines, extends, or refutes it (updating is preferable to growing one next to it)
+- **strengthen X** — if the mistake happened because I didn't notice/apply an existing memory: reword it so I don't miss it in the future
 
-## Формат предложения
+## Proposal format
 
-Показать пользователю компактный список:
+Show the user a compact list:
 
 ```
-1. [новая | обновить X | усилить X] <slug> — одна строка сути
+1. [new | update X | strengthen X] <slug> — one-line essence
 2. ...
 ```
 
-Без пересказа сессии — пользователь её и так помнит. Спросить подтверждение или правки.
+Without retelling the session — the user remembers it anyway. Ask for confirmation or edits.
 
-## После «да»
+## After "yes"
 
-- Новые memory: создать файл в `~/.claude/projects/-home-localadm-projects-cpparch/memory/<slug>.md` со стандартным frontmatter (`name`, `description`, `metadata.type` ∈ {user, feedback, project, reference}). Для feedback/project тело структурировать с `**Why:**` и `**How to apply:**`.
-- Обновление существующих: через Edit. Не переписывать целиком — точечно дополнить.
-- `MEMORY.md`: добавить или поправить строку (одна строка `- [Title](file.md) — суть`, ≤150 символов).
-- Линковать связанные memory через `[[slug]]`.
-- В конце — короткий итог: «записал N новых, обновил M, усилил K». Без пересказа содержимого.
+- New memory: create a file at `~/.claude/projects/-home-localadm-projects-cpparch/memory/<slug>.md` with standard frontmatter (`name`, `description`, `metadata.type` ∈ {user, feedback, project, reference}). For feedback/project, structure the body with `**Why:**` and `**How to apply:**`.
+- Updating existing ones: via Edit. Don't rewrite wholesale — augment surgically.
+- `MEMORY.md`: add or fix a line (one line `- [Title](file.md) — essence`, ≤150 characters).
+- Link related memories via `[[slug]]`.
+- At the end — a short summary: "recorded N new, updated M, strengthened K". Without retelling the contents.
 
-## Тон
+## Tone
 
-Лаконично. Цель — извлечь *именно то, что не очевидно из кода/гита/CLAUDE.md*, и сохранить так, чтобы в следующих сессиях я это **заметил вовремя**.
+Concise. The goal is to extract *exactly what isn't obvious from the code/git/CLAUDE.md*, and save it so that in future sessions I **notice it in time**.

@@ -1,13 +1,13 @@
 # Pure-formatting and pure-rename commits — ignored by git blame.
 #
-# Использование:
+# Usage:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
-# (или установить однажды глобально с --global). GitHub UI читает этот
-# файл автоматически.
+# (or set it once globally with --global). The GitHub UI reads this
+# file automatically.
 #
-# Политика: сюда попадают коммиты, в которых нет семантических изменений —
-# только whitespace, reformat, переименование identifier-ов AST-инструментом.
-# SHA нового такого коммита добавляется в этот файл в коммите ПОСЛЕ него.
+# Policy: commits with no semantic changes go here — only whitespace,
+# reformat, or identifier renames done by an AST tool.
+# The SHA of such a new commit is added to this file in the commit AFTER it.
 
 # 2026-05-27 — clang-format reformat under new LLVM-base + Allman style (#019, step 2/3)
 7be32d1c520c37d80f6fbd3da7e3ffba2ede28d2
@@ -21,5 +21,5 @@ af9d58b792937152425a689359e3293c14f3284c
 # 2026-05-27 — rename 7 struct fields to lowerCamelCase (#019, step 3/3 group 4/4)
 223c04c33eafcf7d9a145b5b6143d9868e5d3cd4
 
-# 2026-05-27 — apply clang-format-18 (#021, дрейф между clang-format-11/18 + длиннее camelCase)
+# 2026-05-27 — apply clang-format-18 (#021, drift between clang-format-11/18 + longer camelCase)
 b5f9a1b207f5cdd2545913165da9fc77740a932e

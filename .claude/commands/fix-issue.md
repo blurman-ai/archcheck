@@ -1,43 +1,43 @@
-Завершить задачу из бэклога: проверить что сделано, зафиксировать коммитом если нужно, перенести файл в completed/ с заполненными итогами.
+Complete a task from the backlog: verify what's done, lock it in with a commit if needed, move the file to completed/ with the summary filled in.
 
-Argument: task ID (NNN) или паттерн имени (e.g. `/fix-issue 042`, `/fix-issue sf9`).
+Argument: task ID (NNN) or a name pattern (e.g. `/fix-issue 042`, `/fix-issue sf9`).
 
 ## Steps
 
-1. **Найти задачу** — в `backlog/wip/` по ID (3-значный, ноль-паддинг) или паттерну:
+1. **Find the task** — in `backlog/wip/` by ID (3-digit, zero-padded) or pattern:
    ```
    Glob(pattern="{NNN}_*.md", path="backlog/wip")
    ```
-   Если не найдено в wip/ — проверить `backlog/new/` и `backlog/future/`. Если нашлось там — предупредить пользователя: «Задача не взята в работу; перевести в wip и стартовать?» (см. `/issue`).
+   If not found in wip/ — check `backlog/new/` and `backlog/future/`. If found there — warn the user: "The task hasn't been taken into work; move it to wip and start?" (see `/issue`).
 
-2. **Прочитать файл задачи.** Вывести:
-   - Заголовок + путь.
-   - **Цель** — что должно быть достигнуто.
-   - **Сделано** — что уже закрыто.
-   - **Следующие шаги** — что осталось.
+2. **Read the task file.** Print:
+   - Title + path.
+   - **Goal** — what should be achieved.
+   - **Done** — what's already closed.
+   - **Next steps** — what remains.
 
-3. **Проверить git-статус** по отношению к задаче:
+3. **Check git status** relative to the task:
    ```bash
    git log --oneline -10
    git status --short
    git diff --stat HEAD
    ```
-   - Есть ли незакоммиченные изменения, связанные с задачей?
-   - Есть ли уже коммиты с упоминанием `#NNN` или темы задачи?
+   - Are there uncommitted changes related to the task?
+   - Are there already commits mentioning `#NNN` or the task topic?
 
-4. **Оценить полноту:**
-   - Все пункты из **Следующие шаги** закрыты?
-   - Есть ли `fixtures/<rule>/pass/` и `fixtures/<rule>/fail_*/` для всех затронутых правил? (требование из CLAUDE.md: без фикстур правило не считается реализованным)
-   - Тесты проходят? Запустить:
+4. **Assess completeness:**
+   - Are all items under **Next steps** closed?
+   - Are there `fixtures/<rule>/pass/` and `fixtures/<rule>/fail_*/` for all affected rules? (requirement from CLAUDE.md: without fixtures a rule is not considered implemented)
+   - Do the tests pass? Run:
      ```bash
      ~/projects/cpparch/build/debug/tests/archcheck_tests
      ```
-     Если бинарь не собран — предупредить, не блокировать.
+     If the binary isn't built — warn, don't block.
 
-5. **Коммит, если нужен:**
-   Если есть незакоммиченные изменения, относящиеся к задаче — коммитить в соответствии со скиллом `/commit`:
+5. **Commit, if needed:**
+   If there are uncommitted changes related to the task — commit in accordance with the `/commit` skill:
 
-   a. Прогнать lint-gate (как в `/commit` шаг 3):
+   a. Run the lint-gate (as in `/commit` step 3):
       ```bash
       { git diff --name-only HEAD; git ls-files --others --exclude-standard; } \
         | grep -E '\.(h|cpp)$' | xargs -r clang-format --dry-run --Werror
@@ -49,29 +49,29 @@ Argument: task ID (NNN) или паттерн имени (e.g. `/fix-issue 042`,
 
       lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/
       ```
-      Если хотя бы одна проверка упала — **стоп**: вывести ошибки и не двигаться дальше до исправления.
+      If at least one check failed — **stop**: print the errors and don't move on until fixed.
 
-   b. Прогнать coverage gate:
+   b. Run the coverage gate:
       ```bash
       bash scripts/check_coverage.sh
       ```
-      FAIL → показать вывод, спросить: продолжить (принять warn) или остановиться.
+      FAIL → show the output, ask: continue (accept warn) or stop.
 
-   c. Собрать сообщение по Conventional Commits (тип/scope по таблицам из `/commit`):
+   c. Build the message per Conventional Commits (type/scope per the tables in `/commit`):
       ```
       fix(<scope>): <summary> (#NNN)
 
-      [optional body: что и почему]
+      [optional body: what and why]
 
       AI-Assisted: Claude
       Verified: <build / build+tests / manual>
-      Risk: low|med|high (<причина>)
+      Risk: low|med|high (<reason>)
       Co-Authored-By: Claude <noreply@anthropic.com>
       ```
 
-   d. **Показать сообщение пользователю и ждать подтверждения.** Запрошены правки — переделать и показать снова.
+   d. **Show the message to the user and wait for confirmation.** Edits requested — redo and show again.
 
-   e. Застейджить только файлы, относящиеся к задаче, и создать коммит через heredoc:
+   e. Stage only the files related to the task, and create the commit via heredoc:
       ```bash
       git add <relevant files>
       git commit -m "$(cat <<'EOF'
@@ -82,34 +82,34 @@ Argument: task ID (NNN) или паттерн имени (e.g. `/fix-issue 042`,
 
    f. `git push origin master`.
 
-6. **Заполнить файл задачи итогами** (секции, которых ещё нет или неполны):
+6. **Fill in the task file with the summary** (the sections that aren't there yet or are incomplete):
 
    ```markdown
-   ## Как работает
-   <одно-два предложения о механике реализации — для будущего читателя>
+   ## How it works
+   <one or two sentences about the mechanics of the implementation — for a future reader>
 
-   ## Ключевые решения
-   - <решение 1>: <почему>
+   ## Key decisions
+   - <decision 1>: <why>
 
-   ## Изменённые файлы
-   - `src/...` — <что сделано> (commit <SHA>)
+   ## Changed files
+   - `src/...` — <what was done> (commit <SHA>)
 
-   ## Итог
-   **Статус:** completed
-   **Дата завершения:** <YYYY-MM-DD>
+   ## Summary
+   **Status:** completed
+   **Completion date:** <YYYY-MM-DD>
    ```
 
-7. **Переместить файл в `backlog/completed/`:**
+7. **Move the file to `backlog/completed/`:**
    ```bash
    git mv backlog/wip/{NNN}_*.md backlog/completed/
    ```
-   Закоммитить этот перенос отдельным `chore`-коммитом:
+   Commit this move as a separate `chore` commit:
    ```
    chore(tasks): close #NNN — <task title>
    ```
    Push.
 
-8. **Отчёт:**
-   - Путь к completed-файлу.
-   - Список коммитов, относящихся к задаче (SHA + однострочник).
-   - Статус тестов (если запускались).
+8. **Report:**
+   - Path to the completed file.
+   - List of commits related to the task (SHA + one-liner).
+   - Test status (if they were run).

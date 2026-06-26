@@ -1,97 +1,97 @@
-Review backlog: найти протухшие, оценить сложность, выделить быстрые победы.
+Review backlog: find stale tasks, estimate difficulty, highlight quick wins.
 
-No arguments. Запускать как `/backlog-review`.
+No arguments. Run as `/backlog-review`.
 
-## Контракт документов (ownership)
+## Document contract (ownership)
 
-| Документ | Что хранит | Время | Update trigger |
+| Document | What it holds | Tense | Update trigger |
 |---|---|---|---|
-| `backlog/new/` | очередь активных задач, ещё не начатых | present | `/create-task`, переезд из `wip/` (откат) или `future/` (поднялась фаза) |
-| `backlog/wip/` | задачи в работе (есть `Дата старта:`) | present | `/issue`, `/checkpoint` |
-| `backlog/completed/` | завершённые задачи + документация системы (DoD-секции) | past, append-only | `/fix-issue` |
-| `backlog/future/` | задачи post-MVP / явно отложены в v0.3+ | mutable | scope-решение, понижение фазы |
-| `backlog/pending/` | парковка, **не очередь** | — | вручную, не из скилов |
-| `backlog/backlog_review.md` | snapshot очереди + классификация | present | этот скил (`/backlog-review`) |
+| `backlog/new/` | queue of active tasks not yet started | present | `/create-task`, move from `wip/` (rollback) or `future/` (phase came up) |
+| `backlog/wip/` | tasks in progress (have a `Start date:`) | present | `/issue`, `/checkpoint` |
+| `backlog/completed/` | completed tasks + system documentation (DoD sections) | past, append-only | `/fix-issue` |
+| `backlog/future/` | post-MVP tasks / explicitly deferred to v0.3+ | mutable | scope decision, phase downgrade |
+| `backlog/pending/` | parking lot, **not a queue** | — | manually, not from skills |
+| `backlog/backlog_review.md` | queue snapshot + classification | present | this skill (`/backlog-review`) |
 
-**Файлы под управлением этого скила:** `backlog/*` (кроме `pending/` — не трогать без явной команды).
-**Файлы под `/status-review`:** `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Не пересекаемся.
-**Этот скил НЕ правит** CHANGELOG / ROADMAP / milestones / spec / README / CLAUDE.md.
+**Files managed by this skill:** `backlog/*` (except `pending/` — don't touch without an explicit command).
+**Files under `/status-review`:** `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. No overlap.
+**This skill does NOT edit** CHANGELOG / ROADMAP / milestones / spec / README / CLAUDE.md.
 
-## Шаги
+## Steps
 
-1. **Собрать все задачи**:
+1. **Collect all tasks**:
    ```
    Glob(pattern="*.md", path="backlog")
    Glob(pattern="*.md", path="backlog/completed")
    ```
-   Прочитать каждую (можно через параллельные `general-purpose` агенты группами по 5-10, model=sonnet).
+   Read each one (you can use parallel `general-purpose` agents in groups of 5-10, model=sonnet).
 
-2. **Классифицировать активные** (в `backlog/`):
-   - **Сложность**: `quick_win` (< 1 дня) / `medium` (1-3 дня) / `hard` (> 3 дней) / `unknown`.
-   - **Модуль**: CONFIG / GRAPH / SCAN / RULES / REPORT / CLI / FIXTURES / BUILD / DOCS.
-   - **Блокеры / зависимости** — из секций `Заблокирован:` / `Блокирует:`.
-   - **Есть ли реальный анализ или это шаблон без содержимого.**
+2. **Classify the active ones** (in `backlog/`):
+   - **Difficulty**: `quick_win` (< 1 day) / `medium` (1-3 days) / `hard` (> 3 days) / `unknown`.
+   - **Module**: CONFIG / GRAPH / SCAN / RULES / REPORT / CLI / FIXTURES / BUILD / DOCS.
+   - **Blockers / dependencies** — from the `Blocked by:` / `Blocks:` sections.
+   - **Whether there's real analysis or it's an empty template.**
 
-3. **Найти протухшее**:
-   - Файлы без обновлений > 30 дней (по `git log`).
-   - Файлы, чей результат уже сделан в другой задаче (искать по совпадениям в `backlog/completed/`).
-   - Шаблоны без анализа, по которым ничего не двинулось.
+3. **Find stale tasks**:
+   - Files not updated in > 30 days (by `git log`).
+   - Files whose outcome is already done in another task (look for matches in `backlog/completed/`).
+   - Templates with no analysis where nothing has moved.
 
-   Для каждого протухшего предложить:
-   - **Delete** — пустой шаблон, нет анализа.
-   - **Move to completed** — есть ценный анализ, даже если сделано иначе.
-   - **Keep in WIP** — план на потом, обоснованно.
+   For each stale one, propose:
+   - **Delete** — empty template, no analysis.
+   - **Move to completed** — has valuable analysis, even if done differently.
+   - **Keep in WIP** — a plan for later, justified.
 
-4. **Найти дубли** — задачи, перекрывающиеся по смыслу. Предложить слить или указать `Related:`.
+4. **Find duplicates** — tasks overlapping in meaning. Propose to merge or note `Related:`.
 
-5. **Сводный отчёт** — сохранить в `backlog/backlog_review.md` с датой:
+5. **Summary report** — save to `backlog/backlog_review.md` with the date:
 
-   ### Протухшие
-   | Файл | Причина | Рекомендация |
+   ### Stale
+   | File | Reason | Recommendation |
    |------|---------|--------------|
 
-   ### Быстрые победы
-   | Файл | Цель | Модуль |
+   ### Quick wins
+   | File | Goal | Module |
    |------|------|--------|
 
-   ### Средние задачи
-   | Файл | Цель | Модуль | Сложность |
+   ### Medium tasks
+   | File | Goal | Module | Difficulty |
    |------|------|--------|-----------|
 
-   ### Сложные / заблокированные
-   | Файл | Блокер |
+   ### Hard / blocked
+   | File | Blocker |
    |------|--------|
 
-   ### Без анализа (нужно исследование)
-   | Файл | Что не хватает |
+   ### Without analysis (needs research)
+   | File | What's missing |
    |------|----------------|
 
-   ### Дубли / связанные
-   | Файлы | Предложение |
+   ### Duplicates / related
+   | Files | Proposal |
    |-------|-------------|
 
-6. **Опционально — TASK_TRACKER**: если существует `backlog/TASK_TRACKER.md` — обновить статусы (`[ ]` / `[x]`), добавить новые, убрать удалённые, пересчитать прогресс.
+6. **Optional — TASK_TRACKER**: if `backlog/TASK_TRACKER.md` exists — update statuses (`[ ]` / `[x]`), add new ones, remove deleted ones, recompute progress.
 
-7. **Сводка пользователю**:
-   - Всего задач.
-   - Сколько протухло.
-   - Сколько быстрых побед.
-   - Сколько требует анализа.
-   - Сколько заблокировано.
+7. **Summary to the user**:
+   - Total tasks.
+   - How many are stale.
+   - How many quick wins.
+   - How many need analysis.
+   - How many are blocked.
 
-## Что НЕ делает
+## What it does NOT do
 
-- Не правит `CHANGELOG.md` / `docs/ROADMAP.md` / `docs/milestones.md` — это работа `/status-review`.
-- Не правит `docs/architecture-spec.md` / `README.md` / `CLAUDE.md` / `AGENTS.md` — это дизайн / framing.
-- Не трогает `backlog/pending/`.
-- Не двигает задачи между `new/` / `wip/` / `completed/` сам — только предлагает. Перемещения — `/issue`, `/checkpoint`, `/fix-issue`.
-- Не коммитит. Только пишет в `backlog/backlog_review.md` и показывает сводку.
-- Не запускает билд / тесты / lizard.
+- Doesn't edit `CHANGELOG.md` / `docs/ROADMAP.md` / `docs/milestones.md` — that's `/status-review`'s job.
+- Doesn't edit `docs/architecture-spec.md` / `README.md` / `CLAUDE.md` / `AGENTS.md` — that's design / framing.
+- Doesn't touch `backlog/pending/`.
+- Doesn't move tasks between `new/` / `wip/` / `completed/` itself — only proposes. Moves are done by `/issue`, `/checkpoint`, `/fix-issue`.
+- Doesn't commit. Only writes to `backlog/backlog_review.md` and shows a summary.
+- Doesn't run build / tests / lizard.
 
-## Тон
+## Tone
 
-Сухо, табличками. Группировать по модулю, не по дате. Кросс-сверка с `completed/` — не пропустить уже сделанное. Если задача протухла — называть прямо, не закругляться.
+Dry, with tables. Group by module, not by date. Cross-check against `completed/` — don't miss what's already done. If a task is stale — say so plainly, don't soften it.
 
 ## Tips
 
-- Параллельные агенты (`general-purpose`, `model=sonnet`) — для чтения групп файлов.
+- Parallel agents (`general-purpose`, `model=sonnet`) — for reading groups of files.

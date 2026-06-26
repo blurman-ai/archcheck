@@ -1,129 +1,129 @@
-Пройтись по git+файловой системе и сверить с документами: `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Показать расхождения и предложить патчи одним пакетом.
+Walk through git + the filesystem and reconcile against the documents: `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`. Show the discrepancies and propose patches in a single batch.
 
-No arguments. Запускать в конце дня / после серии задач: `/status-review`.
+No arguments. Run at the end of the day / after a series of tasks: `/status-review`.
 
-Скилл **только показывает и предлагает**. Ничего не правит до явного «да». Идемпотентный — повторный запуск через минуту ничего нового не находит.
+The skill **only shows and proposes**. It changes nothing until an explicit "yes". Idempotent — a repeat run a minute later finds nothing new.
 
-## Контракт документов (ownership)
+## Document contract (ownership)
 
-| Документ | Что хранит | Время | Update trigger |
+| Document | What it holds | Tense | Update trigger |
 |---|---|---|---|
-| `CHANGELOG.md` | shipped per version | past, append-only | `feat:` / `fix:` / `perf:` → bullet в `[Unreleased]`; release cut → `[X.Y.Z] — YYYY-MM-DD` |
-| `docs/ROADMAP.md` | scope per version + current focus + блокеры | mutable | scope-решение, defer/pull-forward, смена фазы, новый/закрытый блокер v0.X |
-| `docs/milestones.md` | dogfood-runlog | past, append-only | прогон tool-а на чужом коде |
+| `CHANGELOG.md` | shipped per version | past, append-only | `feat:` / `fix:` / `perf:` → bullet in `[Unreleased]`; release cut → `[X.Y.Z] — YYYY-MM-DD` |
+| `docs/ROADMAP.md` | scope per version + current focus + blockers | mutable | scope decision, defer/pull-forward, phase change, new/closed v0.X blocker |
+| `docs/milestones.md` | dogfood-runlog | past, append-only | running the tool on someone else's code |
 
-**Принцип:** один факт — одно место. Дублирование между документами — баг, ловится этим скилом.
+**Principle:** one fact — one place. Duplication between documents is a bug, caught by this skill.
 
-**Файлы под управлением этого скила:** `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`.
-**Файлы под `/backlog-review`:** `backlog/*`. Не пересекаемся.
-**Снимок «где мы сейчас»** живёт в шапке `docs/ROADMAP.md` (`## Current focus`). Отдельного STATUS-файла нет.
+**Files managed by this skill:** `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/milestones.md`.
+**Files under `/backlog-review`:** `backlog/*`. No overlap.
+**The "where we are now" snapshot** lives in the header of `docs/ROADMAP.md` (`## Current focus`). There's no separate STATUS file.
 
-## Dive-marker — с какого момента аудим
+## Dive-marker — from what point we audit
 
-`[Unreleased]` секция в `CHANGELOG.md` = «работа после последнего релиза».
-Граница = последний `## [X.Y.Z]` заголовок в CHANGELOG, либо `git describe --tags --abbrev=0` если тегов больше чем в CHANGELOG.
+The `[Unreleased]` section in `CHANGELOG.md` = "work since the last release".
+The boundary = the last `## [X.Y.Z]` heading in CHANGELOG, or `git describe --tags --abbrev=0` if there are more tags than in CHANGELOG.
 
-Всё, что зашло в `master` после этой границы — должно быть отражено либо в `[Unreleased]`, либо (если это scope-решение) в ROADMAP.
+Everything that landed in `master` after this boundary — must be reflected either in `[Unreleased]`, or (if it's a scope decision) in ROADMAP.
 
-## Шаги
+## Steps
 
-1. **Определить dive-marker:**
+1. **Determine the dive-marker:**
    ```
-   grep -nE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1   # последний релиз
-   git describe --tags --abbrev=0 2>/dev/null                          # последний tag
+   grep -nE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1   # last release
+   git describe --tags --abbrev=0 2>/dev/null                          # last tag
    ```
-   Взять `boundary` = коммит, в котором появился последний `## [X.Y.Z]` (или сам тег vX.Y.Z). Если ни того, ни другого нет — `boundary` = первый коммит репо.
+   Take `boundary` = the commit where the last `## [X.Y.Z]` appeared (or the tag vX.Y.Z itself). If there's neither — `boundary` = the first commit of the repo.
 
-2. **Собрать дельту:**
+2. **Collect the delta:**
    ```
    git log <boundary>..HEAD --oneline
    git log <boundary>..HEAD --name-only --pretty=format:'%H %s'
    ```
-   Сохранить: список коммитов с типами (`feat:` / `fix:` / `perf:` / `docs:` / …), список затронутых путей, упомянутые `#NNN`.
+   Save: the list of commits with types (`feat:` / `fix:` / `perf:` / `docs:` / …), the list of touched paths, the mentioned `#NNN`.
 
-3. **Проверка A — CHANGELOG gaps**. Для каждого коммита из дельты с типом `feat:` / `fix:` / `perf:`:
-   - Есть ли строка в `[Unreleased]` CHANGELOG.md, описывающая то же самое? Нет — флаг.
-   - Не предлагать переписывать `[X.Y.Z]` секции задним числом. Только дополнение `[Unreleased]`.
+3. **Check A — CHANGELOG gaps.** For each commit from the delta with type `feat:` / `fix:` / `perf:`:
+   - Is there a line in `[Unreleased]` of CHANGELOG.md describing the same thing? No — flag.
+   - Don't propose rewriting `[X.Y.Z]` sections retroactively. Only an addition to `[Unreleased]`.
 
-4. **Проверка B — ROADMAP gaps**. Для каждого коммита из дельты:
-   - Содержит маркер scope-решения (`(defer)`, перенос задачи в `backlog/future/`, `chore(tasks): close v0.X blocker`, явный коммит-фикс блокера из `## Current focus`) — отражено в соответствующем version-блоке ROADMAP? Нет — флаг.
-   - Закрытый блокер из `## Current focus` не должен остаться в списке. Открытый блокер должен быть в списке.
-   - Фаза в шапке ROADMAP (`v0.1 (close to release)` и т.п.) согласуется с реальностью? Все блокеры закрыты → фаза должна быть готова к смене.
-   - **Не описывать в ROADMAP конкретные shipped items** — это работа CHANGELOG. ROADMAP описывает scope, не галочки.
+4. **Check B — ROADMAP gaps.** For each commit from the delta:
+   - Does it contain a scope-decision marker (`(defer)`, moving a task to `backlog/future/`, `chore(tasks): close v0.X blocker`, an explicit commit fixing a blocker from `## Current focus`) — is it reflected in the corresponding version block of ROADMAP? No — flag.
+   - A closed blocker from `## Current focus` must not remain in the list. An open blocker must be in the list.
+   - Does the phase in the ROADMAP header (`v0.1 (close to release)` etc.) agree with reality? All blockers closed → the phase should be ready to change.
+   - **Don't describe concrete shipped items in ROADMAP** — that's CHANGELOG's job. ROADMAP describes scope, not checkboxes.
 
-5. **Проверка C — milestones gaps**. Если в дельте есть коммиты с маркерами прогона (`dogfood`, новые `Прогон N` в body коммита, упоминание внешних проектов) — есть ли соответствующая запись в `docs/milestones.md` с близкой датой? Нет — флаг.
+5. **Check C — milestones gaps.** If the delta has commits with run markers (`dogfood`, new `Run N` in a commit body, mentions of external projects) — is there a corresponding entry in `docs/milestones.md` with a close date? No — flag.
 
-6. **Проверка D — completed задачи без DoD-секций**. Для каждого файла, попавшего в `backlog/completed/` в дельте:
-   - Должны присутствовать **Как работает**, **Чем управляется**, **С чем связана**, **Диагностика** (см. `backlog/README.md` §«Жизненный цикл задачи», п. 5).
-   - Нет хотя бы одной — флаг «не достроено».
+6. **Check D — completed tasks without DoD sections.** For each file that landed in `backlog/completed/` in the delta:
+   - **How it works**, **What controls it**, **What it relates to**, **Diagnostics** must be present (see `backlog/README.md` §"Task lifecycle", item 5).
+   - At least one missing — flag "incomplete".
 
-7. **Проверка E — задачи `#NNN` из коммитов реально лежат в `backlog/completed/`**. Коммит ссылается на `(#NNN)` — найти `NNN_*` в `completed/`. Нет — флаг «висячая ссылка».
+7. **Check E — `#NNN` tasks from commits actually sit in `backlog/completed/`.** A commit references `(#NNN)` — find `NNN_*` in `completed/`. Not there — flag "dangling reference".
 
-8. **Игнорировать всегда:**
-   - `backlog/pending/` — парковка, не очередь (см. memory).
-   - Коммиты с типом `docs:` для `backlog/`, `docs/ROADMAP.md`, `CHANGELOG.md`, `docs/milestones.md` — это часть процесса, не контента.
-   - `chore(tasks):` коммиты, перемещающие файлы — это уже учёт.
+8. **Always ignore:**
+   - `backlog/pending/` — parking lot, not a queue (see memory).
+   - Commits with type `docs:` for `backlog/`, `docs/ROADMAP.md`, `CHANGELOG.md`, `docs/milestones.md` — that's part of the process, not content.
+   - `chore(tasks):` commits that move files — that's already accounted for.
 
-## Отчёт
+## Report
 
-Сформировать таблицу-сводку и показать пользователю. Шаблон:
+Form a summary table and show it to the user. Template:
 
 ```
-### Расхождения
+### Discrepancies
 
-| # | Где | Что не отражено | Что предлагаю |
+| # | Where | What's not reflected | What I propose |
 |---|-----|-----------------|---------------|
-| 1 | CHANGELOG.md | feat(rules/drift): DRIFT.1/2 (#009 #040) | Добавить строку в [Unreleased] / Added |
-| 2 | ROADMAP.md | блокер #049 закрыт, но всё ещё в Current focus | Удалить bullet |
-| 3 | milestones.md | прогон на duckdb сегодня | Добавить запись «Прогон N — duckdb» |
+| 1 | CHANGELOG.md | feat(rules/drift): DRIFT.1/2 (#009 #040) | Add a line in [Unreleased] / Added |
+| 2 | ROADMAP.md | blocker #049 closed, but still in Current focus | Remove the bullet |
+| 3 | milestones.md | run on duckdb today | Add entry "Run N — duckdb" |
 
-### Завершённые без DoD-секций
+### Completed without DoD sections
 
-| # | Файл | Не хватает |
+| # | File | What's missing |
 |---|------|------------|
 
-### Висячие ссылки на задачи
+### Dangling task references
 
-| # | Коммит | Ссылка | Где задача |
+| # | Commit | Reference | Where's the task |
 |---|--------|--------|------------|
 
-### Обновить шапку ROADMAP.md
-- было: `phase: <старая фаза>`
-- станет: `phase: <актуальная фаза>` (если все блокеры v0.X закрыты)
+### Update the ROADMAP.md header
+- was: `phase: <old phase>`
+- becomes: `phase: <current phase>` (if all v0.X blockers are closed)
 ```
 
-Если расхождений нет — короткий вывод: `✅ всё синхронизировано. Дельта от <boundary> чистая.` И всё, ничего не править.
+If there are no discrepancies — a short output: `✅ everything is in sync. The delta from <boundary> is clean.` And that's it, change nothing.
 
-## После «да»
+## After "yes"
 
-Применить патчи одним пакетом, **без коммита**:
+Apply the patches in a single batch, **without committing**:
 
-1. Edit `CHANGELOG.md` — точечно дописать в `## [Unreleased]`. Каждый bullet — одно предложение в стиле существующих.
-2. Edit `docs/ROADMAP.md` — обновить `## Current focus` (закрытые блокеры убрать, новые добавить) + при необходимости version-блок (scope-решение); обновить шапку (`phase`, дата).
-3. Edit `docs/milestones.md` — добавить минимальную запись прогона по шаблону в конце файла (пользователь дополнит детали). **Писать простым человеческим языком** (см. §«Язык описаний»): что проверяли, зачем, что вышло — без жаргона и сокращений. Точные числа/commit, которых нет под рукой, оставлять как `<!-- TODO -->`, а не выдумывать.
-4. Edit задач из «без DoD-секций» — добавить заголовки секций с placeholder-комментарием `<!-- TODO -->` (не выдумывать содержимое).
-5. **Коммитить — НЕ из этого скила.** Пользователь сам решает: `/commit chore(process)` или ручной коммит. В отчёте напомнить: «изменения в worktree, не закоммичено».
+1. Edit `CHANGELOG.md` — append surgically to `## [Unreleased]`. Each bullet — one sentence in the style of existing ones.
+2. Edit `docs/ROADMAP.md` — update `## Current focus` (remove closed blockers, add new ones) + the version block if necessary (scope decision); update the header (`phase`, date).
+3. Edit `docs/milestones.md` — add a minimal run entry per the template at the end of the file (the user will fill in details). **Write in plain human language** (see §"Language of descriptions"): what was checked, why, what came out — without jargon and abbreviations. Exact numbers/commit not at hand — leave as `<!-- TODO -->`, don't invent them.
+4. Edit the tasks from "without DoD sections" — add section headings with the placeholder comment `<!-- TODO -->` (don't invent content).
+5. **Committing — NOT from this skill.** The user decides: `/commit chore(process)` or a manual commit. In the report, remind: "changes in the worktree, not committed".
 
-## Что НЕ делать
+## What NOT to do
 
-- Не переписывать `[X.Y.Z]` секции CHANGELOG задним числом. Только дополнение `[Unreleased]`.
-- Не описывать в ROADMAP конкретные shipped items (галочки) — это CHANGELOG.
-- Не двигать файлы в `backlog/`. Это работа `/checkpoint` и `/fix-issue`.
-- Не править `backlog/*` — это `/backlog-review`.
-- Не трогать `backlog/pending/`.
-- Не запускать билд / тесты / lizard. Это не часть аудита.
-- Не править `docs/architecture-spec.md`, `README.md`, `CLAUDE.md`. Это дизайн / framing, не статус.
-- Не выдумывать содержимое DoD-секций. Только каркас.
+- Don't rewrite `[X.Y.Z]` CHANGELOG sections retroactively. Only an addition to `[Unreleased]`.
+- Don't describe concrete shipped items in ROADMAP (checkboxes) — that's CHANGELOG.
+- Don't move files in `backlog/`. That's the job of `/checkpoint` and `/fix-issue`.
+- Don't edit `backlog/*` — that's `/backlog-review`.
+- Don't touch `backlog/pending/`.
+- Don't run build / tests / lizard. That's not part of the audit.
+- Don't edit `docs/architecture-spec.md`, `README.md`, `CLAUDE.md`. That's design / framing, not status.
+- Don't invent the content of DoD sections. Only the skeleton.
 
-## Язык описаний (для записей, которые увидят люди)
+## Language of descriptions (for entries that people will see)
 
-Текст, который попадёт в документы или в отчёт, должен быть понятен **любому, включая менеджеров** — человеку, который не читает код и не знает наших сокращений.
+Text that ends up in documents or in the report must be understandable to **anyone, including managers** — a person who doesn't read code and doesn't know our abbreviations.
 
-- **Простым языком, не технически.** Объясняй *что проверяли, зачем и что из этого вышло*, а не *как это устроено внутри*.
-- **Без жаргона и аббревиатур.** Не «DRIFT.4.CYCLE precision 92% на корпусе», а «правило оказалось верным примерно в 9 случаях из 10». Если технический термин неизбежен — расшифруй его в той же фразе.
-- **Каждая запись прогона milestones — с строкой «главный вывод простыми словами».** Одно предложение, которое поймёт нетехнический читатель.
-- Это касается записей milestones, формулировок в ROADMAP и самого отчёта. Внутренние сухие данные (commit, числа, ID задач) можно оставлять рядом как уточнение, но суть — человеческим языком.
+- **Plain language, not technical.** Explain *what was checked, why, and what came out of it*, not *how it works inside*.
+- **No jargon or acronyms.** Not "DRIFT.4.CYCLE precision 92% on the corpus", but "the rule turned out to be correct in roughly 9 cases out of 10". If a technical term is unavoidable — spell it out in the same phrase.
+- **Each milestones run entry — with a line "main takeaway in plain words".** One sentence a non-technical reader will understand.
+- This applies to milestones entries, ROADMAP wording, and the report itself. Internal dry data (commit, numbers, task IDs) can be kept next to it as a clarification, but the gist — in human language.
 
-## Тон отчёта
+## Report tone
 
-Структурно — табличками, чтобы расхождения было видно сразу. Но **формулировки в таблицах — человеческим языком** (см. §«Язык описаний»), не телеграфным жаргоном. Без пересказа что было сделано — пользователь и так помнит. Цель — поймать **расхождение между реальностью и документами**, не отрапортовать о работе.
+Structurally — with tables, so the discrepancies are visible at once. But **the wording in the tables — in human language** (see §"Language of descriptions"), not telegraphic jargon. Without retelling what was done — the user remembers it anyway. The goal is to catch the **discrepancy between reality and the documents**, not to report on the work.

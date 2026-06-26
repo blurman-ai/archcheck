@@ -1,18 +1,18 @@
 ---
-# База — LLVM coding standards.
-# Одно осознанное отступление — Allman braces (см. docs/code_style.md §«Почему Allman»).
-# Любые другие отличия от LLVM-default — это баг, исправляйте PR-ом.
+# Base — LLVM coding standards.
+# One deliberate departure — Allman braces (see docs/code_style.md §"Why Allman").
+# Any other difference from the LLVM default is a bug; fix it with a PR.
 Language: Cpp
 BasedOnStyle: LLVM
 Standard: c++20
 
-# Наша девиация от LLVM-default Attach.
+# Our deviation from the LLVM default (Attach).
 BreakBeforeBraces: Allman
 
-# Шире чем LLVM-default 80 — современные IDE-ы это терпят легко.
+# Wider than the LLVM default of 80 — modern IDEs handle it easily.
 ColumnLimit: 120
 
-# Группировка include-блоков (стандартная → сторонние → archcheck → остальные).
+# Include-block grouping (standard → third-party → archcheck → the rest).
 IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^<[A-Za-z0-9_/.-]+\.h>'

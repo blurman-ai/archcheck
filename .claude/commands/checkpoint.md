@@ -4,13 +4,13 @@ Find the current task file:
 ```
 Glob(pattern="*.md", path="backlog")
 ```
-Если несколько — спросить пользователя, какая именно сейчас в работе (или взять самую недавно изменённую).
+If there are several — ask the user which one is currently in progress (or take the most recently modified).
 
-Прочитать файл и обновить разделы по текущему прогрессу:
-- Перенести выполненное в **Сделано**.
-- Обновить **В работе**.
-- Добавить новые решения в **Ключевые решения**.
-- Обновить **Изменённые файлы**.
-- Добавить новые коммиты, если были (SHA + краткое описание).
+Read the file and update the sections per current progress:
+- Move completed items into **Done**.
+- Update **In progress**.
+- Add new decisions to **Key decisions**.
+- Update **Changed files**.
+- Add new commits, if any (SHA + short description).
 
-Keep it concise. Не дублировать информацию между разделами.
+Keep it concise. Don't duplicate information between sections.

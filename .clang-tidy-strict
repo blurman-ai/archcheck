@@ -1,7 +1,7 @@
 ---
-# Расширенный набор чеков для второго CI-прохода. Используется warning-only
-# (не валит сборку), копит baseline нарушений. Когда стабилизируется —
-# можно поднять отдельные семейства в обычный .clang-tidy.
+# An extended check set for the second CI pass. Used warning-only
+# (does not fail the build), accumulating a baseline of violations. Once it
+# stabilizes, individual families can be promoted into the regular .clang-tidy.
 
 Checks: >
   bugprone-*,

@@ -1,97 +1,97 @@
 Create git commit with auto-detected changes following Conventional Commits 1.0.
 
-Канон процесса — [`docs/dev/git_workflow.md`](../../docs/dev/git_workflow.md). Скил приводит коммит в соответствие с ним.
+The canonical process is [`docs/dev/git_workflow.md`](../../docs/dev/git_workflow.md). This skill brings the commit into compliance with it.
 
-Argument (optional): подсказка типа (например `/commit fix` или `/commit test`).
+Argument (optional): a type hint (for example `/commit fix` or `/commit test`).
 
 ## Steps
 
-1. `git status` — посмотреть изменённые/неотслеживаемые файлы.
-2. `git diff` — посмотреть содержимое изменений.
-3. **Auto-format** — переформатировать все изменённые/новые `.h`/`.cpp` файлы.
+1. `git status` — look at modified/untracked files.
+2. `git diff` — look at the content of the changes.
+3. **Auto-format** — reformat all modified/new `.h`/`.cpp` files.
 
-   ⚠️ Системный `clang-format` на Astra — 18.1.8 и форматирует ИНАЧЕ, чем CI
-   (Ubuntu, 18.1.3). Всегда использовать pinned 18.1.3, иначе локально «чисто»,
-   а CI-джоба clang-format падает. Установка идемпотентна:
+   ⚠️ The system `clang-format` on Astra is 18.1.8 and formats DIFFERENTLY than CI
+   (Ubuntu, 18.1.3). Always use pinned 18.1.3, otherwise "clean" locally
+   while the CI clang-format job fails. Installation is idempotent:
 
    ```bash
    python3 -m pip install --user --quiet 'clang-format==18.1.3'
-   CF="$HOME/.local/bin/clang-format"   # 18.1.3 — совпадает с CI
+   CF="$HOME/.local/bin/clang-format"   # 18.1.3 — matches CI
 
    { git diff --name-only HEAD; git ls-files --others --exclude-standard; } \
      | grep -E '\.(h|cpp)$' | xargs -r "$CF" -i
    ```
 
-4. **Lint-gate** — запустить на изменённых `.h`/`.cpp` файлах:
+4. **Lint-gate** — run on the modified `.h`/`.cpp` files:
 
    ```bash
-   # clang-format: ВСЁ дерево src include tests — как format-check джоба CI.
-   # Не только изменённые файлы: ловим дрейф форматирования в нетронутых
-   # файлах, иначе CI упадёт на том, что локально пропустили. $CF = 18.1.3.
+   # clang-format: the ENTIRE src include tests tree — as the format-check CI job.
+   # Not just changed files: we catch formatting drift in untouched
+   # files, otherwise CI fails on what we missed locally. $CF = 18.1.3.
    find src include tests \( -name '*.h' -o -name '*.cpp' \) -print \
      | xargs -r "$CF" --dry-run --Werror --style=file
 
-   # cppcheck: всегда на src/ include/ (дёшево, ~1 сек) — как static-analysis CI.
-   # NB: системный cppcheck (Astra 1.86) старше CI-шного и пропускает часть
-   # проверок (напр. performance:stlFindInsert) — на нём «чисто» ≠ CI «чисто».
+   # cppcheck: always on src/ include/ (cheap, ~1 sec) — as static-analysis CI.
+   # NB: the system cppcheck (Astra 1.86) is older than CI's and skips some
+   # checks (e.g. performance:stlFindInsert) — "clean" on it ≠ CI "clean".
    cppcheck --enable=warning,performance,portability \
             --inline-suppr --error-exitcode=1 \
             --suppress=missingIncludeSystem --quiet \
             -I include src/ include/
 
-   # lizard: NLOC + complexity пороги, только production (как в CI)
+   # lizard: NLOC + complexity thresholds, production only (as in CI)
    lizard --CCN 15 -T nloc=30 --arguments 5 --warnings_only src/ include/
    ```
 
-   Если хотя бы одна проверка упала — **остановиться**, вывести ошибки и не продолжать до исправления.
+   If at least one check failed — **stop**, print the errors and don't continue until fixed.
 
-5. **Build + test + smoke gate** — реальная сборка и прогон, как `build`-джоба CI.
-   Это главный «не падать на CI» гейт: coverage-гейт собирает только
-   инструментированный gcc-билд, а тут проверяем, что код честно компилируется,
-   тесты зелёные и бинарь запускается.
+5. **Build + test + smoke gate** — a real build and run, as the `build` CI job.
+   This is the main "don't fail on CI" gate: the coverage gate builds only
+   the instrumented gcc build, whereas here we verify that the code honestly compiles,
+   the tests are green, and the binary runs.
 
    ```bash
-   # Configure + build Debug (build/debug переиспользуется между запусками).
+   # Configure + build Debug (build/debug is reused between runs).
    cmake -B build/debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug
    cmake --build build/debug
 
-   # Тесты (создаёт build/debug/Testing/Temporary/LastTest.log для блока ниже):
+   # Tests (creates build/debug/Testing/Temporary/LastTest.log for the block below):
    ( cd build/debug && ctest --output-on-failure )
 
-   # Smoke-тест бинаря — ровно как на CI (форму не ужесточать: CI принимает
-   # как exit 2, так и exit 0 — `unknown` трактуется как путь сканирования):
+   # Binary smoke test — exactly as on CI (don't tighten the form: CI accepts
+   # both exit 2 and exit 0 — `unknown` is treated as a scan path):
    ./build/debug/src/archcheck --version
    ./build/debug/src/archcheck --help
    ./build/debug/src/archcheck unknown || test $? -eq 2
    ```
 
-   Любой шаг упал (не собралось / тест красный / smoke не прошёл) —
-   **остановиться**, вывести вывод и не продолжать до исправления.
+   Any step failed (didn't build / test red / smoke didn't pass) —
+   **stop**, print the output and don't continue until fixed.
 
-   > CI дополнительно собирает на `clang-18` и `clang-18-libc++`. Это тяжело
-   > гонять перед каждым коммитом, поэтому в гейт не входит. Если правка
-   > рискует по переносимости (новые `#include`, шаблоны, `std::`-фичи) —
-   > прогнать вручную:
+   > CI additionally builds on `clang-18` and `clang-18-libc++`. This is heavy
+   > to run before every commit, so it's not part of the gate. If the change
+   > risks portability (new `#include`s, templates, `std::` features) —
+   > run it manually:
    > `CXX=clang++-18 cmake -B build/clang -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug && cmake --build build/clang`.
 
-6. **Coverage gate** — запустить скрипт покрытия:
+6. **Coverage gate** — run the coverage script:
 
    ```bash
    bash scripts/check_coverage.sh
    ```
 
-   Скрипт использует отдельный `build/coverage` (с `ARCHCHECK_ENABLE_COVERAGE=ON`),
-   прогоняет все тесты, собирает lcov с branch-coverage и проверяет пороги:
-   - lines ≥ 90%, functions ≥ 90%, branches ≥ 40% (источник правды — docs/dev/coverage_constraints.md; те же пороги в CI job `coverage`)
+   The script uses a separate `build/coverage` (with `ARCHCHECK_ENABLE_COVERAGE=ON`),
+   runs all tests, collects lcov with branch-coverage, and checks the thresholds:
+   - lines ≥ 90%, functions ≥ 90%, branches ≥ 40% (source of truth — docs/dev/coverage_constraints.md; same thresholds in CI job `coverage`)
 
-   Если результат **FAIL** — показать вывод скрипта пользователю и спросить:
-   продолжить (пользователь сознательно принимает низкое покрытие) или остановиться.
-   При `Verified:` trailer писать `build+coverage` если прошло, `build+coverage(warn)` если пользователь продолжил несмотря на FAIL.
+   If the result is **FAIL** — show the script output to the user and ask:
+   continue (the user knowingly accepts low coverage) or stop.
+   In the `Verified:` trailer write `build+coverage` if it passed, `build+coverage(warn)` if the user continued despite FAIL.
 
-   Пороги можно переопределить: `MIN_LINES=50 bash scripts/check_coverage.sh`.
+   Thresholds can be overridden: `MIN_LINES=50 bash scripts/check_coverage.sh`.
 
-7. Тест-лог уже создан шагом 5 (`build/debug/Testing/Temporary/LastTest.log`) — прочитать, извлечь имя сьюта, список тестов, PASSED/FAILED.
-8. Проанализировать изменения и собрать сообщение по схеме Conventional Commits:
+7. The test log was already created by step 5 (`build/debug/Testing/Temporary/LastTest.log`) — read it, extract the suite name, the test list, PASSED/FAILED.
+8. Analyze the changes and build the message per the Conventional Commits schema:
 
    ```
    <type>(<scope>): <subject>
@@ -101,126 +101,126 @@ Argument (optional): подсказка типа (например `/commit fix`
    [optional trailers]
    ```
 
-9. **Показать сообщение пользователю и ЖДАТЬ подтверждения.** Запрошены правки — переписать и показать снова.
-10. Аккуратно застейджить только релевантные файлы:
-   - Никаких `.env`, ключей, секретов.
-   - Бинарники — только если пользователь явно попросил.
-   - Связанные `.h` и `.cpp` — вместе.
-11. Создать коммит через heredoc.
-12. `git push origin master` (direct push разрешён admin-у; если работа на feature-ветке — `git push -u origin <branch>`).
-13. `git status` после — убедиться, что прошло.
+9. **Show the message to the user and WAIT for confirmation.** Edits requested — rewrite and show again.
+10. Carefully stage only the relevant files:
+   - No `.env`, keys, secrets.
+   - Binaries — only if the user explicitly asked.
+   - Related `.h` and `.cpp` — together.
+11. Create the commit via heredoc.
+12. `git push origin master` (direct push is allowed for admins; if working on a feature branch — `git push -u origin <branch>`).
+13. `git status` afterward — confirm it went through.
 
-## Type — что выбирать
+## Type — what to choose
 
-| Type | Когда |
+| Type | When |
 |---|---|
-| `feat` | новая функциональность продукта |
-| `fix` | багфикс в коде продукта |
-| `docs` | только документация (README, docs/, спека) |
-| `refactor` | изменение кода без изменения поведения |
-| `test` | тесты или фикстуры |
-| `build` | build-система (CMake, зависимости) |
-| `ci` | CI-конфиги (GitHub Actions) |
-| `perf` | оптимизация |
-| `chore` | рутина: инфраструктура репо, скилы, переименования, конфиги |
+| `feat` | new product functionality |
+| `fix` | bugfix in product code |
+| `docs` | documentation only (README, docs/, spec) |
+| `refactor` | code change without behavior change |
+| `test` | tests or fixtures |
+| `build` | build system (CMake, dependencies) |
+| `ci` | CI configs (GitHub Actions) |
+| `perf` | optimization |
+| `chore` | routine: repo infrastructure, skills, renames, configs |
 
-## Scope — где жить
+## Scope — where it lives
 
-| Scope | Подсистема |
+| Scope | Subsystem |
 |---|---|
 | `config` | YAML loader, Config struct |
-| `graph` | компонентный граф, циклы, метрики |
+| `graph` | component graph, cycles, metrics |
 | `scan` | include / clang scanners |
-| `rules/sf` | Core Guidelines SF.* правила |
-| `rules/lakos` | циклы, god-headers, CCD/ACD/NCCD |
-| `rules/martin` | I/A/D метрики |
-| `rules/custom` | пользовательские pattern-правила |
+| `rules/sf` | Core Guidelines SF.* rules |
+| `rules/lakos` | cycles, god-headers, CCD/ACD/NCCD |
+| `rules/martin` | I/A/D metrics |
+| `rules/custom` | user pattern rules |
 | `report` | text / json / sarif reporters |
-| `cli` | main, аргументы, exit codes |
+| `cli` | main, arguments, exit codes |
 | `fixtures` | `fixtures/`, test corpora |
-| `build` | CMake, упаковка |
-| `docs` | общие документы (README, docs/) |
-| `spec` | архитектурная спецификация конкретно |
-| `claude` | `.claude/` (settings, скилы) |
-| `tasks` | `backlog/` (управление задачами) |
-| `process` | git workflow, CHANGELOG, релиз-процесс |
+| `build` | CMake, packaging |
+| `docs` | general documents (README, docs/) |
+| `spec` | the architecture specification specifically |
+| `claude` | `.claude/` (settings, skills) |
+| `tasks` | `backlog/` (task management) |
+| `process` | git workflow, CHANGELOG, release process |
 
-Несколько scope-ов в одном коммите — выбрать самый репрезентативный или опустить scope. Не подходит ни один — придумать кратко.
+Several scopes in one commit — pick the most representative one or omit the scope. None fits — invent a short one.
 
-## Subject (первая строка)
+## Subject (first line)
 
-- ≤ 72 символа.
-- Lowercase, без точки в конце.
-- Императив: `add`, не `added`/`adds`.
-- Можно ссылаться на задачу: `(#NNN)`.
+- ≤ 72 characters.
+- Lowercase, no trailing period.
+- Imperative: `add`, not `added`/`adds`.
+- May reference a task: `(#NNN)`.
 
 ## Body
 
-После пустой строки. Что и почему, не как (как видно в diff). Опционально.
+After a blank line. What and why, not how (the how is visible in the diff). Optional.
 
-При наличии тестов — отдельный блок:
+When tests are present — a separate block:
 
 ```
 Tests-Run: test1, test2, test3
 Tests-Result: X/Y PASSED (Z%)
 ```
 
-## Trailers (поверх Conventional Commits, для AI-аудита)
+## Trailers (on top of Conventional Commits, for AI auditing)
 
 ```
 AI-Assisted: Claude
-Verified: <как проверял — autotest / manual / build / nothing>
-Risk: low|med|high (причина)
+Verified: <how you verified — autotest / manual / build / nothing>
+Risk: low|med|high (reason)
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-| Trailer | Когда обязателен |
+| Trailer | When required |
 |---|---|
-| `AI-Assisted:` | Любое участие ИИ в коде |
-| `Verified:` | Всегда при `AI-Assisted` |
-| `Risk:` | Изменение правил, графа, графовых метрик; удаление кода |
-| `Co-Authored-By:` | Если ИИ писал значительную часть |
+| `AI-Assisted:` | Any AI involvement in the code |
+| `Verified:` | Always with `AI-Assisted` |
+| `Risk:` | Changing rules, graph, graph metrics; deleting code |
+| `Co-Authored-By:` | If AI wrote a significant part |
 
 **Risk:**
-- `low` — документация, комментарии, мелкие правки.
-- `med` — новый код, рефакторинг, новые правила без изменений семантики.
-- `high` — изменения в графовой логике, дефолтных правилах, exit codes, формате baseline, формате конфига.
+- `low` — documentation, comments, small edits.
+- `med` — new code, refactoring, new rules without semantic changes.
+- `high` — changes to graph logic, default rules, exit codes, baseline format, config format.
 
-## Разделять коммиты
+## Splitting commits
 
-- Код отдельно от fixtures (другая аудитория ревью).
-- Правила отдельно от инфраструктуры.
-- Рефакторинг отдельно от фич.
-- Documentation-only — отдельный коммит.
+- Code separate from fixtures (different review audience).
+- Rules separate from infrastructure.
+- Refactoring separate from features.
+- Documentation-only — a separate commit.
 
-## Перед удалением legacy
+## Before deleting legacy
 
-1. Tag или baseline-commit.
-2. Тесты, покрывающие функционал, должны быть.
-3. В коммите — ссылка на tag для отката.
+1. Tag or baseline-commit.
+2. Tests covering the functionality must exist.
+3. In the commit — a reference to the tag for rollback.
 
-## Пример
+## Example
 
 ```
 fix(graph): correct cycle detection on self-loops (#015)
 
-Self-loop A → A был не виден в DFS из-за raннего возврата на visited-узле.
-Теперь self-loop детектится отдельной проверкой до DFS.
+Self-loop A → A was not visible in DFS due to an early return on a visited node.
+Now the self-loop is detected by a separate check before DFS.
 
 Tests-Run: graph_self_loop, graph_two_node_cycle, graph_dag
 Tests-Result: 3/3 PASSED (100%)
 
 AI-Assisted: Claude
 Verified: autotest
-Risk: med (поведение графовой логики)
+Risk: med (graph logic behavior)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## IMPORTANT
 
-- Heredoc для сохранения форматирования.
+- Heredoc to preserve formatting.
 - Match existing code style.
-- Только реально изменённые файлы.
-- Если непонятно что включать — спросить.
-- Force-push в master заблокирован — не пытаться обходить.
+- Only actually modified files.
+- If it's unclear what to include — ask.
+- Force-push to master is blocked — don't try to bypass it.

@@ -1,59 +1,59 @@
-Проверить, зелёный ли последний прогон CI на GitHub для текущей ветки.
+Check whether the latest CI run on GitHub is green for the current branch.
 
-Аргумент (optional): имя ветки или `<run-id>`. Без аргумента — текущая ветка (`git branch --show-current`).
+Argument (optional): a branch name or `<run-id>`. Without an argument — the current branch (`git branch --show-current`).
 
-Скилл смотрит на GitHub Actions через `gh`, а не собирает локально. Цель — за один вызов дать ответ «зелено / красно» и, если красно, назвать упавшие джобы с причиной.
+The skill looks at GitHub Actions via `gh`, rather than building locally. The goal is to give a "green / red" answer in one call and, if red, name the failed jobs with their cause.
 
-## Инварианты
+## Invariants
 
-- **CI отражает запушенный HEAD, а не локальный.** Если есть незапушенные коммиты — статус на GitHub относится к более старому состоянию. Это нужно проговорить пользователю, а не молча выдать «зелено».
-- **Только чтение.** Скилл ничего не чинит и не коммитит. Нашёл красное — докладывает; чинить — отдельно, по команде.
-- **Не запускать сборку локально.** Для локальных гейтов есть свой путь (см. последний шаг) — но это не основной режим.
+- **CI reflects the pushed HEAD, not the local one.** If there are unpushed commits — the status on GitHub refers to an older state. This must be spelled out to the user, not silently reported as "green".
+- **Read-only.** The skill fixes nothing and commits nothing. Found red — it reports; fixing is separate, on command.
+- **Don't run a build locally.** There's a dedicated path for local gates (see the last step) — but that's not the main mode.
 
-## Шаги
+## Steps
 
-1. **Определить ветку и сверить с remote:**
+1. **Determine the branch and reconcile with remote:**
    ```bash
    BR=$(git branch --show-current)
    git fetch -q origin "$BR" 2>/dev/null
-   git log --oneline "origin/$BR..HEAD"   # незапушенные коммиты
+   git log --oneline "origin/$BR..HEAD"   # unpushed commits
    ```
-   Если список непустой — запомнить: CI знает только про `origin/$BR`, локальный HEAD впереди на N коммитов.
+   If the list is non-empty — remember: CI only knows about `origin/$BR`, the local HEAD is N commits ahead.
 
-2. **Найти последний прогон:**
+2. **Find the latest run:**
    ```bash
    gh run list --branch "$BR" --limit 1
    ```
-   Взять его run-id и статус (`completed`/`in_progress`, `success`/`failure`/`cancelled`).
-   Если передан `<run-id>` аргументом — использовать его.
+   Take its run-id and status (`completed`/`in_progress`, `success`/`failure`/`cancelled`).
+   If a `<run-id>` was passed as an argument — use it.
 
-3. **Если прогон ещё идёт** (`in_progress`/`queued`) — сказать об этом и предложить подождать (можно опросить `gh run watch <id> --exit-status`, но не блокировать надолго без спроса).
+3. **If the run is still going** (`in_progress`/`queued`) — say so and offer to wait (you can poll with `gh run watch <id> --exit-status`, but don't block for long without asking).
 
-4. **Если `success`** — доложить «🟢 CI зелёный на `<sha>` (`<commit subj>`)». Если HEAD впереди remote — добавить предупреждение из шага 1.
+4. **If `success`** — report "🟢 CI green on `<sha>` (`<commit subj>`)". If HEAD is ahead of remote — add the warning from step 1.
 
-5. **Если `failure`/`cancelled`** — разобрать по джобам:
+5. **If `failure`/`cancelled`** — break it down by job:
    ```bash
-   gh run view <id>              # дерево джоб: видно, какие шаги X
-   gh run view <id> --log-failed # логи только упавших шагов
+   gh run view <id>              # job tree: shows which steps X
+   gh run view <id> --log-failed # logs of failed steps only
    ```
-   Для каждой упавшей джобы дать короткую причину (1–2 строки): какой шаг упал и ключевая строка ошибки. Не вываливать весь лог.
+   For each failed job give a short cause (1–2 lines): which step failed and the key error line. Don't dump the whole log.
 
-6. **Вывод** — таблица «джоба → статус → причина» и явный вердикт. Если HEAD впереди origin — напомнить, что часть проблем могла уже быть починена локально, и стоит запушить/перепроверить.
+6. **Output** — a "job → status → cause" table and an explicit verdict. If HEAD is ahead of origin — remind that some of the problems may already have been fixed locally, and it's worth pushing/rechecking.
 
-## Локальные гейты (по запросу, если CI красный и хочется проверить до пуша)
+## Local gates (on request, if CI is red and you want to check before pushing)
 
-Те же проверки, что гоняет `.github/workflows/ci.yml`, в порядке «быстрые сначала».
+The same checks that `.github/workflows/ci.yml` runs, in "fast first" order.
 
-⚠️ Версии инструментов на Astra ≠ CI, локально «чисто» может не значить «зелёный CI»:
-- **clang-format**: системный 18.1.8 форматирует иначе, чем CI (18.1.3). Ставить pin:
+⚠️ Tool versions on Astra ≠ CI, "clean" locally may not mean "green CI":
+- **clang-format**: the system 18.1.8 formats differently than CI (18.1.3). Install the pin:
   `python3 -m pip install --user --quiet 'clang-format==18.1.3'` → `$HOME/.local/bin/clang-format`.
-- **cppcheck**: системный 1.86 старше CI-шного, пропускает часть проверок.
-- **build/debug**: если сконфигурирован без `-Werror` — пропустит варнинги, на которых CI падает. CI гонит Debug с дефолтным `ARCHCHECK_ENABLE_WARNINGS=ON`.
+- **cppcheck**: the system 1.86 is older than CI's, it skips some checks.
+- **build/debug**: if configured without `-Werror` — it will skip warnings that CI fails on. CI runs Debug with the default `ARCHCHECK_ENABLE_WARNINGS=ON`.
 
 ```bash
-CF="$HOME/.local/bin/clang-format"   # 18.1.3, как на CI
+CF="$HOME/.local/bin/clang-format"   # 18.1.3, as on CI
 
-# 1. clang-format (как в CI)
+# 1. clang-format (as in CI)
 find src include tests -name '*.h' -o -name '*.cpp' \
   | xargs "$CF" --dry-run --Werror --style=file
 
@@ -61,10 +61,10 @@ find src include tests -name '*.h' -o -name '*.cpp' \
 cppcheck --enable=warning,performance,portability --inline-suppr \
   --error-exitcode=1 --suppress=missingIncludeSystem --quiet -I include src/ include/
 
-# 3. lizard (gate: NLOC≤30, CCN≤15, args≤5, только production)
+# 3. lizard (gate: NLOC≤30, CCN≤15, args≤5, production only)
 lizard --CCN 15 -T nloc=30 --arguments 5 --warnings_only src/ include/
 
-# 4. build + test (Debug, со строгими варнингами как на CI)
+# 4. build + test (Debug, with strict warnings as on CI)
 cmake -B build/debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DARCHCHECK_ENABLE_WARNINGS=ON
 cmake --build build/debug
 ( cd build/debug && ctest --output-on-failure )
