@@ -64,6 +64,17 @@ Waves P0 → P1 → P2 → P3; verify and commit between waves.
 
 - [x] P0 — public surface (verified: build+tests green, dogfood 0 violations)
 - [x] P1 — docs/ (88 files) + CLAUDE.md flip + JOURNEY
-- [ ] P2 — .claude/commands + analysis/*.py
-- [ ] P3 — backlog/ + experiments/
-- [ ] Final repo-wide Cyrillic = 0
+- [x] P2 — .claude/commands (12) + analysis/*.py (12) + config dotfiles (4)
+- [x] P3 — backlog/ (~170 tracked .md) + analysis/*.md (4) + fixtures/ (2)
+- [x] Final repo-wide Cyrillic = 0 across all tracked files **except** the
+      exclusions below
+
+## Exclusions (deliberate, not gaps)
+
+- `experiments/` — gitignored (never public); holds captured run-data/logs
+  (localized git/date output), not prose. Translating would corrupt artifacts.
+- `backlog/pending/027_maj_coverage_90_percent.md` — left untranslated per the
+  standing "don't touch pending/" rule. ⚠️ It IS tracked, so it would ship with
+  Russian; lift the pending exclusion if it must be translated before release.
+- Untracked in-flight files (`backlog/new/145,146,148,149`,
+  `docs/research/bot_review_drift.md`) — "не под гитом не переводить".
