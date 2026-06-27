@@ -136,30 +136,15 @@ void phase7SameFunctionFilter(std::vector<Pair> &candidates, const std::vector<F
 // P0.6: joint token∧order floor — require high similarity in BOTH metrics
 // Don't emit pairs where token-weight is high but line-overlap is low (bag-of-words collision)
 // or vice versa. Tuning: thresholds calibrated on fp_corpus_r2.tsv.
-//
-// lcsRescue: the line floor is a text-line proxy for "the order matches, not a token-soup
-// collision" — but it is fooled by pure reformatting (a statement wrapped across N lines
-// reads as N disjoint lines). Token-LCS is order-preserving and reformat-immune, so a high
-// LCS rescues such a pair while staying orthogonal to bag-of-words collisions (a shuffle has
-// low LCS). Computed lazily only for pairs that pass weighted but fail the line floor.
-void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments,
-                                double minWeighted = 0.75, double minLine = 0.50, double lcsRescue = 0.80)
+void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, double minWeighted = 0.75, double minLine = 0.50)
 {
   std::vector<Pair> filtered;
 
-  for (auto &p : candidates)
+  for (const auto &p : candidates)
   {
-    if (p.weighted < minWeighted)
-    {
-      continue;
-    }
-    bool keep = p.line >= minLine;
-    if (!keep)
-    {
-      p.lcs = lcsRatio(allFragments[p.a], allFragments[p.b]);
-      keep = p.lcs >= lcsRescue;
-    }
-    if (keep)
+    // Both metrics must be satisfied: w >= minWeighted AND line >= minLine
+    // This rejects high-token-weight + low-line-sim pairs (idiom collisions)
+    if (p.weighted >= minWeighted && p.line >= minLine)
     {
       filtered.push_back(p);
     }
@@ -390,8 +375,7 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
   phase7SameFunctionFilter(candidates, allFragments);
   if (opts.enableJointFloor)
   {
-    phase8JointTokenOrderFloor(candidates, allFragments, opts.jointWeightedThreshold, opts.jointLineThreshold,
-                               opts.jointLcsRescue);
+    phase8JointTokenOrderFloor(candidates, opts.jointWeightedThreshold, opts.jointLineThreshold);
   }
   if (opts.enableWholeFileGuard)
   {
