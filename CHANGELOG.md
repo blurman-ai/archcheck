@@ -8,6 +8,14 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.1.1] - 2026-06-27
+
+### Added
+
 - **`diff_max_clone_scan_bytes` — huge trees skip the new-clone advisory** — the per-commit
   new-clone scan (`--diff`) is a whole-tree pass (the twin of an added clone may live in an unchanged
   file), so a small commit to a very large repo still paid its `O(tree)` cost and could exceed the CI
