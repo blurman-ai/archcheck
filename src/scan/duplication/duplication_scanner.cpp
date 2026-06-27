@@ -136,15 +136,30 @@ void phase7SameFunctionFilter(std::vector<Pair> &candidates, const std::vector<F
 // P0.6: joint token∧order floor — require high similarity in BOTH metrics
 // Don't emit pairs where token-weight is high but line-overlap is low (bag-of-words collision)
 // or vice versa. Tuning: thresholds calibrated on fp_corpus_r2.tsv.
-void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, double minWeighted = 0.75, double minLine = 0.50)
+//
+// lcsRescue: the line floor is a text-line proxy for "the order matches, not a token-soup
+// collision" — but it is fooled by pure reformatting (a statement wrapped across N lines
+// reads as N disjoint lines). Token-LCS is order-preserving and reformat-immune, so a high
+// LCS rescues such a pair while staying orthogonal to bag-of-words collisions (a shuffle has
+// low LCS). Computed lazily only for pairs that pass weighted but fail the line floor.
+void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments,
+                                double minWeighted = 0.75, double minLine = 0.50, double lcsRescue = 0.80)
 {
   std::vector<Pair> filtered;
 
-  for (const auto &p : candidates)
+  for (auto &p : candidates)
   {
-    // Both metrics must be satisfied: w >= minWeighted AND line >= minLine
-    // This rejects high-token-weight + low-line-sim pairs (idiom collisions)
-    if (p.weighted >= minWeighted && p.line >= minLine)
+    if (p.weighted < minWeighted)
+    {
+      continue;
+    }
+    bool keep = p.line >= minLine;
+    if (!keep)
+    {
+      p.lcs = lcsRatio(allFragments[p.a], allFragments[p.b]);
+      keep = p.lcs >= lcsRescue;
+    }
+    if (keep)
     {
       filtered.push_back(p);
     }
@@ -302,14 +317,10 @@ std::unordered_set<std::string> wholeFileClonePairs(const std::vector<Pair> &can
   for (const auto &[k, n] : matched)
   {
     const std::string::size_type sep = k.find('\n');
-    const int fragsA = fragsPerFile[k.substr(0, sep)];
-    const int fragsB = fragsPerFile[k.substr(sep + 1)];
-    const int minFrags = std::min(fragsA, fragsB);
-    const int maxFrags = std::max(fragsA, fragsB);
-    // Two-sided coverage (#151): a real move/copy/vendored twin covers ~all of BOTH
-    // files. Requiring ≥80% of the LARGER file too lets "extract-to-module, original
-    // left in place" (small ⊂ large, large weakly covered) survive as a TP — a missing
-    // reuse edge, not a move.
+    const auto [minFrags, maxFrags] = std::minmax(fragsPerFile[k.substr(0, sep)], fragsPerFile[k.substr(sep + 1)]);
+    // Two-sided coverage (#151): a real move/copy/vendored twin covers ~all of BOTH files.
+    // Requiring ≥80% of the LARGER file too lets "extract-to-module, original kept" (small ⊂
+    // large) survive as a TP — a missing reuse edge, not a move.
     if (minFrags >= 2 && n * 5 >= minFrags * 4 && n * 5 >= maxFrags * 4)
     {
       result.insert(k);
@@ -372,7 +383,8 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
   phase7SameFunctionFilter(candidates, allFragments);
   if (opts.enableJointFloor)
   {
-    phase8JointTokenOrderFloor(candidates, opts.jointWeightedThreshold, opts.jointLineThreshold);
+    phase8JointTokenOrderFloor(candidates, allFragments, opts.jointWeightedThreshold, opts.jointLineThreshold,
+                               opts.jointLcsRescue);
   }
   if (opts.enableWholeFileGuard)
   {
