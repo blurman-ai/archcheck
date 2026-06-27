@@ -146,3 +146,28 @@ TEST_CASE("e2e cli: --diff dispatch errors exit 2", "[cli][e2e]")
   REQUIRE(runArchcheck(dir.path, "--diff --format=yaml HEAD").exitCode == 2);
   REQUIRE(runArchcheck(dir.path, "--diff HEAD~1..HEAD").exitCode == 2); // not a git repo
 }
+
+// #154 Phase 2: an additive classification override from .archcheck.yml reaches
+// the scan layer — a project-specific vendor dir is excluded without patching source.
+TEST_CASE("e2e cli: classification extra_vendored_dirs excludes a custom vendor dir", "[cli][e2e][config]")
+{
+  TempDir dir;
+  std::filesystem::create_directories(dir.path / "housevendor");
+  // a real SF.9 cycle inside a non-standard, project-specific vendor dir
+  writeFile(dir.path / "housevendor" / "a.h", "#pragma once\n#include \"b.h\"\n");
+  writeFile(dir.path / "housevendor" / "b.h", "#pragma once\n#include \"a.h\"\n");
+
+  // without config: the dir is scanned, the cycle gates
+  const auto noCfg = runArchcheck(dir.path, "");
+  CHECK(noCfg.exitCode == 1);
+  CHECK(noCfg.output.find("housevendor") != std::string::npos);
+
+  // with an additive classification override: the dir is excluded, the gate clears
+  writeFile(dir.path / ".archcheck.yml", "version: 1\n"
+                                         "modules:\n  core:\n    paths: [\"src/**\"]\n"
+                                         "rules: []\n"
+                                         "classification:\n  extra_vendored_dirs: [\"housevendor\"]\n");
+  const auto withCfg = runArchcheck(dir.path, "");
+  CHECK(withCfg.exitCode == 0);
+  CHECK(withCfg.output.find("No violations") != std::string::npos);
+}

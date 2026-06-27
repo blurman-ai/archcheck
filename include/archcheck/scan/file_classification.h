@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <unordered_set>
+#include <utility>
 
 // Single source of truth for the file/dir classification defaults shared by
 // every file source (disk traversal + git object DB) and the text-scan rules.
@@ -19,6 +21,27 @@
 // concern, not a file-enumeration one.
 namespace archcheck::scan
 {
+
+// === #154 Phase 2: additive runtime overrides from .archcheck.yml ============
+// Default-empty ⇒ zero-config behaviour is exactly the curated constexpr defaults
+// below. Loaded ONCE at startup from Config (the CLI calls setClassificationExtras
+// before any scan); the curated defaults are never removed, only extended with
+// project-specific tokens. Stored values are pre-normalized by the caller: dir
+// names via normalizeDirSegment, markers via toLowerAscii.
+struct ClassificationExtras
+{
+  std::unordered_set<std::string> vendoredDirs;     // normalizeDirSegment-normalized
+  std::unordered_set<std::string> testDirs;         // normalizeDirSegment-normalized
+  std::unordered_set<std::string> generatedMarkers; // lowercased path substrings
+};
+
+inline ClassificationExtras &classificationExtrasStorage()
+{
+  static ClassificationExtras storage;
+  return storage;
+}
+inline const ClassificationExtras &classificationExtras() { return classificationExtrasStorage(); }
+inline void setClassificationExtras(ClassificationExtras extras) { classificationExtrasStorage() = std::move(extras); }
 
 // Project source + header extensions recognised by the v0.1 scan.
 inline constexpr std::array<std::string_view, 12> kProjectExtensions = {
@@ -132,7 +155,8 @@ inline bool isVendoredDirName(std::string_view name)
 {
   const std::string norm = normalizeDirSegment(name);
   if (std::find(kVendoredDirNames.begin(), kVendoredDirNames.end(), norm) != kVendoredDirNames.end() ||
-      std::find(kVendoredLibDirs.begin(), kVendoredLibDirs.end(), norm) != kVendoredLibDirs.end())
+      std::find(kVendoredLibDirs.begin(), kVendoredLibDirs.end(), norm) != kVendoredLibDirs.end() ||
+      classificationExtras().vendoredDirs.count(norm) != 0)
   {
     return true;
   }
@@ -151,16 +175,10 @@ inline bool isVendoredDirName(std::string_view name)
 // (the final, file-name segment is not tested).
 inline bool pathHasVendoredDir(std::string_view path) { return pathAnyDirSegment(path, isVendoredDirName); }
 
-// Machine-generated files — protobuf, Qt moc/ui/qrc, flex/bison, SWIG wrappers —
-// are never hand-edited, so duplication / complexity in them is not actionable.
-// Matched on the lowercased repo-relative path. (#129: lifted from the dedup
-// scanner's private copy so clone, complexity and graph share ONE definition
-// instead of each rule re-deciding what is generated.)
-inline bool isGeneratedPath(std::string_view path)
+// Exact-suffix matches (not loose substrings, so `socket_wrap.cpp` is safe): SWIG
+// `*_wrap.*`, and the upb amalgamation `*-upb.c/.h` (#151 — all of upb in one file).
+inline bool hasGeneratedSuffix(const std::string &lower)
 {
-  const std::string lower = toLowerAscii(path);
-  // Exact-suffix matches (not loose substrings, so `socket_wrap.cpp` is safe): SWIG
-  // `*_wrap.*`, and the upb amalgamation `*-upb.c/.h` (#151 — all of upb in one file).
   static constexpr std::array<std::string_view, 5> kGeneratedSuffixes = {
       "_wrap.cpp", "_wrap.cxx", "_wrap.c", "-upb.c", "-upb.h",
   };
@@ -171,8 +189,14 @@ inline bool isGeneratedPath(std::string_view path)
       return true;
     }
   }
-  // Substring markers: protobuf/upb (.pb.*, .upb.), Qt (moc_/ui_/qrc_), flex/bison/lemon
-  // (.tab.*, lex.yy, lempar), and `_generated`/`/generated/` conventions (#151 arrow, #127).
+  return false;
+}
+
+// Substring markers: protobuf/upb (.pb.*, .upb.), Qt (moc_/ui_/qrc_), flex/bison/lemon
+// (.tab.*, lex.yy, lempar), `_generated`/`/generated/` conventions (#151 arrow, #127), plus
+// any project-specific markers from .archcheck.yml `classification:` (#154 Phase 2).
+inline bool hasGeneratedMarker(const std::string &lower)
+{
   static constexpr std::array<std::string_view, 16> kGeneratedMarkers = {
       ".pb.h", ".pb.cc", ".pb.cpp", "_generated.", ".generated.", "/generated/", "/moc_",       "/ui_",
       "/qrc_", ".tab.c", ".tab.h",  "lex.yy",      ".g.cpp",      ".upb.",       "_generated_", "lempar",
@@ -184,7 +208,24 @@ inline bool isGeneratedPath(std::string_view path)
       return true;
     }
   }
+  for (const std::string &m : classificationExtras().generatedMarkers)
+  {
+    if (lower.find(m) != std::string::npos)
+    {
+      return true;
+    }
+  }
   return false;
+}
+
+// Machine-generated files — protobuf, Qt moc/ui/qrc, flex/bison, SWIG wrappers —
+// are never hand-edited, so duplication / complexity in them is not actionable.
+// Matched on the lowercased repo-relative path. (#129: lifted from the dedup
+// scanner's private copy so clone, complexity and graph share ONE definition.)
+inline bool isGeneratedPath(std::string_view path)
+{
+  const std::string lower = toLowerAscii(path);
+  return hasGeneratedSuffix(lower) || hasGeneratedMarker(lower);
 }
 
 inline std::string_view baseName(std::string_view path)
@@ -387,7 +428,8 @@ inline constexpr std::array<std::string_view, 7> kTestDirNames = {
 inline bool isTestDirName(std::string_view name)
 {
   const std::string norm = normalizeDirSegment(name);
-  return std::find(kTestDirNames.begin(), kTestDirNames.end(), norm) != kTestDirNames.end();
+  return std::find(kTestDirNames.begin(), kTestDirNames.end(), norm) != kTestDirNames.end() ||
+         classificationExtras().testDirs.count(norm) != 0;
 }
 
 inline bool pathHasTestDir(std::string_view path) { return pathAnyDirSegment(path, isTestDirName); }

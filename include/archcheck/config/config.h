@@ -55,12 +55,24 @@ struct Thresholds
   std::size_t diffMaxCloneScanBytes = 40 * 1024 * 1024;
 };
 
+// Additive overrides for the file/dir classification defaults (#154 Phase 2).
+// Project-specific tokens layered ON TOP of the curated embedded defaults in
+// scan/file_classification.h — never a replacement. Optional `classification:`
+// block in .archcheck.yml; see docs/config_format.md.
+struct Classification
+{
+  std::vector<std::string> extraVendoredDirs;
+  std::vector<std::string> extraTestDirs;
+  std::vector<std::string> extraGeneratedMarkers;
+};
+
 struct Config
 {
   int version = 0;
   std::vector<ModuleDef> modules;
   std::vector<Rule> rules;
   Thresholds thresholds;
+  Classification classification;
 };
 
 } // namespace archcheck::config

@@ -248,3 +248,31 @@ TEST_CASE("hasMinifiedContent: embedded-data / minified files (Linguist, #147/#1
   // Below the 4 KiB floor: never minified (no memory/noise risk).
   REQUIRE_FALSE(hasMinifiedContent(std::string(100, 'x')));
 }
+
+// === #154 Phase 2: additive runtime overrides (.archcheck.yml classification:) ===
+TEST_CASE("classification extras: runtime tokens extend the predicates, defaults stay", "[scan][config]")
+{
+  using namespace archcheck::scan;
+  // default-empty: custom project tokens are not yet recognised
+  REQUIRE_FALSE(isVendoredDirName("mythirdparty"));
+  REQUIRE_FALSE(isTestDirName("spec"));
+  REQUIRE_FALSE(isGeneratedPath("gen/foo.myproto.cpp"));
+
+  ClassificationExtras extras;
+  extras.vendoredDirs.insert(normalizeDirSegment("My_ThirdParty"));
+  extras.testDirs.insert(normalizeDirSegment("spec"));
+  extras.generatedMarkers.insert(toLowerAscii(".myproto."));
+  setClassificationExtras(extras);
+
+  CHECK(isVendoredDirName("mythirdparty"));
+  CHECK(isVendoredDirName("My-ThirdParty")); // normalization collapses spelling variants
+  CHECK(pathHasVendoredDir("src/My_ThirdParty/x.h"));
+  CHECK(isTestDirName("spec"));
+  CHECK(isGeneratedPath("gen/Foo.MyProto.cpp")); // lowercased substring match
+  // curated defaults remain intact alongside the extras
+  CHECK(isVendoredDirName("third_party"));
+  CHECK(isGeneratedPath("a.pb.cc"));
+
+  setClassificationExtras({}); // reset — never leak global state into other tests
+  CHECK_FALSE(isVendoredDirName("mythirdparty"));
+}

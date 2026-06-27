@@ -19,6 +19,7 @@
 #include "archcheck/rules/gate_policy.h"
 #include "archcheck/rules/rule_set.h"
 #include "archcheck/scan/disk_file_source.h"
+#include "archcheck/scan/file_classification.h"
 #include "archcheck/scan/source_snapshot.h"
 
 namespace archcheck::cli
@@ -161,6 +162,21 @@ int applyDriftFile(const std::filesystem::path &driftFile, std::vector<std::uniq
   return 0;
 }
 
+// Bridge the loaded config's additive classification overrides into the scan
+// layer's set-once registry (#154 Phase 2). Dir tokens are normalized / markers
+// lowercased to match how the predicates compare.
+archcheck::scan::ClassificationExtras toClassificationExtras(const config::Classification &c)
+{
+  archcheck::scan::ClassificationExtras extras;
+  for (const auto &dir : c.extraVendoredDirs)
+    extras.vendoredDirs.insert(archcheck::scan::normalizeDirSegment(dir));
+  for (const auto &dir : c.extraTestDirs)
+    extras.testDirs.insert(archcheck::scan::normalizeDirSegment(dir));
+  for (const auto &marker : c.extraGeneratedMarkers)
+    extras.generatedMarkers.insert(archcheck::scan::toLowerAscii(marker));
+  return extras;
+}
+
 } // namespace
 
 // Read+classify the tree once (#129); the graph and the SF.* text rules share the
@@ -201,6 +217,7 @@ int runCheck(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts b
       return 2;
     }
   }
+  archcheck::scan::setClassificationExtras(toClassificationExtras(config->classification));
   auto rules = archcheck::rules::makeDefaultRuleSet(*config);
   const int driftRc = baseline.driftFile ? applyDriftFile(*baseline.driftFile, rules) : 0;
   if (driftRc != 0)

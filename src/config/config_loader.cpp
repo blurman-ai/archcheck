@@ -339,15 +339,67 @@ void parse_thresholds(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Conf
   }
 }
 
+std::vector<std::string> parse_token_list(const ryml::ConstNodeRef &node, const std::string &key, const LoaderCtx &ctx)
+{
+  if (!node.is_seq() || node.num_children() == 0)
+  {
+    throw_at(ctx, node, "classification '" + key + "' must be a non-empty list");
+  }
+  std::vector<std::string> out;
+  for (const auto &child : node.children())
+  {
+    std::string token = to_string(child.val());
+    if (token.empty())
+    {
+      throw_at(ctx, child, "classification '" + key + "' has an empty entry");
+    }
+    out.push_back(std::move(token));
+  }
+  return out;
+}
+
+// Optional phase-2 block; absent keys keep the embedded defaults. Additive only:
+// listed tokens are layered on top of the curated defaults, never a replacement.
+void parse_classification(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Config &config)
+{
+  if (!root.has_child("classification"))
+  {
+    return;
+  }
+  const auto node = root["classification"];
+  if (!node.is_map())
+  {
+    throw_at(ctx, node, "'classification' must be a map");
+  }
+  static const std::array<std::pair<std::string_view, std::vector<std::string> Classification::*>, 3> kKeys = {{
+      {"extra_vendored_dirs", &Classification::extraVendoredDirs},
+      {"extra_test_dirs", &Classification::extraTestDirs},
+      {"extra_generated_markers", &Classification::extraGeneratedMarkers},
+  }};
+  for (const auto &child : node.children())
+  {
+    const std::string key = to_string(child.key());
+    const auto it = std::find_if(kKeys.begin(), kKeys.end(), [&key](const auto &entry) { return entry.first == key; });
+    if (it == kKeys.end())
+    {
+      throw_at(ctx, child,
+               "unknown classification key '" + key +
+                   "' (expected: extra_vendored_dirs, extra_test_dirs, extra_generated_markers)");
+    }
+    config.classification.*(it->second) = parse_token_list(child, key, ctx);
+  }
+}
+
 void validate_top_keys(const ryml::ConstNodeRef &root, const LoaderCtx &ctx)
 {
   for (const auto &child : root.children())
   {
     const ryml::csubstr key = child.key();
     const std::string k(key.data(), key.size());
-    if (k != "version" && k != "modules" && k != "rules" && k != "thresholds")
+    if (k != "version" && k != "modules" && k != "rules" && k != "thresholds" && k != "classification")
     {
-      throw_at(ctx, child, "unknown top-level key '" + k + "' (expected: version, modules, rules, thresholds)");
+      throw_at(ctx, child,
+               "unknown top-level key '" + k + "' (expected: version, modules, rules, thresholds, classification)");
     }
   }
   if (!root.has_child("modules"))
@@ -380,6 +432,7 @@ Config load(const std::filesystem::path &path)
     parse_modules(root, ctx, config);
     parse_rules(root, ctx, config);
     parse_thresholds(root, ctx, config);
+    parse_classification(root, ctx, config);
     cross_validate(config, ctx);
     return config;
   }

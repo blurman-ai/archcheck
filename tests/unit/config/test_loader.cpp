@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <filesystem>
+#include <string>
 
 #include "archcheck/config/config_loader.h"
 
@@ -69,6 +70,26 @@ TEST_CASE("config loader: thresholds — keep embedded defaults when block absen
   REQUIRE(cfg.thresholds.diffMaxAddedLines == 10000);
 }
 
+TEST_CASE("config loader: classification — parses additive override lists", "[config][pass]")
+{
+  const auto cfg = archcheck::config::load(fixture("pass", "classification"));
+  REQUIRE(cfg.classification.extraVendoredDirs.size() == 2);
+  CHECK(cfg.classification.extraVendoredDirs[0] == "mythirdparty");
+  CHECK(cfg.classification.extraVendoredDirs[1] == "imported");
+  REQUIRE(cfg.classification.extraTestDirs.size() == 1);
+  CHECK(cfg.classification.extraTestDirs[0] == "spec");
+  REQUIRE(cfg.classification.extraGeneratedMarkers.size() == 1);
+  CHECK(cfg.classification.extraGeneratedMarkers[0] == ".myproto.");
+}
+
+TEST_CASE("config loader: classification — empty when block absent", "[config][pass]")
+{
+  const auto cfg = archcheck::config::load(fixture("pass", "tiny"));
+  CHECK(cfg.classification.extraVendoredDirs.empty());
+  CHECK(cfg.classification.extraTestDirs.empty());
+  CHECK(cfg.classification.extraGeneratedMarkers.empty());
+}
+
 TEST_CASE("config loader: findConfig walks up to the nearest .archcheck.yml", "[config][pass]")
 {
   const std::filesystem::path deep =
@@ -112,6 +133,12 @@ TEST_CASE("config loader: rejects unknown threshold key", "[config][fail]")
 {
   REQUIRE_THROWS_WITH(archcheck::config::load(fixture("fail", "fail_unknown_threshold_key")),
                       ContainsSubstring("unknown threshold key"));
+}
+
+TEST_CASE("config loader: rejects unknown classification key", "[config][fail]")
+{
+  REQUIRE_THROWS_WITH(archcheck::config::load(fixture("fail", "fail_unknown_classification_key")),
+                      ContainsSubstring("unknown classification key"));
 }
 
 TEST_CASE("config loader: rejects non-positive threshold", "[config][fail]")

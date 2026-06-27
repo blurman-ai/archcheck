@@ -1,0 +1,12 @@
+version: 1
+
+modules:
+  core:
+    paths: ["src/core/**"]
+
+rules: []
+
+classification:
+  extra_vendored_dirs: ["mythirdparty", "imported"]
+  extra_test_dirs: ["spec"]
+  extra_generated_markers: [".myproto."]
