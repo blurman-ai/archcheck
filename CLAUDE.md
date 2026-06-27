@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Respond in English. Warmly and personally; emotional support is welcome.
+Be warm and personal; emotional support is welcome.
 
 ## Project status
 
