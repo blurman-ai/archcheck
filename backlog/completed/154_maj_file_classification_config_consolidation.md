@@ -1,8 +1,9 @@
 # [SCAN][CONFIG] Consolidate file-classification constants into one parameterizable home
 
 **Created:** 2026-06-27
-**Started:** —
-**Status:** new
+**Started:** 2026-06-27
+**Completed:** 2026-06-28
+**Status:** completed
 **Module:** SCAN / CONFIG / RULES
 **Priority:** major
 **Complexity:** L (touches ~10 consumers + authored_scope; constexpr→runtime delivery is a design decision, not a mechanical move)
@@ -185,10 +186,25 @@ project-specific `housevendor/` dir gates (exit 1) without config and clears (ex
 `extra_vendored_dirs: [housevendor]`. dogfood 0, coverage PASS (92.3/96.5/57.5), format/cppcheck/lizard clean.
 docs/config_format.md updated. Not committed (awaiting command).
 
-**Phase 2b follow-up (the one remaining gap)**: `--diff` / `--save-graph-baseline` build graphs directly
-(not via runCheck), so they honour the defaults but not yet the `classification:` overrides. Both sides stay
-on defaults ⇒ consistent (no spurious drift), so it is a feature gap, not a correctness bug. Wire config
-discovery into the diff path + a baseline/current-consistency test.
+### Phase 2b — overrides in --diff / --save-graph-baseline (2026-06-28): DONE
+
+`--diff` and `--save-graph-baseline` built graphs outside `runCheck`, so they ignored the
+`classification:` overrides. Closed it: extracted the converter into a shared
+`cli::applyClassificationConfig(const Config&)` (declared in check_command.h, no duplication —
+the very anti-pattern #154 fights), and call it once per mode **before any side is read**:
+- `--diff`: inside `loadDiffThresholds` (which already discovered the config for thresholds), so the
+  same overrides apply to baseline AND current → no spurious drift from the override itself;
+- `--save-graph-baseline`: discover + apply before the graph build (a baseline now reflects the same
+  exclusions the later `--drift-baseline` run will use; config error → exit 2);
+- `runCheck` (check + `--drift-baseline`) now routes through the same helper too.
+
+Verified: 591/591; **end-to-end** (`tests/integration/diff/...config`): a grown SF.9 cycle inside a
+project-specific `housevendor/` dir gates the diff (exit 1, cycle listed) without config and clears
+(exit 0, grown_cycles 0) with `extra_vendored_dirs:[housevendor]` — proving both the override and
+baseline/current consistency. dogfood 0, coverage PASS (92.3/96.5/57.5), format/cppcheck/lizard clean.
+
+The `classification:` feature now works in every scanning mode. The core goal of #154 (one
+parameterizable classification home, overridable from YAML, no drifting duplicates) is met.
 
 Still deferred (out of Phase 2):
 - **`sf9_no_cycles.cpp:86` inline `{.hpp,.hh,.h}`** → `kHeaderExtensions`: **NOT equivalent** (3 vs 8 extensions). Changes `componentStem` behavior. Needs a fixture proving intent → fixture phase.
@@ -240,3 +256,26 @@ Still deferred (out of Phase 2):
 | Additive `extra_*` merge | Authority-backed defaults must not be silently deleted; user adds, not replaces |
 | Not every list gets a YAML key | License/banner/stem heuristics are curated; user input there is nonsensical |
 | area_of merge is the risk | Its noiseDirs semantics differ from scan-exclusion; needs fixtures, not a blind redirect |
+
+## Summary
+
+**Status:** completed — **2026-06-28**
+
+The scattered file/dir classification constants are consolidated into one home
+(`include/archcheck/scan/file_classification.h`) and that home is now overridable
+from `.archcheck.yml` via an additive `classification:` block, honoured in every
+scanning mode.
+
+Shipped (commits): Phase 1 — `kImplSuffixes`/`isInlineImplFile`, `kPchBasenames`/`isKnownPchBasename`,
+named `kGeneratedSuffixes` (`5916b77`); Phase 1b — `area_of` delegates to the canonical predicates,
+with a measured 0/100427 #115 impact (`62c0c62`); Phase 2 — additive `classification:` block +
+set-once `ClassificationExtras` registry, wired into `runCheck` (`9918a7a`); Phase 2b — overrides in
+`--diff`/`--save-graph-baseline` via shared `applyClassificationConfig` (`bded295`). Docs in
+`docs/config_format.md`; journey in `docs/JOURNEY.md`.
+
+**Out of scope (not pursued — minor, tangential to the goal):**
+- `sf9_no_cycles.cpp:86` inline `{.hpp,.hh,.h}` → `kHeaderExtensions`: a behavior change in `componentStem`
+  (3 vs 8 extensions), about the cycle heuristic, not the classification config. Needs a fixture; split to a
+  follow-up if wanted.
+- `kMirrorPrefixes` (include_resolver): resolver-internal; consolidate only if it earns a YAML key.
+- `kStdCHeaders`: closed as Tier D (FIXED by the C standard, like the C++ keyword list).
