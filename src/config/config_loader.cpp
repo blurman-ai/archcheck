@@ -319,10 +319,11 @@ void parse_thresholds(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Conf
   {
     throw_at(ctx, node, "'thresholds' must be a map");
   }
-  static constexpr std::array<std::pair<std::string_view, std::size_t Thresholds::*>, 3> kKeys = {{
+  static constexpr std::array<std::pair<std::string_view, std::size_t Thresholds::*>, 4> kKeys = {{
       {"chain_length", &Thresholds::chainLength},
       {"god_header_fan_in", &Thresholds::godHeaderFanIn},
       {"diff_max_added_lines", &Thresholds::diffMaxAddedLines},
+      {"diff_max_clone_scan_bytes", &Thresholds::diffMaxCloneScanBytes},
   }};
   for (const auto &child : node.children())
   {
@@ -331,7 +332,8 @@ void parse_thresholds(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Conf
     if (it == kKeys.end())
     {
       throw_at(ctx, child,
-               "unknown threshold key '" + key + "' (expected: chain_length, god_header_fan_in, diff_max_added_lines)");
+               "unknown threshold key '" + key +
+                   "' (expected: chain_length, god_header_fan_in, diff_max_added_lines, diff_max_clone_scan_bytes)");
     }
     config.thresholds.*(it->second) = parse_positive_int(child, key, ctx);
   }

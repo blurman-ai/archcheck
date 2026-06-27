@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,6 +21,7 @@ using AddedLineMap = std::unordered_map<std::string, std::unordered_set<int>>;
 struct NewCloneDriftResult
 {
   rules::ViolationList violations;
+  bool skippedLargeTree = false; // #149: authored tree over the byte cap → scan skipped
 };
 
 // Scan the whole new tree for duplication, then keep only pairs where at least
@@ -34,7 +37,12 @@ struct NewCloneDriftResult
 // instance, hence no pair to match against.
 //
 // Consumes pre-read+classified snapshots (#129): authored files only, no reading.
+//
+// maxScanBytes (#149): when the new tree's authored bytes exceed this, the scan is
+// skipped (result.skippedLargeTree = true, no violations) because the whole-tree
+// pass would not fit the per-commit budget. Advisory-only, so the gate is unaffected.
 [[nodiscard]] NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot,
-                                                  const SourceSnapshot &parentSnapshot, const AddedLineMap &added);
+                                                  const SourceSnapshot &parentSnapshot, const AddedLineMap &added,
+                                                  std::size_t maxScanBytes = std::numeric_limits<std::size_t>::max());
 
 } // namespace archcheck::scan

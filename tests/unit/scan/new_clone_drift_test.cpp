@@ -146,3 +146,24 @@ TEST_CASE("new_clone_drift: empty added map yields nothing", "[scan][newclone]")
   const auto res = detectNewClones(SourceSnapshot::read(src), SourceSnapshot::read(parent), {});
   REQUIRE(res.violations.empty());
 }
+
+TEST_CASE("new_clone_drift: tree over the byte cap is skipped, not scanned (#149)", "[scan][newclone]")
+{
+  MapFileSource src = cloneCorpus();
+  MapFileSource parent = cloneCorpus();
+  parent.files.erase("copy.cpp");
+  const auto added = allLinesOf("copy.cpp", 14);
+
+  // A cap below the authored byte total: the whole-tree scan is skipped (advisory),
+  // the result flags it, and the gate-bearing caller still completes.
+  const auto skipped =
+      detectNewClones(SourceSnapshot::read(src), SourceSnapshot::read(parent), added, /*maxScanBytes=*/64);
+  REQUIRE(skipped.skippedLargeTree);
+  REQUIRE(skipped.violations.empty());
+
+  // A generous cap: the same clone still fires — the guard is inert below the limit.
+  const auto scanned =
+      detectNewClones(SourceSnapshot::read(src), SourceSnapshot::read(parent), added, /*maxScanBytes=*/1u << 20);
+  REQUIRE_FALSE(scanned.skippedLargeTree);
+  REQUIRE(scanned.violations.size() >= 1);
+}

@@ -6,6 +6,15 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **`diff_max_clone_scan_bytes` — huge trees skip the new-clone advisory** — the per-commit
+  new-clone scan (`--diff`) is a whole-tree pass (the twin of an added clone may live in an unchanged
+  file), so a small commit to a very large repo still paid its `O(tree)` cost and could exceed the CI
+  budget. Past the configured authored-byte cap (default 40 MiB) the advisory is now skipped and the
+  diff reports it; the **gate** (cycles / god-headers) still runs, so a giant repo is measured instead
+  of timing out. (#149)
+
 ## [0.1.0] - 2026-06-25
 
 First tagged release. Ships prebuilt Linux x86_64 binaries (tarball + `.sha256`)

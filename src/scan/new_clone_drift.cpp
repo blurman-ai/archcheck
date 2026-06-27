@@ -77,16 +77,21 @@ rules::Violation makeViolation(const duplication::Fragment &introduced, const du
   return v;
 }
 
-} // namespace
+// #149: total authored bytes — the whole-tree clone scan cost scales with this.
+std::size_t authoredBytes(const std::vector<std::pair<std::string, std::string>> &sources)
+{
+  std::size_t bytes = 0;
+  for (const auto &s : sources)
+    bytes += s.second.size();
+  return bytes;
+}
 
-NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
-                                    const AddedLineMap &added)
+// Scan the new tree and emit one violation per introduced clone pair: a pair where
+// one side touches an added line and the parent did not already contain it.
+NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::string>> &sources,
+                                  const std::unordered_set<std::string> &parentKeys, const AddedLineMap &added)
 {
   NewCloneDriftResult result;
-  if (added.empty())
-    return result;
-  const auto parentKeys = parentPairKeys(parentSnapshot);
-  const auto sources = newSnapshot.authoredSources();
   // Whole-file guard off: in a snapshot a whole-file duplicate is vendored noise,
   // but a commit that adds a file-copy is exactly the signal we want. Precision
   // filters (joint floor, P1 classifiers) stay on.
@@ -106,6 +111,26 @@ NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const Sou
     result.violations.push_back(aTouched ? makeViolation(fa, fb, p) : makeViolation(fb, fa, p));
   }
   return result;
+}
+
+} // namespace
+
+NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
+                                    const AddedLineMap &added, std::size_t maxScanBytes)
+{
+  NewCloneDriftResult result;
+  if (added.empty())
+    return result;
+  const auto sources = newSnapshot.authoredSources();
+  // #149: the clone scan is a whole-tree pass twice over (parent + new); on a huge
+  // authored tree it blows the per-commit budget. Skip past the cap — advisory only,
+  // so the gate (cycles/god-headers) still runs and the commit is not lost.
+  if (authoredBytes(sources) > maxScanBytes)
+  {
+    result.skippedLargeTree = true;
+    return result;
+  }
+  return emitNewClones(sources, parentPairKeys(parentSnapshot), added);
 }
 
 } // namespace archcheck::scan

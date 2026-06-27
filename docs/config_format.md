@@ -88,11 +88,13 @@ thresholds:
   chain_length: 10        # Lakos.ChainLength: max include-chain depth
   god_header_fan_in: 50   # Lakos.GodHeader: max fan-in before a header is a "god header"
   diff_max_added_lines: 10000  # --diff: skip the local-complexity advisory above this many added lines (bulk import)
+  diff_max_clone_scan_bytes: 41943040  # --diff: skip the new-clone advisory when the authored tree exceeds this many bytes (#149)
 ```
 
 - Each value must be a **positive integer**. Zero, negatives, and non-numeric values are a config error (exit code `2`).
 - Unknown keys inside `thresholds` are a config error.
-- Defaults when absent: `chain_length: 10`, `god_header_fan_in: 50`, `diff_max_added_lines: 10000`.
+- Defaults when absent: `chain_length: 10`, `god_header_fan_in: 50`, `diff_max_added_lines: 10000`, `diff_max_clone_scan_bytes: 41943040` (40 MiB).
+- `diff_max_clone_scan_bytes` bounds the per-commit new-clone scan, which is a whole-tree pass (the twin of an added clone may live in an unchanged file). Past the cap the advisory is skipped; the **gate** (cycles / god-headers) is unaffected.
 
 ## Rule types
 

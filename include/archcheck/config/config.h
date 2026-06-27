@@ -45,6 +45,14 @@ struct Thresholds
   // (bulk source imports are not authored evolution; #109 corpus calibration —
   // genuine large features stay below ~6k, bulk drops start at ~20k).
   std::size_t diffMaxAddedLines = 10000;
+  // --diff: skip the new-clone advisory when the authored tree exceeds this many
+  // bytes. The clone scan is a whole-tree pass (the twin of an added clone may
+  // live in an unchanged file), so its cost is O(tree), not O(diff): a small
+  // commit to a huge repo still pays it (#149). Past this size it does not fit the
+  // per-commit budget — skipping keeps the GATE (cycles/god-headers) running.
+  // ~40 MB authored ≈ 2x apache/arrow (~21 MB, ~4.5 s); giants skip, normal repos
+  // keep the advisory. Advisory-only ⇒ never changes the gate.
+  std::size_t diffMaxCloneScanBytes = 40 * 1024 * 1024;
 };
 
 struct Config

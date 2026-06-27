@@ -146,14 +146,15 @@ archcheck::scan::BoolFieldDriftResult collectBoolFieldDrift(const std::filesyste
 // clone pairs that already existed there are not introduced by this diff.
 archcheck::scan::NewCloneDriftResult collectNewClones(const archcheck::scan::SourceSnapshot &curSnap,
                                                       const archcheck::scan::SourceSnapshot &baseSnap,
-                                                      const std::vector<archcheck::git::AddedLine> &addedLines)
+                                                      const std::vector<archcheck::git::AddedLine> &addedLines,
+                                                      std::size_t maxCloneScanBytes)
 {
   archcheck::scan::AddedLineMap added;
   for (const auto &a : addedLines)
     added[a.file].insert(a.lineNumber);
   if (added.empty())
     return {};
-  return archcheck::scan::detectNewClones(curSnap, baseSnap, added);
+  return archcheck::scan::detectNewClones(curSnap, baseSnap, added, maxCloneScanBytes);
 }
 
 // Flag-argument drift (ARG.1, #093): boolean flag parameters in signatures the
@@ -198,7 +199,7 @@ struct DiffAdvisories
 };
 
 DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed,
-                                     std::size_t maxAddedLines)
+                                     std::size_t maxAddedLines, std::size_t maxCloneScanBytes)
 {
   DiffAdvisories result;
   const auto addedLines = archcheck::git::collectAddedLines(repoRoot, parsed.baseline, parsed.current);
@@ -213,15 +214,14 @@ DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, cons
     result.complexitySkippedAddedLines = totalAdded;
     return result;
   }
-  // #129 read-once: one snapshot per ref, read+classified here and shared by the
-  // complexity advisory, the clone advisory AND (kept on the result) the graph
-  // build — each of which used to read the trees itself.
+  // #129 read-once: one snapshot per ref, shared by the complexity/clone advisories
+  // AND (kept on the result) the graph build, instead of each re-reading the trees.
   auto baseSnap = readRefSnapshotMemory(repoRoot, parsed.baseline);
   auto curSnap = readRefSnapshotMemory(repoRoot, parsed.current);
   if (!baseSnap || !curSnap)
     return result;
   result.complexity = collectComplexityDrift(repoRoot, parsed, *baseSnap, *curSnap);
-  result.newClones = collectNewClones(*curSnap, *baseSnap, addedLines);
+  result.newClones = collectNewClones(*curSnap, *baseSnap, addedLines, maxCloneScanBytes);
   result.flagArguments = collectFlagArguments(*curSnap, addedLines);
   result.boolFields = collectBoolFieldDrift(repoRoot, parsed, *baseSnap, *curSnap);
   result.baseSnapshot = std::move(baseSnap);
@@ -256,6 +256,9 @@ void printDiffAdvisories(const DiffAdvisories &a)
     return;
   }
   printComplexityResult(a.complexity);
+  if (a.newClones.skippedLargeTree)
+    std::cout << "\nnew-clone drift (advisory): skipped — authored tree exceeds "
+                 "thresholds.diff_max_clone_scan_bytes (#149)\n";
   printViolationList("new-clone drift (advisory)", a.newClones.violations);
   printViolationList("flag-argument drift (advisory)", a.flagArguments);
   printViolationList("bool-field accretion (advisory)", a.boolFields.violations);
@@ -279,6 +282,7 @@ struct DiffConfig
 {
   archcheck::diff::MetricThresholds metric;
   std::size_t maxAddedLines = archcheck::config::Thresholds{}.diffMaxAddedLines;
+  std::size_t maxCloneScanBytes = archcheck::config::Thresholds{}.diffMaxCloneScanBytes;
 };
 
 // Threshold discovery shared with check mode; nullopt = config error (exit 2).
@@ -290,6 +294,7 @@ std::optional<DiffConfig> loadDiffThresholds(const std::filesystem::path &repoRo
     const auto thresholds = archcheck::config::discover(repoRoot).thresholds;
     cfg.metric.godHeaderFanIn = thresholds.godHeaderFanIn;
     cfg.maxAddedLines = thresholds.diffMaxAddedLines;
+    cfg.maxCloneScanBytes = thresholds.diffMaxCloneScanBytes;
   }
   catch (const archcheck::config::ConfigError &e)
   {
@@ -388,7 +393,7 @@ int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git:
   // fix later" / not even the author's code), so block-gating a merge over its graph
   // is unfair and noisy. Skip the graph checks (gating AND drift) on bulk commits,
   // as clone/complexity already do — archcheck's job is slow incremental drift. (#124)
-  auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines);
+  auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines, thresholds->maxCloneScanBytes);
   const bool bulk = advisories.complexitySkippedAddedLines > 0;
 
   DiffGraph graph; // bulk ⇒ stays empty (no gating, no drift)
