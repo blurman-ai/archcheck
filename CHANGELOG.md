@@ -14,6 +14,30 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
   budget. Past the configured authored-byte cap (default 40 MiB) the advisory is now skipped and the
   diff reports it; the **gate** (cycles / god-headers) still runs, so a giant repo is measured instead
   of timing out. (#149)
+- **Minified and embedded-data files are excluded from analysis up front** — files whose average
+  line length exceeds 110 characters (measured on a 64 KiB prefix) are classified as
+  non-source — the same heuristic GitHub Linguist uses — and now drop out before the include
+  graph, duplication, complexity, and bool-field passes. A 43 MiB tokenizer vocabulary
+  header that previously reached every scan is caught in the first 64 KiB and ignored entirely,
+  cutting peak memory 4.9× and scan time 7.6× on affected repositories. (#127, #147)
+
+### Fixed
+
+- **Duplication: "extracted code into a module, kept the original" is no longer silently
+  suppressed** — the whole-file clone guard (P0.2) dropped a file-pair when ≥80% of the
+  *smaller* file matched, treating "small module ⊂ large original" as a move/vendored twin.
+  That silenced the detector's most valuable true positive — the missing reuse edge. The
+  guard is now **two-sided**: it suppresses only when ≥80% of *both* files match (a real
+  move/copy/twin), so an extraction with the original left in place is reported. Generated
+  amalgamations the one-sided guard masked by accident (protobuf's `*-upb.c`, protoc
+  `*.upb.*`, the Lemon `lempar` template, `*_generated_*`) are now classified as generated
+  up front, keeping them out of the report. Verified on a 133-repo corpus slice: +780
+  authored clone file-pairs surfaced, generated noise removed. (#151)
+- **`--diff` no longer runs out of memory on repositories with large embedded-data files** —
+  the tokenizer now stops reading a single file at 1 MiB. Hand-written C++ is never that
+  large; anything above that limit is generated or embedded data with no clone-detection or
+  complexity value. Affected passes: duplication, local-complexity, flag-argument (the graph
+  scan does not use the tokenizer and is unaffected). (#147)
 
 ## [0.1.0] - 2026-06-25
 

@@ -1,7 +1,7 @@
 # [BUG][DUPLICATION] P0.2 whole-file suppress silences the TP "extracted code into a module, kept the original"
 
 **Created:** 2026-06-26
-**Status:** new
+**Status:** completed (2026-06-27)
 **Module:** SCAN / DUPLICATION
 **Priority:** major
 **Related:** #052/#056 (clone detector), #127 (vendored/generated exclusion), #147 (dup OOM),
@@ -135,3 +135,39 @@ Any of the options (or a combo), plus a regression fixture:
   (opt. `opts.enableWholeFileGuard`).
 - `src/cli/preview_commands.cpp:139` — report line `... whole-file clone group(s) suppressed`.
 - `docs/duplication_architecture.md:241` — description of P0.2 (update when fixing).
+
+---
+
+## Resolution (2026-06-27)
+
+**Two changes.**
+
+1. **Two-sided whole-file guard** (`wholeFileClonePairs`, `duplication_scanner.cpp`).
+   The suppression now requires ≥80% coverage of **both** files (`n*5 >= minFrags*4 &&
+   n*5 >= maxFrags*4`), not just the smaller. A move/twin (A ≈ B, both covered) is still
+   silenced; an extraction (small ⊂ large) is reported. Regression test in
+   `duplication_fp_guards_test.cpp` ("P0.2: extract-to-module with a live original is
+   reported…") drives both directions off the `wholefile_extract_fp` fixture.
+
+2. **Generated-file markers** (`isGeneratedPath`, `file_classification.h`). The corpus
+   check (below) showed the two-sided fix exposed a pre-existing P0.9 gap the one-sided
+   guard had masked by accident: amalgamations (a small source ⊂ a giant generated bundle)
+   have the same shape as an extraction. Added high-confidence markers: `*-upb.c/.h`
+   (upb amalgamation), `*.upb.*` (protoc upb), `lempar` (Lemon template), `_generated_`.
+   Deliberately NOT `_pdb.`/`_parse.c` — too generic for a classifier shared by graph /
+   complexity / drift.
+
+**Why standalone-only matters.** This guard runs only in `archcheck --duplication <dir>`
+(no baseline). The `--diff` new-clone path (#123) already disables it and uses a
+parent-guard against the baseline tree — it caught the leadline extraction correctly
+(13 pairs) all along. The bug bit the standalone scan, which is what runs locally and on
+push-to-master CI.
+
+**Corpus verification.** old-vs-new binaries on the 133 corpus repos that had whole-file
+suppressions. File-pair delta: **+780 authored TP, −263 generated, −14 authored**
+(mostly same-file representation churn; ~6 borderline structural pairs shifted under the
+joint floor because excluding the amalgamations cleaned the global IDF — e.g. grpc
+`posix/stat.cc ↔ windows/stat.cc`, weighted 0.752). Residual FP: 64, all in gimp
+(PDB/bison). Bonus: amalgamations now leave the source set — grpc 26352→7822 fragments.
+
+**Shipped in v0.1.1.** JOURNEY: see the 2026-06-27 #151 entry.

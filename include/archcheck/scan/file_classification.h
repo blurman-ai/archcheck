@@ -159,21 +159,23 @@ inline bool pathHasVendoredDir(std::string_view path) { return pathAnyDirSegment
 inline bool isGeneratedPath(std::string_view path)
 {
   const std::string lower = toLowerAscii(path);
-  // SWIG output: match an exact basename suffix, not a loose substring, so a
-  // hand-written `socket_wrap.cpp` is not false-dropped.
-  for (const std::string_view suf :
-       {std::string_view{"_wrap.cpp"}, std::string_view{"_wrap.cxx"}, std::string_view{"_wrap.c"}})
+  // Exact-suffix matches (not loose substrings, so `socket_wrap.cpp` is safe): SWIG
+  // `*_wrap.*`, and the upb amalgamation `*-upb.c/.h` (#151 — all of upb in one file).
+  static constexpr std::array<std::string_view, 5> kGeneratedSuffixes = {
+      "_wrap.cpp", "_wrap.cxx", "_wrap.c", "-upb.c", "-upb.h",
+  };
+  for (const std::string_view suf : kGeneratedSuffixes)
   {
     if (lower.size() >= suf.size() && lower.compare(lower.size() - suf.size(), suf.size(), suf) == 0)
     {
       return true;
     }
   }
-  // `.tab.c` already substring-covers bison sources (.tab.c/.cpp/.cc/.cxx); `.tab.h`
-  // adds the C++ header forms (.tab.h/.hpp/.hh/.hxx) — #127 supercollider SCDoc.tab.hpp.
-  static constexpr std::array<std::string_view, 13> kGeneratedMarkers = {
-      ".pb.h", ".pb.cc", ".pb.cpp", "_generated.", ".generated.", "/generated/", "/moc_",
-      "/ui_",  "/qrc_",  ".tab.c",  ".tab.h",      "lex.yy",      ".g.cpp",
+  // Substring markers: protobuf/upb (.pb.*, .upb.), Qt (moc_/ui_/qrc_), flex/bison/lemon
+  // (.tab.*, lex.yy, lempar), and `_generated`/`/generated/` conventions (#151 arrow, #127).
+  static constexpr std::array<std::string_view, 16> kGeneratedMarkers = {
+      ".pb.h", ".pb.cc", ".pb.cpp", "_generated.", ".generated.", "/generated/", "/moc_",       "/ui_",
+      "/qrc_", ".tab.c", ".tab.h",  "lex.yy",      ".g.cpp",      ".upb.",       "_generated_", "lempar",
   };
   for (const std::string_view m : kGeneratedMarkers)
   {
@@ -189,6 +191,47 @@ inline std::string_view baseName(std::string_view path)
 {
   const std::size_t slash = path.rfind('/');
   return slash == std::string_view::npos ? path : path.substr(slash + 1);
+}
+
+// === Header-companion file roles (#154 consolidation) ========================
+// Lifted from per-rule private copies so the SF.9 cycle rule and the god-header
+// rule share ONE definition instead of each re-deciding these file roles. Both
+// preserve the rules' original case-sensitive matching.
+
+// Inline/template implementation files that legitimately pair with a same-stem
+// header (foo.h + foo.inl / foo.ipp / foo-inl.h / foo_impl.hpp ...). The _impl.*
+// family is the dominant header-only convention (mlpack, Boost, Eigen). Was a
+// private list in src/rules/sf9_no_cycles.cpp.
+inline constexpr std::array<std::string_view, 14> kImplSuffixes = {
+    "-inl.h", "_inl.h", ".tmpl.h", ".impl.h",   ".inl",     ".ipp",    ".icc",
+    ".tcc",   ".tpp",   ".hxx",    "_impl.hpp", "_impl.hh", "_impl.h", "_impl.hxx",
+};
+
+inline bool isInlineImplFile(std::string_view name)
+{
+  for (const std::string_view suf : kImplSuffixes)
+  {
+    if (name.size() >= suf.size() && name.compare(name.size() - suf.size(), suf.size(), suf) == 0)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Precompiled-header basenames exempt from the god-header fan-in rule. Exact
+// (case-sensitive) basename match. Was a private set in
+// src/rules/lakos_god_headers.cpp.
+inline constexpr std::array<std::string_view, 4> kPchBasenames = {
+    "pch.h",
+    "stdafx.h",
+    "precompiled.h",
+    "precompiled_header.h",
+};
+
+inline bool isKnownPchBasename(std::string_view filename)
+{
+  return std::find(kPchBasenames.begin(), kPchBasenames.end(), filename) != kPchBasenames.end();
 }
 
 // Layer 1 — curated single-file-lib basenames (case-insensitive). Base:

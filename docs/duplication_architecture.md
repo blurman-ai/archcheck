@@ -238,15 +238,23 @@ guards must filter it out.
 
 Guards implemented in `src/scan/duplication/duplication_scanner.cpp`:
 
-- **P0.2: whole-file clone suppression** (`phase8WholeFileSuppress`, line 336).
-  If ≥80% of the fragments of the smaller file matched the larger one → the whole
-  file is considered a move/copy/vendored, the pair is excluded. Used to cut off
-  refactor on par with versioning (a real file copied as-is).
+- **P0.2: whole-file clone suppression** (`phase9WholeFileSuppress`). Suppresses a
+  file-pair only when ≥80% of the fragments of **both** files match (the smaller has
+  ≥2) → a real move / copy / vendored twin (A ≈ B). The condition was once one-sided
+  (≥80% of the *smaller* file), which conflated a twin with "extract a module, leave
+  the original in place" (small ⊂ large): the latter is the detector's prime TP — the
+  missing reuse edge — and was silently dropped. Two-sided coverage reports the
+  extraction while still cutting the twin (#151). NOTE: a snapshot heuristic; the
+  authoritative move-vs-extract discriminator lives in the `--diff` path's parent-guard
+  (`new_clone_drift.cpp`), which has the baseline tree and disables this guard entirely.
 
-- **P0.9: generated files** (`isGeneratedPath`, line 173). Markers: `.pb.cc`,
-  `.pb.h`, `moc_`, `ui_`, `qrc_`, `.tab.c`, `lex.yy`, `/generated/`.
-  Machine-generated files (protobuf, Qt, flex/bison) are not refactored by a
-  human — duplication in them is not actionable.
+- **P0.9: generated files** (`isGeneratedPath`, `file_classification.h`). Markers:
+  `.pb.*`, `*.upb.*`, `*-upb.c/.h` (upb amalgamation), `moc_`, `ui_`, `qrc_`,
+  `.tab.c/.h`, `lex.yy`, `lempar` (Lemon template), `_generated.`/`_generated_`,
+  `/generated/`, SWIG `*_wrap.*`. Machine-generated files (protobuf/upb, Qt,
+  flex/bison/lemon) are not refactored by a human — duplication in them is not
+  actionable, and big amalgamations (all of upb concatenated into one file) otherwise
+  read as a whole-file clone of every real source they bundle.
 
 #### History of P0.4 (removed 2026-06-11)
 

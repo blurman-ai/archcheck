@@ -1,4 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 
 #include "archcheck/scan/duplication/duplication_scanner.h"
 #include "archcheck/scan/duplication/token_normalizer.h"
@@ -270,6 +273,58 @@ TEST_CASE("P0.2: git rename/move suppress — whole-file clones pass through", "
       // Whole-file clone: keep for investigation (P0.2 simplified version)
       REQUIRE(pair.line >= 0.90);
     }
+  }
+}
+
+// #151: P0.2 must distinguish "extract-to-module, original left in place" (small file
+// ⊂ large file, a missing reuse edge = TP) from a real move/copy/vendored twin (A ≈ B,
+// both files fully covered = FP). The one-sided rule (≥80% of the SMALLER file) silenced
+// the TP; the two-sided rule (≥80% of BOTH) reports it while still cutting the twin.
+namespace
+{
+std::string readFixture(const std::string &name)
+{
+  const auto p = std::filesystem::path{ARCHCHECK_FIXTURES_DIR} / "duplication" / "wholefile_extract_fp" / name;
+  std::ifstream in(p);
+  std::ostringstream ss;
+  ss << in.rdbuf();
+  return ss.str();
+}
+
+bool hasCrossFilePair(const ScanResult &result)
+{
+  for (const auto &pair : result.pairs)
+  {
+    if (result.fragments[pair.a].file != result.fragments[pair.b].file)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+} // namespace
+
+TEST_CASE("P0.2: extract-to-module with a live original is reported, not whole-file-suppressed",
+          "[duplication][fp-guards]")
+{
+  // Uses the #151 fixture at CLI defaults (minTokens = 30, as runDuplication does).
+  const std::string extracted = readFixture("extracted_geom.cpp"); // 3 helpers
+  const std::string original = readFixture("original_geom.cpp");   // same 3 helpers + 4 unrelated
+  REQUIRE_FALSE(extracted.empty());
+  REQUIRE_FALSE(original.empty());
+
+  SECTION("extract-leave-original (small ⊂ large) → reported")
+  {
+    const auto result = scanForDuplication({{"extracted.cpp", extracted}, {"original.cpp", original}}, {});
+    REQUIRE(hasCrossFilePair(result));
+    REQUIRE(result.wholeFileClones == 0);
+  }
+
+  SECTION("move / vendored twin (A ≈ B, both fully covered) → still suppressed")
+  {
+    const auto result = scanForDuplication({{"a.cpp", extracted}, {"b.cpp", extracted}}, {});
+    REQUIRE(result.wholeFileClones >= 1);
+    REQUIRE_FALSE(hasCrossFilePair(result));
   }
 }
 
