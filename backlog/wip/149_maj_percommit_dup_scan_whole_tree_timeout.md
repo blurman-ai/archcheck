@@ -73,13 +73,14 @@ wrong JSON key (`ruleId` vs `rule`) → vacuously 0==0. The real divergence only
 extractor was fixed and content was compared. Classic "the run produced numbers ≠ the conclusion is
 right" — the comparison itself needed verifying.)
 
-## Still open — the proper diff-scope rewrite (its own task now)
+## Still open — the proper diff-scope rewrite → split into #152
 
-- [ ] Isolate WHY scoping changes the emitted set (which `applyCandidateFilters` stage is
-      candidate-set-dependent), then make scoping transparent — OR re-validate `#103` precision on the
-      new (larger) clone set and adopt it if it is genuinely more correct. Either path is a real task,
-      not a perf tweak.
-- [ ] Pair-explosion repos (dense duplication under the 40 MiB byte-cap, e.g. blazingmq) stay blocked
-      until the above lands; the corpus harness can drop `diff_max_clone_scan_bytes` to skip more.
-- [ ] After it lands — re-measure how many of the 256 ai-377 / 28 trending blacklisted repos pass.
-- [ ] Agentic-stratum bot-test re-run (#146) once big bot-heavy repos are measurable.
+The diff-scope rewrite (make the per-commit clone scan O(diff), not O(tree)) was attempted here and
+reverted (it changes the emitted clone set — see above). It is now its own task:
+**[#152](../new/152_maj_diff_scope_clone_scan_changed_files.md)** — isolate the set-dependent
+`applyCandidateFilters` stage, decide semantics, re-validate #103 precision. That task also covers the
+pair-explosion repos (blazingmq-type, under the 40 MiB cap), the corpus re-measure, and unblocking the
+agentic-stratum bot-test re-run (#146).
+
+This task (#149) is **done for its shipped scope**: the byte-cap mitigation. Consider it
+closeable once #152 is filed (it is).
