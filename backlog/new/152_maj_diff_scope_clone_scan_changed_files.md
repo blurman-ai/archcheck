@@ -55,6 +55,23 @@ key — `ruleId` vs `rule` — vacuously 0==0; the divergence only appeared once
 - [ ] Re-measure: how many of the 256 ai-377 / 28 trending blacklisted repos pass after the fix.
 - [ ] Unblocks the agentic-stratum bot-test re-run (#146).
 
+## Caveat for the re-run — a SECOND bottleneck: snapshot read (2026-06-27)
+
+Verified live that the clone scan is **not the only** thing that times out the corpus giants. With the
+shipped byte-cap at default, `tensorflow` (17 059 C++ files) and `opencv` (3 715) still hit ~115 s and
+were killed at **RSS ≈ 35 MB** — i.e. stuck **before** the clone scan, in `readRefSnapshotMemory`
+reading thousands of blobs one-by-one via `git cat-file`. These corpus repos are cloned
+`--no-checkout` + `--filter=blob:none`, so per-file blob access is slow.
+
+This is an **artifact of the corpus clone strategy, not of real CI** — in CI the repo is checked out,
+files are on disk, and the snapshot read is fast (cf. `apache/arrow`, checked out, 21 MB, completes in
+~5 s; the byte-cap demo skips its clone scan → ~1 s). Implication for this task's re-run step: drive
+the agentic-stratum / blacklist re-measure on **checked-out** working trees (or a batched
+`cat-file --batch` blob read), NOT `--diff-mode=memory` over blob:none clones — otherwise the
+snapshot-read wall will mask whether the clone-scope fix actually rescued the repo. The byte-cap demo
+(arrow, cap < tree size → clone skipped, gate intact, 5.3 s → 1.1 s) confirms the clone-scan path
+itself is correctly bounded.
+
 ## Acceptance
 
 Per-commit new-clone scan is O(changed) on a large repo (blazingmq completes < 120 s) AND the emitted
