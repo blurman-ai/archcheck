@@ -10,7 +10,7 @@ This document defines the **schema** `archcheck` validates. It does not yet desc
 
 In the current release `--config`:
 
-- **validates** the whole file (`version`, `modules`, `rules`, `thresholds`) and fails with exit code `2` on a malformed config;
+- **validates** the whole file (`version`, `modules`, `rules`, `thresholds`, `classification`) and fails with exit code `2` on a malformed config;
 - **applies** `thresholds` to the default intrinsic rules (god-header fan-in, chain length, etc.);
 - **parses but does not yet enforce** the module-level `rules` (`layers` / `independence` / `forbidden`) — they are schema-checked, but a violating include will not (yet) fail the build.
 
@@ -41,7 +41,7 @@ rules:
     # type-specific fields below
 ```
 
-The three required top-level keys are `version`, `modules`, `rules`; `thresholds` is an optional fourth (see below). Any other key is a config error (exit code `2`).
+The three required top-level keys are `version`, `modules`, `rules`; `thresholds` and `classification` are optional (see below). Any other key is a config error (exit code `2`).
 
 ### `version`
 
@@ -95,6 +95,22 @@ thresholds:
 - Unknown keys inside `thresholds` are a config error.
 - Defaults when absent: `chain_length: 10`, `god_header_fan_in: 50`, `diff_max_added_lines: 10000`, `diff_max_clone_scan_bytes: 41943040` (40 MiB).
 - `diff_max_clone_scan_bytes` bounds the per-commit new-clone scan, which is a whole-tree pass (the twin of an added clone may live in an unchanged file). Past the cap the advisory is skipped; the **gate** (cycles / god-headers) is unaffected.
+
+### `classification`
+
+Optional map of **additive** overrides for the file/dir classification defaults (which dirs are vendored / test, which paths are generated). Project-specific tokens are layered **on top of** the curated embedded defaults — never a replacement, so a non-standard vendor folder can be excluded without patching the binary.
+
+```yaml
+classification:
+  extra_vendored_dirs: ["housevendor", "imported"]  # excluded like third_party/ (normalized: case & _-space insensitive)
+  extra_test_dirs: ["spec", "acceptance"]            # excluded like test/ (normalized)
+  extra_generated_markers: [".myproto.", "_codegen_"] # path substrings treated as generated, like .pb. / moc_
+```
+
+- Each key is an optional **non-empty list of non-empty strings**; an unknown key inside `classification` or an empty entry is a config error (exit code `2`).
+- `extra_vendored_dirs` / `extra_test_dirs` match a **directory segment** after normalization (lowercased, `_`/`-`/space stripped — `My_Vendor` ≡ `myvendor`). `extra_generated_markers` are lowercased **path substrings**.
+- The curated defaults (`third_party`, `vendor`, `node_modules`, `test`, `.pb.`, `moc_`, …) always apply; these only **add** to them.
+- Applies in the standard check and `--drift-baseline` modes. `--diff` / `--save-graph-baseline` honour the defaults but not yet the overrides (both sides stay on defaults, so no spurious drift) — wiring them is a tracked follow-up.
 
 ## Rule types
 

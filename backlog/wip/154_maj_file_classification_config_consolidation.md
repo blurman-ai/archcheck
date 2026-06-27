@@ -161,11 +161,39 @@ validated against the C++ pinning test, ran over a 205-repo corpus sample:
 Verified: 585/585 tests (incl. 54 drift assertions unchanged), dogfood 0, format/cppcheck/lizard clean.
 Pinning test `tests/unit/rules/area_of_test.cpp` updated to the merged behavior. Not committed (awaiting command).
 
-Still deferred:
-- **`sf9_no_cycles.cpp:86` inline `{.hpp,.hh,.h}`** → `kHeaderExtensions`: **NOT equivalent** (3 vs 8 extensions — adds `.hxx/.ipp/.tpp/.inl/.inc`). Swapping changes `componentStem` behavior. Needs a fixture proving intent → fixture phase.
+### Phase 2 — YAML parameterization (2026-06-27): DONE (additive `classification:` block)
+
+The stated goal: project-specific tokens layered on the curated defaults from `.archcheck.yml`,
+without patching the binary. Delivered:
+- **Mechanism**: a header-only, set-once `ClassificationExtras` registry in `file_classification.h`
+  (default-empty ⇒ zero-config == today's constexpr defaults). The predicates `isVendoredDirName`,
+  `isTestDirName`, `isGeneratedPath` (split into `hasGeneratedSuffix`/`hasGeneratedMarker` to stay
+  under lizard) consult it after the constexpr defaults. This avoids threading a classifier object
+  through the ~10 consumers (the constexpr→runtime tension from the open questions) — a CLI loads
+  config once, so a set-once global fits and keeps the hot-path signatures.
+- **Config + loader**: `config::Classification` struct (`extraVendoredDirs/extraTestDirs/extraGeneratedMarkers`);
+  loader parses the optional `classification:` block (mirror of `thresholds:`), additive `extra_*` keys,
+  unknown key / empty entry → exit 2.
+- **Wiring**: `runCheck` converts `config.classification` → normalized `ClassificationExtras` and calls
+  `setClassificationExtras` once before the scan (covers the standard check + `--drift-baseline`).
+- **Surface decision**: only the user-meaningful lists got a key — vendored dirs, test dirs, generated
+  markers. License/banner phrases, single-file-lib stems, extensions stayed embedded-only (extensions
+  are checked inline in project_files.cpp — a trivial follow-up if a user asks for `.cu` etc.).
+
+Verified: 590/590 tests; **end-to-end proven** (`tests/integration/cli/...config`): a real SF.9 cycle in a
+project-specific `housevendor/` dir gates (exit 1) without config and clears (exit 0, "No violations") with
+`extra_vendored_dirs: [housevendor]`. dogfood 0, coverage PASS (92.3/96.5/57.5), format/cppcheck/lizard clean.
+docs/config_format.md updated. Not committed (awaiting command).
+
+**Phase 2b follow-up (the one remaining gap)**: `--diff` / `--save-graph-baseline` build graphs directly
+(not via runCheck), so they honour the defaults but not yet the `classification:` overrides. Both sides stay
+on defaults ⇒ consistent (no spurious drift), so it is a feature gap, not a correctness bug. Wire config
+discovery into the diff path + a baseline/current-consistency test.
+
+Still deferred (out of Phase 2):
+- **`sf9_no_cycles.cpp:86` inline `{.hpp,.hh,.h}`** → `kHeaderExtensions`: **NOT equivalent** (3 vs 8 extensions). Changes `componentStem` behavior. Needs a fixture proving intent → fixture phase.
 - **`kStdCHeaders`** — reclassified Tier D (FIXED), left in resolver.
-- **`kMirrorPrefixes`** — Phase 2 only.
-- **Phase 2** — the YAML-parameterizable classifier class (the stated goal), the one large remaining piece.
+- **`kMirrorPrefixes`** — consolidate only if it earns a YAML key.
 
 ## Open design questions (decide in the task, do not pre-bake)
 
