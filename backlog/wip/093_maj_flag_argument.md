@@ -2,7 +2,7 @@
 
 **Created:** 2026-06-10
 **Started:** 2026-06-23
-**Status:** wip — `ARG.1.flag_argument_signature` (signatures) shipped (c0f37db, in release 0.1.0); remainder = `ARG.2` (call sites: ≥2 `true`/`false` literals in a single call)
+**Status:** wip — `ARG.1.flag_argument_signature` shipped (c0f37db, release 0.1.0); `ARG.2.boolean_literal_call` (call sites: ≥2 top-level `true`/`false` literals in one call) implemented + tested (this session, uncommitted). Remainder: decide whether to keep ARG as diff-only or also wire into check-mode (currently diff-only, same as ARG.1).
 **Module:** SCAN / DIFF / REPORT
 **Priority:** major
 **Complexity:** medium
@@ -152,7 +152,17 @@ Required checks:
 
 ## Done
 
-- (empty)
+- ARG.1 (signatures) — shipped c0f37db, release 0.1.0.
+- ARG.2 (call sites) — `detectBooleanLiteralCalls` in [src/scan/flag_argument_scan.cpp](../../src/scan/flag_argument_scan.cpp):
+  candidate = `id` directly followed by `(`; count top-level `true`/`false` literals
+  via `()[]{}` depth (NOT `<>` — comparison-ambiguous in args); fire at `>= 2`.
+  Control headers (keywords, not `id`) and function-definition parameter parens
+  (ARG.1's territory) are excluded. Rides the same diff-mode added-line filter in
+  `collectFlagArguments`. Unit tests in [tests/flag_argument_scan_test.cpp](../../tests/flag_argument_scan_test.cpp)
+  (two-literal fires, single-literal silent, control header silent, nested-call
+  silent, definition default-args → ARG.1 not ARG.2, qualified call fires).
+  Verified live: `configure(true, false)` on an added line → `ARG.2.boolean_literal_call`.
+  580/580 tests, dogfood 0, lizard clean. **Not committed.**
 
 ## In progress
 
