@@ -93,4 +93,6 @@ a cycle. The thesis in one PR.
 - [x] **Invert:** corpus gate-drift commits → PRs → bot review → 38 AI-reviewed drift PRs, ~36 no
       structural engagement, 0 blocked, all merged. Eye-checked, denominator TP-verified.
 - [ ] Fold in the ai-377 agentic stratum (computing) → combined table in the research doc.
-- [ ] Bright cases → showcase/demo (#123) — SPECFEMPP#943 is the lead candidate.
+- [x] Bright case → showcase/demo (#123): `experiments/showcase/006_cycle_specfempp_bot_blindspot.md`
+      — SPECFEMPP#943, AI reviewer said "cut circular includes" + 0 comments + merged, archcheck found
+      a new 7-header cycle. Verbatim bot quote, hand-traced cycle, reproduce command.
