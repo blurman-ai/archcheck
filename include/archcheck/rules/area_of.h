@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "archcheck/scan/file_classification.h"
+
 namespace archcheck::rules
 {
 
@@ -20,44 +22,33 @@ inline const std::unordered_set<std::string> &wrapperDirs()
   return kDirs;
 }
 
-inline const std::unordered_set<std::string> &noiseDirs()
-{
-  static const std::unordered_set<std::string> kDirs = {"build",
-                                                        "_build",
-                                                        "out",
-                                                        "cmake-build-debug",
-                                                        "cmake-build-release",
-                                                        "vendor",
-                                                        "third_party",
-                                                        "thirdparty",
-                                                        "external",
-                                                        "externals",
-                                                        "_deps",
-                                                        "extern",
-                                                        "test",
-                                                        "tests",
-                                                        "testing",
-                                                        "examples",
-                                                        "example",
-                                                        "generated",
-                                                        "node_modules",
-                                                        "contrib",
-                                                        "mock",
-                                                        "mocks"};
-  return kDirs;
-}
-
 inline std::string lowerStr(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
   return s;
 }
 
-// Build/test scaffolding segment — not a real module boundary.
+// area_of-specific scaffolding dirs that are not a module boundary but are NOT
+// scan-exclusions either (examples/, mock/, generated/ are still scanned, so they
+// have no home in file_classification.h). The vendored / test / build-output dirs
+// are delegated to the canonical predicates below so the two lists cannot drift
+// (#154). For files that reach the graph this delegation is a verified no-op —
+// authored_scope already drops vendored/test via the same predicates (measured:
+// 0/100427 authored corpus files change areaOf) — it only matters when areaOf is
+// called on a raw path.
+inline bool isAreaExtraNoise(const std::string &lower)
+{
+  static const std::unordered_set<std::string> kExtras = {"_build", "testing", "examples", "example", "generated"};
+  return kExtras.count(lower) != 0; // mock/mocks handled by the "mock" prefix below
+}
+
+// Build/test/vendor scaffolding segment — not a real module boundary.
 inline bool isNoiseSeg(const std::string &seg)
 {
   const std::string l = lowerStr(seg);
-  if (noiseDirs().count(l))
+  if (scan::isExcludedDirName(l) || scan::isVendoredDirName(l) || scan::isTestDirName(l))
+    return true;
+  if (isAreaExtraNoise(l))
     return true;
   if (l.rfind("build_", 0) == 0 || l.rfind("build-", 0) == 0 || l.rfind("mock", 0) == 0)
     return true;
