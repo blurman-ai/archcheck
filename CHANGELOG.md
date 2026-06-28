@@ -8,6 +8,14 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.1.2] - 2026-06-28
+
+### Added
+
 - **`--diff` suppresses grown-cycle artifacts of a mass include move** — a commit that
   `git mv`s files re-paths any pre-existing cycle, and because SCC membership is keyed on
   path, the re-pathed cycle surfaced as a brand-new gating regression (~19% of `--diff`
