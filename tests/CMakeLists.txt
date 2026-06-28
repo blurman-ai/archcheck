@@ -83,6 +83,7 @@ add_executable(archcheck_tests
    unit/rules/sf9_no_cycles_test.cpp
    integration/diff/git_diff_test.cpp
    integration/diff/diff_workflow_e2e_test.cpp
+   integration/diff/new_clone_fixtures_test.cpp
    integration/cli/cli_smoke_e2e_test.cpp
    integration/rules/drift_fixtures_test.cpp
    unit/config/test_loader.cpp

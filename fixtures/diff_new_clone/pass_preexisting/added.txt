@@ -1,0 +1,4 @@
+# Lines this commit added in the new tree, as <path>:<start>-<end>.
+# copy.cpp was only reformatted; the orig.cpp<->copy.cpp clone already existed
+# in the parent, so the parent-guard must keep this silent.
+copy.cpp:1-16
