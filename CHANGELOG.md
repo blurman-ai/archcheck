@@ -8,7 +8,25 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- **`--diff` suppresses grown-cycle artifacts of a mass include move** — a commit that
+  `git mv`s files re-paths any pre-existing cycle, and because SCC membership is keyed on
+  path, the re-pathed cycle surfaced as a brand-new gating regression (~19% of `--diff`
+  cycle-fires on mass include-rewrites: coal 252 files, allwpilib 2477). A grown cycle whose
+  *every* member is a freshly-renamed path is now dropped as a rename artifact; a cycle that
+  mixes moved and unmoved files (a genuine new edge) still gates. Reported as a `note:` in
+  text mode and `advisory.rename_suppressed_cycles` in JSON. (#133)
+
 ### Changed
+
+- **Plain check mode gates (exit 1) only on dependency cycles (SF.9)** — physical-design
+  proxies (`Lakos.ChainLength` deep include chains, `Lakos.GodHeader` fan-in) and per-file
+  hygiene (SF.7/SF.8) are now reported but **advisory** (exit 0). A naive first `archcheck
+  <repo>` on header-heavy libraries flooded the gate with chain-length noise (abseil: 211
+  chain-length findings, exit 1), drowning the precise signals and miscommunicating that
+  existing debt is a CI failure — that debt belongs behind `--baseline`, not a hard exit.
+  This shifts the check-mode exit code from "1 = any violation" to "1 = a cycle"; the JSON
+  report carries a per-finding `disposition` (`gating`/`advisory`). Mirrors the `--diff`
+  gate model. (#133)
 
 ### Fixed
 

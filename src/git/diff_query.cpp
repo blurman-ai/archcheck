@@ -193,4 +193,27 @@ std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const
   return parseNumstatOutput(run.out);
 }
 
+std::vector<std::string> collectRenamedPaths(const std::filesystem::path &repoRoot, const std::string &baselineRef,
+                                             const std::string &currentRef)
+{
+  // --find-renames forces rename detection regardless of the user's diff.renames
+  // config; --diff-filter=R --name-only then prints one new-side path per rename.
+  std::vector<std::string> args{"diff", "--no-ext-diff", "--find-renames", "--diff-filter=R", "--name-only"};
+  args.push_back(baselineRef);
+  if (currentRef != kWorktreeRef)
+    args.push_back(currentRef);
+
+  const auto run = runGit(args, repoRoot);
+  if (run.exitCode != 0)
+    return {};
+
+  std::vector<std::string> result;
+  std::istringstream iss{run.out};
+  std::string line;
+  while (std::getline(iss, line))
+    if (!line.empty())
+      result.push_back(line);
+  return result;
+}
+
 } // namespace archcheck::git

@@ -267,4 +267,19 @@ void writeTextReport(const RegressionReport &r, std::ostream &out)
   out << "\ngate: " << (r.gates() ? "fail" : "ok") << " (gating: cycles, god-headers)\n";
 }
 
+std::size_t dropRenameArtifactCycles(RegressionReport &r, const std::unordered_set<std::string> &renamedNewPaths)
+{
+  if (renamedNewPaths.empty())
+    return 0;
+  auto &v = r.grownCycles;
+  const auto before = v.size();
+  const auto allRenamed = [&](const GrownCycle &c)
+  {
+    return !c.members.empty() && std::all_of(c.members.begin(), c.members.end(),
+                                             [&](const std::string &m) { return renamedNewPaths.count(m) != 0; });
+  };
+  v.erase(std::remove_if(v.begin(), v.end(), allRenamed), v.end());
+  return before - v.size();
+}
+
 } // namespace archcheck::diff

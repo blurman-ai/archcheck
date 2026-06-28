@@ -161,6 +161,35 @@ TEST_CASE("git diff: PR that closes a cycle → grownCycles is non-empty", "[dif
   REQUIRE(report.hasRegression());
 }
 
+TEST_CASE("git diff: a mass include move re-paths a pre-existing cycle, suppressed as a rename artifact (#133)",
+          "[diff][git][integration][rename]")
+{
+  TempDir repo;
+  initRepo(repo.path);
+  // Pre-existing cycle a.h <-> b.h in the baseline (legacy debt, NOT new).
+  writeFile(repo.path / "a.h", "#include \"b.h\"\n");
+  writeFile(repo.path / "b.h", "#include \"a.h\"\n");
+  commitAll(repo.path, "baseline with an existing a<->b cycle");
+  // Move both files into lib/ unchanged — the relative includes still resolve, so
+  // the cycle persists, but under new paths it looks brand-new to a path-keyed SCC diff.
+  fs::create_directories(repo.path / "lib");
+  REQUIRE(runIn(repo.path, "git mv a.h lib/a.h && git mv b.h lib/b.h") == 0);
+  commitAll(repo.path, "move the cyclic pair into lib/");
+
+  auto report = diffRefs(repo.path, "HEAD~1", "HEAD");
+  REQUIRE(report.grownCycles.size() == 1); // the re-path artifact
+  REQUIRE(report.gates());
+
+  const auto renamed = archcheck::git::collectRenamedPaths(repo.path, "HEAD~1", "HEAD");
+  REQUIRE(std::find(renamed.begin(), renamed.end(), "lib/a.h") != renamed.end());
+  REQUIRE(std::find(renamed.begin(), renamed.end(), "lib/b.h") != renamed.end());
+
+  const std::size_t dropped = archcheck::diff::dropRenameArtifactCycles(report, {renamed.begin(), renamed.end()});
+  REQUIRE(dropped == 1);
+  REQUIRE(report.grownCycles.empty());
+  REQUIRE_FALSE(report.gates()); // the legacy cycle no longer fails the run
+}
+
 TEST_CASE("git diff: first cross-area dependency is reported as a new area pair", "[diff][git][integration]")
 {
   TempDir repo;

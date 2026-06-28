@@ -34,6 +34,13 @@ struct NumStat
 [[nodiscard]] std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const std::string &baselineRef,
                                                   const std::string &currentRef);
 
+// New-side paths of files git detects as renamed between the two refs (-M rename
+// detection). A mass include move re-paths pre-existing cycles, which the diff
+// layer suppresses as grown-cycle artifacts. Empty on git failure. (#133)
+[[nodiscard]] std::vector<std::string> collectRenamedPaths(const std::filesystem::path &repoRoot,
+                                                           const std::string &baselineRef,
+                                                           const std::string &currentRef);
+
 // Total added lines of a diff — the bulk-import gate for advisories (#117):
 // a diff adding more than thresholds.diff_max_added_lines is a source drop,
 // not authored evolution.

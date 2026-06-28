@@ -6,7 +6,10 @@
 #include "archcheck/graph/dependency_graph.h"
 
 using archcheck::diff::buildRegressionReport;
+using archcheck::diff::dropRenameArtifactCycles;
+using archcheck::diff::GrownCycle;
 using archcheck::diff::MetricThresholds;
+using archcheck::diff::RegressionReport;
 using archcheck::diff::writeTextReport;
 using archcheck::graph::DependencyGraph;
 using archcheck::graph::NodeId;
@@ -36,6 +39,34 @@ TEST_CASE("buildRegressionReport: no diff → empty, no regression", "[diff][rep
   REQUIRE(r.removedEdges.empty());
   REQUIRE(r.grownCycles.empty());
   REQUIRE_FALSE(r.hasRegression());
+}
+
+TEST_CASE("dropRenameArtifactCycles: a fully-renamed cycle is suppressed", "[diff][report][rename]")
+{
+  RegressionReport r;
+  r.grownCycles.push_back(GrownCycle{{"lib/a.h", "lib/b.h"}, 0, 2});
+  const std::size_t dropped = dropRenameArtifactCycles(r, {"lib/a.h", "lib/b.h"});
+  REQUIRE(dropped == 1);
+  REQUIRE(r.grownCycles.empty());
+  REQUIRE_FALSE(r.gates());
+}
+
+TEST_CASE("dropRenameArtifactCycles: a cycle with an unmoved member is kept", "[diff][report][rename]")
+{
+  RegressionReport r;
+  r.grownCycles.push_back(GrownCycle{{"lib/a.h", "src/b.h"}, 0, 2}); // src/b.h not renamed
+  const std::size_t dropped = dropRenameArtifactCycles(r, {"lib/a.h"});
+  REQUIRE(dropped == 0);
+  REQUIRE(r.grownCycles.size() == 1);
+  REQUIRE(r.gates()); // a genuine new edge among the moved files still gates
+}
+
+TEST_CASE("dropRenameArtifactCycles: no renamed paths is a no-op", "[diff][report][rename]")
+{
+  RegressionReport r;
+  r.grownCycles.push_back(GrownCycle{{"lib/a.h", "lib/b.h"}, 0, 2});
+  REQUIRE(dropRenameArtifactCycles(r, {}) == 0);
+  REQUIRE(r.grownCycles.size() == 1);
 }
 
 TEST_CASE("buildRegressionReport: shortcut edge a->c is reported as added", "[diff][report]")

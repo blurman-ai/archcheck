@@ -4,6 +4,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "archcheck/graph/dependency_graph.h"
@@ -81,6 +82,14 @@ struct RegressionReport
 
 RegressionReport buildRegressionReport(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current,
                                        MetricThresholds thresholds = {});
+
+// Drop grown cycles that are pure artifacts of a file rename. A pre-existing
+// cycle re-pathed by `git mv` (a mass include move) reappears as a brand-new SCC
+// because membership is keyed on path; when *every* member of a grown cycle is a
+// freshly-renamed path the cycle is a re-path, not a new architectural regression.
+// A cycle that mixes renamed and unmoved files (a genuine new edge) is kept.
+// Returns the number of cycles removed. (#133)
+std::size_t dropRenameArtifactCycles(RegressionReport &r, const std::unordered_set<std::string> &renamedNewPaths);
 
 void writeTextReport(const RegressionReport &r, std::ostream &out);
 

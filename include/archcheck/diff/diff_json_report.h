@@ -21,6 +21,9 @@ struct DiffJsonContext
   // advisories for this diff; lets JSON consumers tell a skipped zero from a
   // genuinely clean zero. 0 = not skipped.
   std::size_t complexitySkippedAddedLines = 0;
+  // Grown cycles dropped as rename artifacts of a mass include move (#133): a
+  // re-pathed pre-existing cycle, not a new regression. 0 = none suppressed.
+  std::size_t renameSuppressedCycles = 0;
 };
 
 // Stable JSON document for `--diff --format=json`. Schema version 1:

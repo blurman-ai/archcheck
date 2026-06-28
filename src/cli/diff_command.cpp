@@ -310,11 +310,12 @@ std::optional<DiffConfig> loadDiffThresholds(const std::filesystem::path &repoRo
 }
 
 int emitJsonDiff(const archcheck::diff::RegressionReport &report, DiffAdvisories advisories,
-                 const archcheck::git::Revspec &parsed)
+                 const archcheck::git::Revspec &parsed, std::size_t renameSuppressed)
 {
   const std::size_t skipped = advisories.complexitySkippedAddedLines;
   archcheck::diff::writeJsonReport(
-      report, {parsed.baseline, parsed.current, flattenAdvisories(std::move(advisories)), skipped}, std::cout);
+      report, {parsed.baseline, parsed.current, flattenAdvisories(std::move(advisories)), skipped, renameSuppressed},
+      std::cout);
   return report.gates() ? 1 : 0;
 }
 
@@ -345,6 +346,7 @@ struct DiffGraph
   std::size_t baselineNodes = 0;
   std::size_t currentNodes = 0;
   bool ok = true;
+  std::size_t renameSuppressed = 0; // grown cycles dropped as mass-rename artifacts (#133)
 };
 
 // Memory mode reuses the advisory snapshots (#129 read-once: both trees were already
@@ -374,6 +376,17 @@ DiffGraph buildDiffGraph(const std::filesystem::path &repoRoot, const archcheck:
           current.graph.nodeCount(), true};
 }
 
+// A mass include move re-paths pre-existing cycles into phantom "new" SCCs; drop
+// the ones whose every member was renamed in this diff (#133).
+void applyRenameArtifactGuard(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed,
+                              DiffGraph &graph)
+{
+  if (graph.report.grownCycles.empty())
+    return;
+  const auto renamed = archcheck::git::collectRenamedPaths(repoRoot, parsed.baseline, parsed.current);
+  graph.renameSuppressed = archcheck::diff::dropRenameArtifactCycles(graph.report, {renamed.begin(), renamed.end()});
+}
+
 void printDiffText(const archcheck::git::Revspec &parsed, DiffMode mode, bool bulk, const DiffGraph &graph,
                    const DiffAdvisories &advisories)
 {
@@ -386,6 +399,9 @@ void printDiffText(const archcheck::git::Revspec &parsed, DiffMode mode, bool bu
   else
     std::cout << "baseline_nodes: " << graph.baselineNodes << '\n' << "current_nodes:  " << graph.currentNodes << '\n';
   archcheck::diff::writeTextReport(graph.report, std::cout);
+  if (graph.renameSuppressed > 0)
+    std::cout << "\nnote: " << graph.renameSuppressed
+              << " grown cycle(s) suppressed as rename artifacts of a mass include move (#133)\n";
   printDiffAdvisories(advisories);
 }
 
@@ -398,11 +414,10 @@ int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git:
   if (!baselineResolves(repoRoot, parsed.baseline))
     return 2;
 
-  // Advisories first: they compute the bulk-import signal (#117). A bulk import is
-  // not the project's authored evolution (vendored / generated / "committed as-is,
-  // fix later" / not even the author's code), so block-gating a merge over its graph
-  // is unfair and noisy. Skip the graph checks (gating AND drift) on bulk commits,
-  // as clone/complexity already do — archcheck's job is slow incremental drift. (#124)
+  // Advisories first: they compute the bulk-import signal (#117). A bulk import is not
+  // authored evolution (vendored / generated / "committed as-is, fix later"), so gating a
+  // merge over its graph is unfair and noisy — skip the graph checks (gating AND drift) on
+  // bulk commits, as clone/complexity already do; archcheck's job is slow drift. (#124)
   auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines, thresholds->maxCloneScanBytes);
   const bool bulk = advisories.complexitySkippedAddedLines > 0;
 
@@ -412,10 +427,11 @@ int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git:
     graph = buildDiffGraph(repoRoot, parsed, mode, thresholds->metric, advisories);
     if (!graph.ok)
       return 2;
+    applyRenameArtifactGuard(repoRoot, parsed, graph);
   }
 
   if (format == OutputFormat::Json)
-    return emitJsonDiff(graph.report, std::move(advisories), parsed);
+    return emitJsonDiff(graph.report, std::move(advisories), parsed, graph.renameSuppressed);
   printDiffText(parsed, mode, bulk, graph, advisories);
   return graph.report.gates() ? 1 : 0;
 }

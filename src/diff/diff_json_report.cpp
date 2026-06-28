@@ -95,6 +95,7 @@ void writeJsonReport(const RegressionReport &r, const DiffJsonContext &ctx, std:
   else
     out << "null";
   out << ",\n    \"complexity_skipped_added_lines\": " << ctx.complexitySkippedAddedLines;
+  out << ",\n    \"rename_suppressed_cycles\": " << ctx.renameSuppressedCycles;
   out << ",\n    \"violations\": ";
   writeViolations(ctx.advisoryViolations, out);
   out << "\n  }\n}\n";
