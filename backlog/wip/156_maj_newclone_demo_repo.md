@@ -49,6 +49,27 @@ The control set and ground truth already exist:
 
 ## Done
 
+**LIVE (2026-06-28):** the demo is published at **https://github.com/blurman-ai/archcheck-demo**
+— a public merge-accumulate showcase. **PRs #1–#14**, all CI green, run against released **v0.1.3**:
+N1–N5 silent (#1–5); P1–P5 fire EXACT/whole/renamed `DRIFT.NEW_CLONE` (#6–10); **S1–S4 fire
+STRUCTURAL** — partial / Type-3 copies (inserted line, inserted block, one token changed, extra
+trailing logic) (#11–14). P4/P5 demonstrate detection of copy-paste of code already duplicated
+earlier in the accumulated history (the bug fixed below). **PR comments are markdown** (`--format=md`,
+#157): a gate-summary header, the findings as a bullet list with **clickable links** to each
+`file:line` at the head commit, structural diff folded into `<details>`. (#157 done — clickable
+findings + `<details>` shipped in v0.1.3, not deferred.) Driver:
+`experiments/clone_gate_demo_156/run_accumulate.py --mode live` (negatives-first order keeps
+the labels clean under accumulation; the workflow diffs the PR event's explicit
+`base.sha..head.sha` with `fetch-depth: 0`, not `origin/main..HEAD`, which breaks under a
+moving main + PR merge-ref).
+
+**Scanner bug found + fixed via this demo (shipped in v0.1.2):** the `DRIFT.NEW_CLONE`
+parent-guard keyed clone pairs by content only, so a freshly pasted copy of code already
+duplicated elsewhere was suppressed (real copy-paste missed). Fix = location-aware fragment
+key (`src/scan/new_clone_drift.cpp`), pinned by a regression test, FP-gated on a 250-repo /
+2029-commit before/after probe (+6% firings, same precision class). Commits 7559ea5 (fix) +
+c960e6c (release). See JOURNEY 2026-06-28 entries.
+
 In-repo reproducible demo assets built and verified locally (2026-06-28), under
 `experiments/clone_gate_demo_156/`:
 
