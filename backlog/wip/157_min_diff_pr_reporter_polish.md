@@ -40,10 +40,12 @@ Lean (a) for a real product surface; (b) is the cheap stopgap the demo can carry
 - [x] Decide (a) tool-side `--format=md` vs (b) workflow-side — chose **(a)**.
 - [x] **Code-fence** the raw report block (`writeTextReport` wrapped in ` ``` `).
 - [x] **One-line summary header** with gate emoji + primary violation count.
-- [x] `text`/`json` unchanged; `md` added; 3 unit tests pinned (pass/advisory/fail states).
+- [x] `text`/`json` unchanged; `md` added; unit tests pinned (pass/advisory/fail + link states).
 - [x] Demo workflow updated to use `--format=md` for the sticky PR comment.
-- [ ] **Clickable findings** — deferred; needs GitHub context (repo URL + head SHA) not available to the tool.
-- [ ] Optional: `<details>` collapse — may add in v0.2 when the output grows.
+- [x] **Clickable findings** — DONE: md now renders the advisory findings as a bullet list, and
+      each `file:line` links to that line at the head commit (`{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}/blob/<currentSha>/file#Lline`).
+      Context comes from the env GitHub Actions always sets; off-CI it falls back to plain code spans.
+- [x] **`<details>` collapse** — DONE: structural metadata folded into `<details>`, findings on top.
 
 ## Done
 
@@ -54,18 +56,31 @@ Lean (a) for a real product surface; (b) is the cheap stopgap the demo can carry
 
 ## Next steps
 
-1. Pick (a) vs (b).
-2. If (a), add the reporter alongside `text_reporter`/`json_reporter` (one file + factory line);
-   if (b), edit `experiments/clone_gate_demo_156/templates/archcheck-pr.yml`.
+- Ready to close after v0.1.3 ships and the demo is re-run on it (the demo workflow uses
+  `--format=md`, so PR comments show the summary + clickable findings).
+- Possible v0.2 nicety (not blocking): link the *source* span (`clone of <file>:<a>-<b>`) too,
+  and switch from blob links to PR-diff-anchor links when the diff anchor is derivable.
 
 ## Key decisions
 
 | Decision | Reason |
 |---------|---------|
+| tool-side `--format=md`, not workflow dressing | reusable by any user; testable; matches "reporter = one file" pattern |
 | polish the comment, not the inline annotations | annotations already match the industry standard (#156 comparison); the comment is the weak surface |
 | advisory-only framing in the header | matches shipped behaviour — `DRIFT.NEW_CLONE` does not gate (v0.2 decision #103/#124) |
+| clickable findings deferred | tool has no access to GitHub context at runtime |
 
-## Fixtures (if a rule)
+## Commit
 
-- n/a — a reporter, not a rule. If done tool-side (a), pin the rendered markdown with reporter
-  fixtures (0-finding pass + ≥1-finding fail).
+`7f8820f` feat(report): add --format=md for --diff; markdown PR comment (#157)
+
+## Changed files
+
+- `include/archcheck/diff/md_report.h` (new)
+- `src/diff/md_report.cpp` (new)
+- `src/cli/check_command.h` — `OutputFormat::Markdown` added
+- `src/main.cpp` — `--format=md` parsed
+- `src/cli/diff_command.cpp` — Markdown branch in `runDiffFullPath`
+- `src/CMakeLists.txt` — `md_report.cpp` registered
+- `tests/unit/diff/regression_report_test.cpp` — 3 `[md_report]` tests added
+- `tests/unit/scan/new_clone_drift_test.cpp` — pre-existing clang-format fixed

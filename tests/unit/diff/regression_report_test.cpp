@@ -392,3 +392,34 @@ TEST_CASE("writeMdReport: grown cycle → fail icon", "[diff][md_report]")
   REQUIRE(s.find("grown cycle(s)") != std::string::npos);
   REQUIRE(s.find("gate: fail") != std::string::npos);
 }
+
+TEST_CASE("writeMdReport: advisory findings render as clickable links when linkBase is set", "[diff][md_report]")
+{
+  const auto r = buildRegressionReport(chain_abc(), chain_abc()); // clean structure
+  archcheck::rules::ViolationList advisories;
+  advisories.push_back({"DRIFT.NEW_CLONE", "socket.c", 517, "copy-paste introduced (EXACT): clone of net.c:1-6"});
+
+  std::ostringstream out;
+  writeMdReport(r, advisories, "https://github.com/o/r/blob/abc123/", out);
+  const auto s = out.str();
+  REQUIRE(s.find("### Findings (advisory)") != std::string::npos);
+  // file:line is a markdown link to the blob URL at the given line anchor
+  REQUIRE(s.find("[`socket.c:517`](https://github.com/o/r/blob/abc123/socket.c#L517)") != std::string::npos);
+  REQUIRE(s.find("DRIFT.NEW_CLONE") != std::string::npos);
+  REQUIRE(s.find("1 advisory finding(s)") != std::string::npos);
+  // structural metadata folded away
+  REQUIRE(s.find("<details>") != std::string::npos);
+}
+
+TEST_CASE("writeMdReport: without linkBase findings are plain code spans", "[diff][md_report]")
+{
+  const auto r = buildRegressionReport(chain_abc(), chain_abc());
+  archcheck::rules::ViolationList advisories;
+  advisories.push_back({"DRIFT.NEW_CLONE", "a.c", 9, "x"});
+
+  std::ostringstream out;
+  writeMdReport(r, advisories, "", out);
+  const auto s = out.str();
+  REQUIRE(s.find("`a.c:9`") != std::string::npos);
+  REQUIRE(s.find("](") == std::string::npos); // no markdown link
+}

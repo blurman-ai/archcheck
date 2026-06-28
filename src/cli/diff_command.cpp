@@ -1,5 +1,6 @@
 #include "cli/diff_command.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -279,6 +280,19 @@ archcheck::rules::ViolationList flattenAdvisories(DiffAdvisories a)
   return all;
 }
 
+// GitHub blob-URL prefix for clickable findings, e.g.
+// https://github.com/owner/repo/blob/<currentSha>/  — built from the env GitHub Actions
+// always sets. Empty outside CI ⇒ the markdown reporter falls back to plain code spans.
+std::string githubLinkBase(const std::string &currentRef)
+{
+  const char *repo = std::getenv("GITHUB_REPOSITORY");
+  if (repo == nullptr || *repo == '\0')
+    return {};
+  const char *server = std::getenv("GITHUB_SERVER_URL");
+  const std::string base = (server != nullptr && *server != '\0') ? server : "https://github.com";
+  return base + "/" + repo + "/blob/" + currentRef + "/";
+}
+
 // Config-derived knobs of the diff path: graph metric thresholds plus the
 // bulk-import gate for advisories (#117).
 struct DiffConfig
@@ -317,6 +331,14 @@ int emitJsonDiff(const archcheck::diff::RegressionReport &report, DiffAdvisories
   archcheck::diff::writeJsonReport(
       report, {parsed.baseline, parsed.current, flattenAdvisories(std::move(advisories)), skipped, renameSuppressed},
       std::cout);
+  return report.gates() ? 1 : 0;
+}
+
+int emitMarkdownDiff(const archcheck::diff::RegressionReport &report, DiffAdvisories advisories,
+                     const archcheck::git::Revspec &parsed)
+{
+  archcheck::diff::writeMdReport(report, flattenAdvisories(std::move(advisories)), githubLinkBase(parsed.current),
+                                 std::cout);
   return report.gates() ? 1 : 0;
 }
 
@@ -415,13 +437,10 @@ int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git:
   if (!baselineResolves(repoRoot, parsed.baseline))
     return 2;
 
-  // Advisories first: they compute the bulk-import signal (#117). A bulk import is not
-  // authored evolution (vendored / generated / "committed as-is, fix later"), so gating a
-  // merge over its graph is unfair and noisy — skip the graph checks (gating AND drift) on
-  // bulk commits, as clone/complexity already do; archcheck's job is slow drift. (#124)
+  // Advisories first: they compute the bulk-import signal (#117). A bulk import isn't authored
+  // evolution, so skip graph checks (gating AND drift) on it — unfair/noisy, archcheck's job is slow drift (#124).
   auto advisories = collectDiffAdvisories(repoRoot, parsed, thresholds->maxAddedLines, thresholds->maxCloneScanBytes);
   const bool bulk = advisories.complexitySkippedAddedLines > 0;
-
   DiffGraph graph; // bulk ⇒ stays empty (no gating, no drift)
   if (!bulk)
   {
@@ -434,10 +453,7 @@ int runDiffFullPath(const std::filesystem::path &repoRoot, const archcheck::git:
   if (format == OutputFormat::Json)
     return emitJsonDiff(graph.report, std::move(advisories), parsed, graph.renameSuppressed);
   if (format == OutputFormat::Markdown)
-  {
-    archcheck::diff::writeMdReport(graph.report, std::cout);
-    return graph.report.gates() ? 1 : 0;
-  }
+    return emitMarkdownDiff(graph.report, std::move(advisories), parsed);
   printDiffText(parsed, mode, bulk, graph, advisories);
   return graph.report.gates() ? 1 : 0;
 }

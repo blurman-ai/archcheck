@@ -8,6 +8,14 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- **`--diff --format=md` — GitHub-ready markdown PR comment** — alongside `text`/`json`, the
+  diff can now emit a markdown report tuned for a sticky PR comment: a gate-summary header
+  (advisory count + gate state), the advisory findings (new-clone, SATD, …) as a bullet list,
+  and the structural diff folded into a `<details>` code block. When run under GitHub Actions
+  (`GITHUB_REPOSITORY`/`GITHUB_SERVER_URL` present) each finding's `file:line` is rendered as a
+  **clickable link** to that line at the head commit, so a reviewer clicks straight to the
+  copy-paste. Falls back to plain code spans off-CI. (#157)
+
 ### Changed
 
 ### Fixed
