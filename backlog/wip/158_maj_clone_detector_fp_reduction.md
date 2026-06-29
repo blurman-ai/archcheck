@@ -196,6 +196,7 @@ All levers swept on the Group-3 labelled corpus from the committed high-recall c
 | weighted 0.65 + rare2 | 40.7% | 70.4% | −7 TP | worst recall |
 | contiguous-run ≥3/4/5 | 45.0/42.1/40.7% | 69.2/70.2/69.5% | −1/−5/−7 TP | ~1:1, no separation |
 | **switch-skeleton stop** | **45.7%** | **69.6%** | **0 TP** | **clean — SHIPPED `b91fe32`** |
+| rare-shared-LINES ≥2/3 (dfCap3) | 44.3/42.1% | 69.7/68.6% | −2/−5 TP | WORSE than 1:1 — reverted |
 
 **Finding.** The three numeric knobs (rare-anchor, weighted floor) and the contiguous-run
 measure all trade ~1 real catch per FP removed — they cannot separate a coincidental scaffold
@@ -204,12 +205,24 @@ discriminator is not the run's length/shape but its **content**: skeleton vs sub
 Excluding switch-skeleton lines (`case X:`/`break;`/`default:`/`switch(...)`) from the run
 measure is the only lever that removed FP at **zero recall cost** — shipped.
 
-**Still open in D:** the SEQUENTIAL-scaffold idioms (SQL `ensureTables`, TFT slider draws,
-struct-field-assign blocks, graphillion BDD-iterator skeletons) share substantive-looking
-lines, so the skeleton stop doesn't touch them. A content-substance weighting beyond `switch`
-(e.g. down-weight any line that is a pure library-call idiom) is the next candidate — needs
-its own measurement, same harness. The numeric knobs are documented as NOT worth their recall
-cost for the research corpus; revisit only for a precision-first shipped default.
+**Sequential-scaffold idioms (SQL `ensureTables`, TFT slider draws, struct-assign blocks,
+graphillion BDD iterators) — line-rarity tried and REVERTED.** Hypothesis: a real copy shares
+project-RARE lines; a scaffold shares only common ones. Implemented per-line document frequency
+(CloneIndex.lineDf) + a run-path gate requiring ≥K shared lines with lineDf≤3. Measured: a WORSE
+than 1:1 trade (≥2 → −2 TP / −1 FP). Row-level: it killed 1 real idiom FP (tasksmack Gpu/Network
+panels) but also 2 labelled TP — bylins/mud SQL data-source copy AND graphillion zdd iterator
+(corpus-labelled TP, though arguably the recursion→iteration recipe). **Why it fails:** rarity is
+repo-relative, same wall as the rare-TOKEN anchor (#131 df≤12 leak). A real copy's surviving
+shared lines are often themselves ceremony (the specifics got edited, or live in a family of
+similar code where they aren't rare). Rarity — token or line — does NOT separate; the only clean
+lever was switch-skeleton (UNIVERSAL, content-free keywords).
+
+**Conclusion for D.** Clean precision wins come from universal non-specificity (the `switch`
+skeleton), not from rarity (always repo-relative) or run geometry (length/contiguity — scaffolds
+are long contiguous blocks). Remaining idiom classes need a different idea (a curated stop-list of
+library-ceremony lines is brittle/library-specific; an AST/semantic signal is out of v0.1 scope).
+Numeric knobs documented as not worth their recall cost. D is effectively closed: one clean lever
+shipped, the rest are dominated.
 
 ---
 
