@@ -39,7 +39,11 @@ struct ScannerOptions
   // table — recovers Type-3 edited copies (insert/delete deflates the ratio but not
   // the absolute run) without admitting framework idioms (no rare anchor). 0 disables.
   std::size_t jointMinSharedLines = 6;
-  std::size_t jointMinSharedRare = 2;
+  std::size_t jointMinSharedRare = 0;        // run-path needs this many shared anchors (0 disables)
+  std::size_t jointAnchorDfCap = 12;         // a token shared by both AND in <= this many fragments is a
+                                             // project anchor; framework idioms (Qt/STL) exceed it -> no anchor
+  double jointRunWeightedThreshold = 0.60;   // run-path weighted floor: edits dilute the bag below
+                                             // jointWeightedThreshold, so a strong line-run uses a lower bound
   bool enableP1Guards = true;           // P1: enable classifier filters (data-table, boilerplate, header-impl, IDF)
   bool enablePathGuards = true;         // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
   bool enableWholeFileGuard = true;     // P0.2: count whole-file clones separately, drop their pairs

@@ -43,8 +43,9 @@ std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragment
     p.weighted = weightedJaccard(allFragments[p.a], allFragments[p.b], index.idf);
     p.plain = plainJaccard(allFragments[p.a], allFragments[p.b]);
     p.line = lineOverlap(allFragments[p.a], allFragments[p.b]);
-    p.sharedLines = sharedLineCount(allFragments[p.a], allFragments[p.b]);
-    p.sharedRare = sharedRareCount(allFragments[p.a], allFragments[p.b], index.df, opts.indexOpts.rareDfCap);
+    // Ordered line-LCS: a real edited copy keeps a long run; an idiom shares scattered lines.
+    p.sharedLines = lcsLength(allFragments[p.a].normLineSeq, allFragments[p.b].normLineSeq);
+    p.sharedRare = sharedRareCount(allFragments[p.a], allFragments[p.b], index.df, opts.jointAnchorDfCap);
     if (opts.precise)
     {
       p.lcs = lcsRatio(allFragments[p.a], allFragments[p.b]);
@@ -145,19 +146,16 @@ void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, const std::vector
 
   for (const auto &p : candidates)
   {
-    if (p.weighted < opts.jointWeightedThreshold)
-    {
-      continue; // token similarity floor holds for every survivor
-    }
-    // The union-ratio rejects high-weight/low-line idiom collisions — but it also
-    // deflates on a real edited copy (inserted/deleted lines grow the union). So a
-    // long absolute run of shared verbatim lines is an alternative pass — but only
-    // with rare project-specific anchors (else a framework idiom leaks) and on a
-    // diverse (non-table) fragment (P0.6b, #131 Group 3).
-    const bool ratioOk = p.line >= opts.jointLineThreshold;
+    // Classic path: both metrics high (rejects high-weight/low-line idiom collisions).
+    const bool ratioOk = p.weighted >= opts.jointWeightedThreshold && p.line >= opts.jointLineThreshold;
+    // Run path: an edited copy deflates BOTH the line-ratio (union grows) AND the
+    // weighted bag (inserted/deleted tokens), so a long ordered run of verbatim lines
+    // passes at a lower weighted floor — gated by diversity (no tables) and, optionally,
+    // rare project anchors (no framework idioms). P0.6b, #131 Group 3.
     const double maxDiv = std::max(frags[p.a].diversity, frags[p.b].diversity);
-    const bool runOk = opts.jointMinSharedLines > 0 && p.sharedLines >= opts.jointMinSharedLines &&
-                       p.sharedRare >= opts.jointMinSharedRare && maxDiv >= 0.30;
+    const bool runOk = p.weighted >= opts.jointRunWeightedThreshold && opts.jointMinSharedLines > 0 &&
+                       p.sharedLines >= opts.jointMinSharedLines && maxDiv >= 0.30 &&
+                       p.sharedRare >= opts.jointMinSharedRare;
     if (ratioOk || runOk)
     {
       filtered.push_back(p);

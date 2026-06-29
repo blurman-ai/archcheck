@@ -96,6 +96,29 @@ struct CollectContext
   std::vector<Fragment> &out;
 };
 
+// Collect the fragment's verbatim line views: a set for the union ratio, and an
+// ordered sequence of substantive lines (drop "}", "{", "});") for the line-LCS run.
+void collectNormLines(Fragment &f, const std::vector<std::string> &lines)
+{
+  for (int ln = f.startLine; ln <= f.endLine; ++ln)
+  {
+    if (ln < 1 || static_cast<std::size_t>(ln) > lines.size())
+    {
+      continue;
+    }
+    std::string norm = normalizeLine(lines[ln - 1]);
+    if (norm.empty())
+    {
+      continue;
+    }
+    if (norm.size() >= 4)
+    {
+      f.normLineSeq.push_back(norm);
+    }
+    f.normLines.insert(std::move(norm));
+  }
+}
+
 Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t hi, const std::string &file,
                       const std::vector<std::string> &lines)
 {
@@ -112,17 +135,7 @@ Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t h
     f.seq.push_back(t[i].sym);
     f.rawSeq.push_back(t[i].raw.empty() ? t[i].sym : t[i].raw);
   }
-  for (int ln = f.startLine; ln <= f.endLine; ++ln)
-  {
-    if (ln >= 1 && static_cast<std::size_t>(ln) <= lines.size())
-    {
-      std::string norm = normalizeLine(lines[ln - 1]);
-      if (!norm.empty())
-      {
-        f.normLines.insert(norm);
-      }
-    }
-  }
+  collectNormLines(f, lines);
   f.diversity = trigramDiversity(f.seq);
   return f;
 }
