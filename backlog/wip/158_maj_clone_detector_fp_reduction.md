@@ -2,7 +2,8 @@
 
 **Created:** 2026-06-29
 **Status:** wip — A+C DONE (`5277cd2`), D measured+closed (`b91fe32`), harness fixed +
-statement-floor DONE but **UNCOMMITTED** (2026-06-30 session, see checkpoint below); B still open
+statement-floor DONE; 2026-06-30 uncommitted follow-up added Bison/Flex generated filtering,
+CLASSIC switch-skeleton filtering, and deleted-line move suppression.
 **Module:** SCAN / duplication (#056/#070), classification (#129)
 
 > **RESUME HERE — checkpoint 2026-06-30 (read this first).** Jump to the section
@@ -417,3 +418,268 @@ etc.). Genuine "detector wrong" ≈ 8-10, in clean classes:
 - Some corpus TP labels credit 2-3 line fragments as copy-paste (NAAb, NexusMiner); treat
   sub-4-statement "recall" with suspicion (the user's stance: that is not copy-paste).
 - Re-link the binary before any A/B (a stale binary gave a 518==518 no-op illusion, #158 A+C).
+
+## 2026-06-30 — composition/API-choreography probe + Part B generated fix
+
+User pushed back: do not split the composition idea into a new task while #158 is still open.
+The temporary #159 write-up was deleted; the evidence lives here.
+
+### Composition probe — real class, no generic fix yet
+
+Re-ran the current Group-3 gate:
+
+```text
+cd experiments/corpus_remeasure_131
+python3 group3_precision.py
+python3 rescore.py group3_findings.jsonl
+```
+
+Corrected matcher result reproduced:
+
+```text
+recall      61/140 = 43.6%
+suppression 141/166 = 84.9%
+precision   61/86 = 70.9%
+```
+
+Manual witness checks confirmed the user's idea as a real FP explanation:
+
+- `mgradwohl/tasksmack@05a40b4bd3`: ImPlot/ImGui chart blocks share `BeginPlot`,
+  `SetupAxes`, `SetupAxisFormat`, `SetupAxisLimits`, `plotLineWithFill`, hover tooltip;
+  the domain data differs (disk read/write vs threads/page-faults, labels, colors,
+  formatters, y-axis format).
+- `florinzgz/FULL-FIRMWARE-Coche-Marcos@838e686d30`: TFT slider drawing repeats the same
+  API choreography with different value source, label, y-coordinate and color.
+
+But the offline probe (`experiments/corpus_remeasure_131/composition_probe.py`,
+local ignored experiment) showed simple thresholds are dominated:
+
+```text
+family-based:  FP 1 / TP collateral 1
+family-free:   FP 2-4 / TP collateral 4-5
+call-density:  FP 1 / TP collateral 1-2, then FP 0 when tightened
+```
+
+Conclusion: `same calls with different parameters` is real, but `same calls` /
+callee-LCS / argument-overlap / call-density must NOT become a generic guard.
+If revisited, it needs a narrower API-choreography model (UI/plot/drawing DSL) with
+fixtures and a TP-collateral table.
+
+Rechecked on the current post-inline-case corpus state (`group3_findings_INLINECASE.jsonl`):
+
+```text
+minCalls=4 calleeLcs>=0.80 argOverlap<=0.35 family>=0.60: FP 1 / TP 1
+minCalls=5 calleeLcs>=0.85 argOverlap<=0.65 family>=0.60: FP 2 / TP 2
+minCalls=5 calleeLcs>=0.85 argOverlap<=0.75 family>=0.60: FP 4 / TP 5
+minCalls=6 calleeLcs>=0.85 argOverlap<=0.75 family>=0.70: FP 3 / TP 3
+```
+
+The strict hit is not the desired UI-composition class; it is `NexusMiner`, which the user
+classified as real copy-paste. `Lightpad` itself illustrates why a generic "different args"
+metric is not enough: the repeated Qt stylesheet builders have high callee-LCS, but the
+argument-token overlap remains medium/high because both sides share `theme`, `c`, `inputBg`,
+`.name()`, `qMax`, `radius`, etc. This points to a narrower future signal: API-DSL/builder
+composition, probably based on repeated `QString`/`.arg` or UI drawing call chains, not on
+generic call-sequence similarity.
+
+User clarified a narrower idea: not nested calls in arbitrary expressions, but top-level
+call-statement choreography:
+
+```cpp
+helper1(1, 2, 3);
+helper2(4, 5);
+helper3(7, 8);
+```
+
+versus the same helper sequence with different payload arguments. Offline probe over current
+findings counted only standalone call lines (`callee(...);` / `obj.callee(...);`), then compared
+callee-sequence LCS and argument overlap:
+
+```text
+strict: minCalls=3 calleeLcs>=0.95 argOverlap<=0.35 diffCallRatio>=0.80 -> FP 0 / TP 0
+base:   minCalls=3 calleeLcs>=0.85 argOverlap<=0.55 diffCallRatio>=0.75 -> FP 2 / TP 0
+loose:  minCalls=3 calleeLcs>=0.80 argOverlap<=0.70 diffCallRatio>=0.60 -> FP 3 / TP 3
+many:   minCalls=5 calleeLcs>=0.85 argOverlap<=0.65 diffCallRatio>=0.75 -> FP 2 / TP 0
+```
+
+The base/many hits were `Usagi-dono` (`LOG`/`q.exec` table-setup calls) and `xsscx/research`
+(`printf`/`SignatureToFourCC`/diagnostic calls). The user classified both as copy-paste/useful
+findings, not suppressible composition. The loose config also catches `FULL-FIRMWARE` TFT drawing,
+but the user classified it as copy-paste and it brings 3 TP collateral rows. Conclusion: this
+top-level-call version is a good future research direction, but the current corpus does not
+contain a clean suppressible example. Do not ship a guard until a real positive example set exists.
+
+### Part B generated — Bison/Flex ordinary-name output
+
+Concrete fix started: generated parser/scanner files under ordinary names (`parser.cpp`,
+`parser.h`, `scanner.cpp`) escaped `isGeneratedPath` because they are not `.tab.*` / `lex.yy`.
+The real corpus witness is `esrrhs/fakelua`: Bison/Flex output under `src/compile/bison/`
+and `src/compile/flex/`.
+
+Fix direction: extend `hasGeneratedHeader` with narrow, top-of-file Bison/Flex skeleton
+markers instead of a broad prose marker:
+
+- `A Bison parser, made by GNU Bison`
+- `Skeleton implementation/interface for Bison`
+- `A lexical scanner generated by flex`
+- `#define FLEX_SCANNER` together with `YY_FLEX_MAJOR_VERSION`
+
+Tests added in `file_classification_test.cpp` and `authored_scope_test.cpp`. This should
+remove the generated FP class before duplication scanning through the shared
+`AuthoredScope` gate.
+
+## 2026-06-30 — follow-up fix pack measured on Group-3
+
+Implemented in-tree, not committed:
+
+- **Generated ordinary-name Bison/Flex output:** `hasGeneratedHeader` now recognizes narrow
+  Bison/Flex skeleton banners and the Flex macro/version signature. Covered by file
+  classification and `AuthoredScope` tests.
+- **Switch-case support for CLASSIC too:** switch skeleton lines (`switch`, bare `case`,
+  `default`, `break`) and inline switch-table rows (`case N: action; break;`) are excluded
+  from both `normLineSeq` and `normLines`, so the earlier Part-D lever now applies to
+  run-path and classic line-overlap scoring.
+- **Move detector for `--diff` new-clone drift:** `collectDeletedLines` records deleted-side
+  old-line numbers; a new clone touching added lines is suppressed when the same normalized
+  fragment content touched deleted parent lines. Covered by unit and e2e diff tests.
+- **Composition/API-choreography:** measured again, deliberately **not shipped** as a generic
+  guard. The simple models remove FP only with equal/worse TP collateral.
+
+### Corpus result, corrected matcher
+
+Re-run:
+
+```text
+cd experiments/corpus_remeasure_131
+python3 group3_precision.py
+python3 rescore.py group3_findings.jsonl
+python3 group3_summary.py
+```
+
+Current measured result after the inline switch-table extension:
+
+```text
+measured rows: 306
+recall      58/140 = 41.4%
+suppression 148/166 = 89.2%
+precision   58/76  = 76.3%
+```
+
+Delta vs `group3_findings_STMTFLOOR.jsonl` using the same corrected `match.py`:
+
+```text
+FP removed: 7
+TP collateral: 3
+```
+
+Removed FP rows:
+
+- `cschladetsch/CppKAI@a25e5d1f` — generated proxy move/coincidental row.
+- `esrrhs/fakelua@ace8cfd8` — Bison/Flex generated `parser.cpp/parser.h/scanner.cpp`.
+- `fuddlesworth/PlasmaZones@78ee9b04` — whole-file EditorController split/move.
+- `graphillion/kyotodd@dbf24972` — whole-file `mtbdd_*` header split.
+- `graphillion/kyotodd@9b365935` — whole-file `zdd_adv_*` split.
+- `mgradwohl/tasksmack@05a40b4b` — UI composition/API choreography.
+- `cometdom/DirettaRendererUPnP@603a2273` — inline switch-table rows (`case N: ...; break;`).
+
+TP collateral rows:
+
+- `danielraffel/pulp@2b9d6f5b` — WASAPI switch-like within-file chunk.
+- `deltahdl/deltahdl@30f61166` — elaborator switch/dispatch-like within-file chunk.
+- `xsscx/research@34fb052b` — small signature-shift heuristic blocks.
+
+### Remaining fired FP set
+
+18 measured FP rows remain:
+
+- data-table: 5
+- idiom/API ceremony: 7
+- other: 3
+- whole-file/move/split: 2
+- generated/SIMD-family: 1
+
+Rows:
+
+- `CrispStrobe/CrispASR@272f7ee0` — loader/weight-table style block.
+- `HendrikGC02/Astroray@5d290120` — wavefront RNG header pair.
+- `NamecoinGithub/NexusMiner@34f6aa4a` — repeated protocol request block.
+- `aethersdr/AetherSDR@081cb1b2` — EQ coefficient/data-table block.
+- `alexandrosk0/Smatchet@b6f35116` — consent gate idiom.
+- `bobjansen/Ibex@030a73b5` — interpreter variant-ladder idiom.
+- `bobjansen/Ibex@a238ed63` — join/interpreter-derived whole-file split still fires via sibling pairs.
+- `chrxh/alien@a2e905cf` — Inspector/Inspection rename plus remaining GUI sibling pair.
+- `cometdom/DirettaRendererUPnP@635159b3` — SIMD memcpy family.
+- `djeada/Lightpad@0e316a95` — UI style table/function family.
+- `djeada/Standard-of-Iron@003a0dc5` — renderer family table.
+- `esrrhs/fakelua@5a4e6fcf` — compiler extraction/split within new file.
+- `esrrhs/fakelua@243bc399` — reverse compiler extraction/split.
+- `etkecc/komai@88cd9985` — slash-command data table.
+- `florinzgz/FULL-FIRMWARE-Coche-Marcos@5c9a89e8` — RenderContext overload idiom.
+- `florinzgz/FULL-FIRMWARE-Coche-Marcos@838e686d` — TFT menu/API choreography.
+- `viperx1/Usagi-dono@238159cc` — manager boilerplate/idiom.
+- `xsscx/research@26b3110d` — heuristic-library repeated blocks.
+
+### Verification
+
+```text
+cmake --build build/debug
+ctest --output-on-failure                         # 615/615 passed
+./build/debug/src/archcheck src include tests     # No violations found
+lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/
+```
+
+`lizard` still returns non-zero because of pre-existing warnings elsewhere; the new
+warnings introduced during this fix pack were removed before finishing.
+
+### 2026-06-30 — residual FP review + min-line floor probe
+
+User re-reviewed the 18 remaining labelled FP by looking at real code snippets, not labels.
+Result: almost all are legitimate copy-paste or at least useful advisory repeats. The corpus
+labels substantially overstate residual noise.
+
+Human verdict from the review:
+
+- copy-paste / useful advisory repeat: `CrispASR`, `Astroray`, `NexusMiner`, `AetherSDR`,
+  `Ibex` variant ladder, `Ibex` join/reshape sibling, `alien` GUI pair,
+  `DirettaRendererUPnP` `FastMemcpy_Audio*`, `Standard-of-Iron`, `fakelua c_gen`,
+  `fakelua` arithmetic/codegen blocks, `komai`, `FULL-FIRMWARE` gauges,
+  `FULL-FIRMWARE menu_led_control`, `Usagi-dono`, `xsscx/research`.
+- composition / future-signal candidate: `Lightpad` Qt stylesheet builders.
+- minor/acceptable noisy edge: `Smatchet` guard boilerplate (extractable common helper,
+  but not enough mass to justify a risky generic suppressor now).
+
+Follow-up investigation:
+
+- `fakelua c_gen` is not a random mismatch. The full witness is a large repeated compiler
+  code-generation block: both sides extract `SyntaxTreeFunction` / `SyntaxTreeLocalFunction`,
+  build parameter lists, iterate math specializations, and emit C signatures. The cropped
+  4-line chat snippet made it look unrelated.
+- `FULL-FIRMWARE menu_led_control` is also a real repeated UI slider choreography: get config,
+  set TFT datum/color, draw label, draw slider background/fill/border, format value, draw value.
+- `DirettaRendererUPnP` `FastMemcpy_Audio*` is copy-paste/performance-variant code, not
+  generated output. The commit says "SIMD and PCM optimizations"; `docs/SIMD_OPTIMIZATION_CHANGES.md`
+  describes AVX2/AVX-512 `memcpy_audio` with prefetch, and the repository includes the upstream
+  `FastMemcpy_Avx.h` banner (`FastMemcpy.c - skywind3000@163.com, 2015`). The remaining witness
+  is the local AVX-512/audio specialization: aligned vs unaligned 1024-byte loops with identical
+  prefetch offsets (`2048`, `2112`, `2176`, `2240`) and fallback chunk thresholds (`512`, `256`,
+  `128`). Those are magic performance constants, but the duplication finding is still useful.
+
+Min-line floor idea measured offline over `group3_findings_INLINECASE.jsonl`: filter emitted
+findings whose **minimum substantive line count** is below N, then rescore with `match.py`.
+
+```text
+minLines=2: recall 58/140=41.4%  FP fired 18/166  precision 76.3%
+minLines=3: recall 57/140=40.7%  FP fired 18/166  precision 76.0%
+minLines=4: recall 54/140=38.6%  FP fired 18/166  precision 75.0%
+minLines=5: recall 53/140=37.9%  FP fired 18/166  precision 74.6%
+minLines=6: recall 50/140=35.7%  FP fired 18/166  precision 73.5%
+minLines=7: recall 48/140=34.3%  FP fired 17/166  precision 73.8%
+minLines=10: recall 43/140=30.7% FP fired 15/166  precision 74.1%
+```
+
+Conclusion: default `minLines=5` is dominated. It removes **zero** of the remaining
+labelled FP but loses 5 TP rows (`NexusMiner`, `NAAb` x2, `CppKAI`, `kyotodd`). The chat
+examples were cropped to 3-4 lines for readability; the actual remaining witnesses are all
+larger (minimum substantive line counts: 6, 8, 9, 11, 16, 21, 35, 52, ...). Do not ship a
+default line floor of 5. A user-tunable option can still be considered later, but not as
+the default precision fix.

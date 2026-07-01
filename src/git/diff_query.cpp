@@ -39,6 +39,26 @@ int parseHunkNewLineNo(const std::string &line)
   }
 }
 
+int parseHunkOldLineNo(const std::string &line)
+{
+  const auto pos = line.find(" -");
+  if (pos == std::string::npos)
+    return 0;
+  const auto commaPos = line.find(',', pos);
+  const auto endPos = line.find(' ', pos + 2);
+  const auto subEnd = (commaPos != std::string::npos && commaPos < endPos) ? commaPos : endPos;
+  if (subEnd == std::string::npos)
+    return 0;
+  try
+  {
+    return std::stoi(line.substr(pos + 2, subEnd - (pos + 2)));
+  }
+  catch (...)
+  {
+    return 0;
+  }
+}
+
 void processHeaderOrHunk(const std::string &line, std::string &currentFile, int &currentLineNo)
 {
   // "diff --git a/path b/path"
@@ -63,6 +83,28 @@ void processHeaderOrHunk(const std::string &line, std::string &currentFile, int 
   // "@@ -... +... @@"
   if (line.compare(0, 2, "@@") == 0)
     currentLineNo = parseHunkNewLineNo(line);
+}
+
+void processDeletedHeaderOrHunk(const std::string &line, std::string &currentFile, int &currentLineNo)
+{
+  if (line.compare(0, 4, "diff") == 0)
+  {
+    const auto aPos = line.find(" a/");
+    const auto bPos = line.find(" b/");
+    if (aPos != std::string::npos && bPos != std::string::npos && aPos + 3 < bPos)
+      currentFile = line.substr(aPos + 3, bPos - (aPos + 3));
+    currentLineNo = 0;
+    return;
+  }
+  if (line.compare(0, 3, "---") == 0)
+  {
+    if (line.size() > 6 && line.compare(0, 6, "--- a/") == 0)
+      currentFile = line.substr(6);
+    currentLineNo = 0;
+    return;
+  }
+  if (line.compare(0, 2, "@@") == 0)
+    currentLineNo = parseHunkOldLineNo(line);
 }
 
 void processContentLine(const std::string &line, const std::string &currentFile, int &currentLineNo,
@@ -112,6 +154,37 @@ std::vector<AddedLine> parseUnifiedDiff(std::string_view diffOutput)
   return result;
 }
 
+void processDeletedContentLine(const std::string &line, const std::string &currentFile, int &currentLineNo,
+                               std::vector<DeletedLine> &result)
+{
+  if (line.empty() || line[0] == '+' || line[0] == '\\' || line[0] == '@')
+    return;
+  if (line[0] == '-')
+  {
+    if (currentLineNo > 0 && !currentFile.empty() && !(line.size() > 3 && line.compare(0, 3, "---") == 0))
+      result.push_back({currentFile, currentLineNo, line.substr(1)});
+    ++currentLineNo;
+    return;
+  }
+  if (currentLineNo > 0)
+    ++currentLineNo;
+}
+
+std::vector<DeletedLine> parseUnifiedDeletedDiff(std::string_view diffOutput)
+{
+  std::vector<DeletedLine> result;
+  std::istringstream iss{std::string{diffOutput}};
+  std::string line;
+  std::string currentFile;
+  int currentLineNo = 0;
+  while (std::getline(iss, line))
+  {
+    processDeletedHeaderOrHunk(line, currentFile, currentLineNo);
+    processDeletedContentLine(line, currentFile, currentLineNo, result);
+  }
+  return result;
+}
+
 } // namespace
 
 std::vector<AddedLine> collectAddedLines(const std::filesystem::path &repoRoot, const std::string &baselineRef,
@@ -137,6 +210,25 @@ std::vector<AddedLine> collectAddedLines(const std::filesystem::path &repoRoot, 
     return {};
 
   return parseUnifiedDiff(run.out);
+}
+
+std::vector<DeletedLine> collectDeletedLines(const std::filesystem::path &repoRoot, const std::string &baselineRef,
+                                             const std::string &currentRef)
+{
+  std::vector<std::string> args{"diff", "--no-ext-diff", "--unified=0"};
+  if (currentRef == kWorktreeRef)
+    args.push_back(baselineRef);
+  else
+  {
+    args.push_back(baselineRef);
+    args.push_back(currentRef);
+  }
+
+  const auto run = runGit(args, repoRoot);
+  if (run.exitCode != 0)
+    return {};
+
+  return parseUnifiedDeletedDiff(run.out);
 }
 
 std::vector<NumStat> parseNumstatOutput(std::string_view output)

@@ -16,6 +16,7 @@ class SourceSnapshot;
 // New-file line numbers a commit added, keyed by repo-relative path. Built by
 // the caller from git::collectAddedLines — keeps this module free of git/.
 using AddedLineMap = std::unordered_map<std::string, std::unordered_set<int>>;
+using DeletedLineMap = std::unordered_map<std::string, std::unordered_set<int>>;
 
 // Clones a commit *introduces* (#123). Advisory only — never gates the exit code.
 struct NewCloneDriftResult
@@ -41,6 +42,11 @@ struct NewCloneDriftResult
 // maxScanBytes (#149): when the new tree's authored bytes exceed this, the scan is
 // skipped (result.skippedLargeTree = true, no violations) because the whole-tree
 // pass would not fit the per-commit budget. Advisory-only, so the gate is unaffected.
+[[nodiscard]] NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot,
+                                                  const SourceSnapshot &parentSnapshot, const AddedLineMap &added,
+                                                  const DeletedLineMap &deleted,
+                                                  std::size_t maxScanBytes = std::numeric_limits<std::size_t>::max());
+
 [[nodiscard]] NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot,
                                                   const SourceSnapshot &parentSnapshot, const AddedLineMap &added,
                                                   std::size_t maxScanBytes = std::numeric_limits<std::size_t>::max());

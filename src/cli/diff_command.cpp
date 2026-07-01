@@ -151,6 +151,7 @@ archcheck::scan::BoolFieldDriftResult collectBoolFieldDrift(const std::filesyste
 archcheck::scan::NewCloneDriftResult collectNewClones(const archcheck::scan::SourceSnapshot &curSnap,
                                                       const archcheck::scan::SourceSnapshot &baseSnap,
                                                       const std::vector<archcheck::git::AddedLine> &addedLines,
+                                                      const std::vector<archcheck::git::DeletedLine> &deletedLines,
                                                       std::size_t maxCloneScanBytes)
 {
   archcheck::scan::AddedLineMap added;
@@ -158,7 +159,10 @@ archcheck::scan::NewCloneDriftResult collectNewClones(const archcheck::scan::Sou
     added[a.file].insert(a.lineNumber);
   if (added.empty())
     return {};
-  return archcheck::scan::detectNewClones(curSnap, baseSnap, added, maxCloneScanBytes);
+  archcheck::scan::DeletedLineMap deleted;
+  for (const auto &d : deletedLines)
+    deleted[d.file].insert(d.lineNumber);
+  return archcheck::scan::detectNewClones(curSnap, baseSnap, added, deleted, maxCloneScanBytes);
 }
 
 // Flag-argument drift (ARG.1, #093): boolean flag parameters in signatures the
@@ -202,11 +206,35 @@ struct DiffAdvisories
   std::optional<archcheck::scan::SourceSnapshot> currentSnapshot;
 };
 
+struct SnapshotAdvisoryInput
+{
+  const std::filesystem::path &repoRoot;
+  const archcheck::git::Revspec &parsed;
+  const std::vector<archcheck::git::AddedLine> &addedLines;
+  const std::vector<archcheck::git::DeletedLine> &deletedLines;
+  std::size_t maxCloneScanBytes;
+};
+
+void collectSnapshotAdvisories(DiffAdvisories &result, const SnapshotAdvisoryInput &input)
+{
+  auto baseSnap = readRefSnapshotMemory(input.repoRoot, input.parsed.baseline);
+  auto curSnap = readRefSnapshotMemory(input.repoRoot, input.parsed.current);
+  if (!baseSnap || !curSnap)
+    return;
+  result.complexity = collectComplexityDrift(input.repoRoot, input.parsed, *baseSnap, *curSnap);
+  result.newClones = collectNewClones(*curSnap, *baseSnap, input.addedLines, input.deletedLines, input.maxCloneScanBytes);
+  result.flagArguments = collectFlagArguments(*curSnap, input.addedLines);
+  result.boolFields = collectBoolFieldDrift(input.repoRoot, input.parsed, *baseSnap, *curSnap);
+  result.baseSnapshot = std::move(baseSnap);
+  result.currentSnapshot = std::move(curSnap);
+}
+
 DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, const archcheck::git::Revspec &parsed,
                                      std::size_t maxAddedLines, std::size_t maxCloneScanBytes)
 {
   DiffAdvisories result;
   const auto addedLines = archcheck::git::collectAddedLines(repoRoot, parsed.baseline, parsed.current);
+  const auto deletedLines = archcheck::git::collectDeletedLines(repoRoot, parsed.baseline, parsed.current);
   result.satd = archcheck::scan::detectSatdMarkers(addedLines);
   const auto numstatEntries = archcheck::git::collectNumstat(repoRoot, parsed.baseline, parsed.current);
   result.testCoEvolution = archcheck::scan::detectTestCoEvolution(numstatEntries);
@@ -220,16 +248,7 @@ DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, cons
   }
   // #129 read-once: one snapshot per ref, shared by the complexity/clone advisories
   // AND (kept on the result) the graph build, instead of each re-reading the trees.
-  auto baseSnap = readRefSnapshotMemory(repoRoot, parsed.baseline);
-  auto curSnap = readRefSnapshotMemory(repoRoot, parsed.current);
-  if (!baseSnap || !curSnap)
-    return result;
-  result.complexity = collectComplexityDrift(repoRoot, parsed, *baseSnap, *curSnap);
-  result.newClones = collectNewClones(*curSnap, *baseSnap, addedLines, maxCloneScanBytes);
-  result.flagArguments = collectFlagArguments(*curSnap, addedLines);
-  result.boolFields = collectBoolFieldDrift(repoRoot, parsed, *baseSnap, *curSnap);
-  result.baseSnapshot = std::move(baseSnap);
-  result.currentSnapshot = std::move(curSnap);
+  collectSnapshotAdvisories(result, {repoRoot, parsed, addedLines, deletedLines, maxCloneScanBytes});
   return result;
 }
 

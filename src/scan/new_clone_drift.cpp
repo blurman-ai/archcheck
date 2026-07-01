@@ -33,6 +33,17 @@ std::string fragKey(const duplication::Fragment &f)
   return std::to_string(std::hash<std::string>{}(joined));
 }
 
+std::string contentKey(const duplication::Fragment &f)
+{
+  std::string joined;
+  for (const auto &t : f.seq)
+  {
+    joined += t;
+    joined.push_back('\x1f');
+  }
+  return std::to_string(std::hash<std::string>{}(joined));
+}
+
 // Order-independent key for a clone pair, so parent and new trees match regardless
 // of which side the scanner happened to label `a`.
 std::string pairKey(const duplication::Fragment &a, const duplication::Fragment &b)
@@ -69,6 +80,31 @@ bool touchesAdded(const duplication::Fragment &f, const AddedLineMap &added)
   return false;
 }
 
+bool touchesDeleted(const duplication::Fragment &f, const DeletedLineMap &deleted)
+{
+  const auto it = deleted.find(f.file);
+  if (it == deleted.end())
+    return false;
+  for (int ln = f.startLine; ln <= f.endLine; ++ln)
+    if (it->second.count(ln))
+      return true;
+  return false;
+}
+
+std::unordered_set<std::string> deletedFragmentKeys(const SourceSnapshot &parentSnapshot, const DeletedLineMap &deleted)
+{
+  std::unordered_set<std::string> keys;
+  if (deleted.empty())
+    return keys;
+  duplication::ScannerOptions opts;
+  opts.enableWholeFileGuard = false;
+  const auto scan = duplication::scanForDuplication(parentSnapshot.authoredSources(), opts);
+  for (const auto &f : scan.fragments)
+    if (touchesDeleted(f, deleted))
+      keys.insert(contentKey(f));
+  return keys;
+}
+
 rules::Violation makeViolation(const duplication::Fragment &introduced, const duplication::Fragment &source,
                                const duplication::Pair &p)
 {
@@ -96,7 +132,8 @@ std::size_t authoredBytes(const std::vector<std::pair<std::string, std::string>>
 // Scan the new tree and emit one violation per introduced clone pair: a pair where
 // one side touches an added line and the parent did not already contain it.
 NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::string>> &sources,
-                                  const std::unordered_set<std::string> &parentKeys, const AddedLineMap &added)
+                                  const std::unordered_set<std::string> &parentKeys,
+                                  const std::unordered_set<std::string> &deletedKeys, const AddedLineMap &added)
 {
   NewCloneDriftResult result;
   // Whole-file guard off: in a snapshot a whole-file duplicate is vendored noise,
@@ -113,6 +150,8 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
     const bool bTouched = touchesAdded(fb, added);
     if (!aTouched && !bTouched)
       continue;
+    if ((aTouched && deletedKeys.count(contentKey(fa)) != 0) || (bTouched && deletedKeys.count(contentKey(fb)) != 0))
+      continue; // moved from deleted parent lines, not an additional copy
     if (parentKeys.count(pairKey(fa, fb)))
       continue; // pre-existing clone, diff merely touched it
     result.violations.push_back(aTouched ? makeViolation(fa, fb, p) : makeViolation(fb, fa, p));
@@ -123,7 +162,7 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
 } // namespace
 
 NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
-                                    const AddedLineMap &added, std::size_t maxScanBytes)
+                                    const AddedLineMap &added, const DeletedLineMap &deleted, std::size_t maxScanBytes)
 {
   NewCloneDriftResult result;
   if (added.empty())
@@ -137,7 +176,13 @@ NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const Sou
     result.skippedLargeTree = true;
     return result;
   }
-  return emitNewClones(sources, parentPairKeys(parentSnapshot), added);
+  return emitNewClones(sources, parentPairKeys(parentSnapshot), deletedFragmentKeys(parentSnapshot, deleted), added);
+}
+
+NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
+                                    const AddedLineMap &added, std::size_t maxScanBytes)
+{
+  return detectNewClones(newSnapshot, parentSnapshot, added, DeletedLineMap{}, maxScanBytes);
 }
 
 } // namespace archcheck::scan

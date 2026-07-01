@@ -5,6 +5,18 @@
 
 using namespace archcheck::scan::duplication;
 
+namespace
+{
+
+std::vector<Fragment> extractSmallFragments(const std::string &src)
+{
+  FragmentOptions opts;
+  opts.minTokens = 5;
+  return extractFragments(lex(src), src, "switch.cpp", opts);
+}
+
+} // namespace
+
 TEST_CASE("Fragmenter: empty source", "[duplication]")
 {
   const std::string src;
@@ -82,4 +94,59 @@ TEST_CASE("Fragmenter: trigram diversity calculated", "[duplication]")
     REQUIRE(frags[0].diversity >= 0.0);
     REQUIRE(frags[0].diversity <= 1.0);
   }
+}
+
+TEST_CASE("Fragmenter: switch skeleton lines are not substantive line signal", "[duplication]")
+{
+  const std::string src = R"(
+int dispatch(int op)
+{
+  switch (op)
+  {
+  case 1:
+    return compute_one(op);
+  case 2:
+    return compute_two(op);
+  default:
+    break;
+  }
+  return fallback(op);
+}
+)";
+
+  const auto frags = extractSmallFragments(src);
+
+  REQUIRE(frags.size() == 1);
+  REQUIRE(frags[0].normLines.count("switch (op)") == 0);
+  REQUIRE(frags[0].normLines.count("case 1:") == 0);
+  REQUIRE(frags[0].normLines.count("case 2:") == 0);
+  REQUIRE(frags[0].normLines.count("default:") == 0);
+  REQUIRE(frags[0].normLines.count("break;") == 0);
+  REQUIRE(frags[0].normLines.count("return compute_one(op);") == 1);
+  REQUIRE(frags[0].normLines.count("return fallback(op);") == 1);
+}
+
+TEST_CASE("Fragmenter: inline switch table rows are not substantive line signal", "[duplication]")
+{
+  const std::string src = R"(
+int flagsFor(int op)
+{
+  int flags = 0;
+  switch (op)
+  {
+  case 0: flags |= Flag0; break;
+  case 1: flags |= Flag1; break;
+  default: flags |= DefaultFlag; break;
+  }
+  return flags;
+}
+)";
+
+  const auto frags = extractSmallFragments(src);
+
+  REQUIRE(frags.size() == 1);
+  REQUIRE(frags[0].normLines.count("case 0: flags |= Flag0; break;") == 0);
+  REQUIRE(frags[0].normLines.count("default: flags |= DefaultFlag; break;") == 0);
+  REQUIRE(frags[0].normLines.count("int flags = 0;") == 1);
+  REQUIRE(frags[0].normLines.count("return flags;") == 1);
 }

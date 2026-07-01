@@ -79,6 +79,24 @@ TEST_CASE("e2e --diff: copy-paste a commit introduces fires DRIFT.NEW_CLONE, adv
   REQUIRE(r.output.find("gate: ok") != std::string::npos);
 }
 
+TEST_CASE("e2e --diff: moving code is not reported as new copy-paste", "[diff][e2e][newclone]")
+{
+  TempDir repo;
+  distinctiveBase(repo.path);
+  std::string copy = modSrc(3);
+  copy.replace(copy.find("compute_mod3"), std::string("compute_mod3").size(), "preexisting_copy_mod3");
+  writeFile(repo.path / "mod8.c", modSrc(8) + copy);
+  commitAll(repo.path, "pre-existing copy of mod3");
+
+  std::filesystem::remove(repo.path / "mod3.c");
+  writeFile(repo.path / "moved_mod3.c", modSrc(3));
+  commitAll(repo.path, "move mod3 body to a new file");
+
+  const auto r = runArchcheck(repo.path, "--diff HEAD~1..HEAD");
+  REQUIRE(r.output.find("DRIFT.NEW_CLONE") == std::string::npos);
+  REQUIRE(r.exitCode == 0);
+}
+
 TEST_CASE("e2e --diff: a commit adding only unique code surfaces no new clone (#123)", "[diff][e2e][newclone]")
 {
   TempDir repo;

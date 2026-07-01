@@ -145,6 +145,22 @@ TEST_CASE("new_clone_drift: a new copy fires even when the content was already c
   REQUIRE(res.violations[0].file == "third.cpp");
 }
 
+TEST_CASE("new_clone_drift: moved code from deleted parent lines is not a new clone", "[scan][newclone]")
+{
+  MapFileSource parent = cloneCorpus(); // orig.cpp + copy.cpp share `shared`
+  MapFileSource src = cloneCorpus();
+  src.files.erase("orig.cpp");
+  src.files["moved.cpp"] = fileWithSharedFunc("uniqMoved");
+
+  archcheck::scan::DeletedLineMap deleted;
+  for (int ln = 1; ln <= 14; ++ln)
+    deleted["orig.cpp"].insert(ln);
+
+  const auto res =
+      detectNewClones(SourceSnapshot::read(src), SourceSnapshot::read(parent), allLinesOf("moved.cpp", 14), deleted);
+  REQUIRE(res.violations.empty());
+}
+
 TEST_CASE("new_clone_drift: clone outside added lines is silent", "[scan][newclone]")
 {
   MapFileSource src = cloneCorpus();
