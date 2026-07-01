@@ -12,6 +12,14 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- **Duplication false positives reduced on generated, switch-table, and move cases** —
+  ordinary-name Bison/Flex parser output is now excluded by generated-header markers,
+  switch dispatch/table boilerplate no longer contributes line-similarity signal, and
+  `DRIFT.NEW_CLONE` suppresses pure code moves by matching added fragments against deleted
+  parent lines. The corrected Group-3 remeasure improved precision to 76.3% while keeping
+  the remaining generic composition idea out of product code until #159 has cleaner evidence.
+  (#158)
+
 ## [0.1.5] - 2026-06-28
 
 ### Changed

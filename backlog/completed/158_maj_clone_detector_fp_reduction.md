@@ -1,14 +1,12 @@
 # [SCAN] Clone-detector FP reduction — classification gaps + cosmetic data-table guard
 
 **Created:** 2026-06-29
-**Status:** wip — A+C DONE (`5277cd2`), D measured+closed (`b91fe32`), harness fixed +
-statement-floor DONE; 2026-06-30 uncommitted follow-up added Bison/Flex generated filtering,
-CLASSIC switch-skeleton filtering, and deleted-line move suppression.
+**Completed:** 2026-07-01
+**Status:** done — FP-reduction fix pack shipped (`d250040`); composition follow-up split to #159.
 **Module:** SCAN / duplication (#056/#070), classification (#129)
 
-> **RESUME HERE — checkpoint 2026-06-30 (read this first).** Jump to the section
-> "## CHECKPOINT 2026-06-30" at the bottom: it lists exactly what is done, what is
-> uncommitted, how it was measured, where the trustworthy numbers are, and what is left.
+> **Outcome.** The actionable #158 fixes are shipped. Remaining generic composition detection
+> is deliberately not included here; it is tracked separately as #159.
 
 ## Done 2026-06-29 — Parts A + C (commit `5277cd2`)
 
@@ -530,7 +528,7 @@ remove the generated FP class before duplication scanning through the shared
 
 ## 2026-06-30 — follow-up fix pack measured on Group-3
 
-Implemented in-tree, not committed:
+Implemented and committed in `d250040`:
 
 - **Generated ordinary-name Bison/Flex output:** `hasGeneratedHeader` now recognizes narrow
   Bison/Flex skeleton banners and the Flex macro/version signature. Covered by file
@@ -623,13 +621,13 @@ Rows:
 
 ```text
 cmake --build build/debug
-ctest --output-on-failure                         # 615/615 passed
-./build/debug/src/archcheck src include tests     # No violations found
+./build/debug/tests/archcheck_tests --reporter compact   # 616/616 test cases passed
+./build/debug/src/archcheck src include tests             # No violations found
 lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/
 ```
 
-`lizard` still returns non-zero because of pre-existing warnings elsewhere; the new
-warnings introduced during this fix pack were removed before finishing.
+`lizard` still returns non-zero because of pre-existing warnings elsewhere; no new warnings
+remain from this fix pack.
 
 ### 2026-06-30 — residual FP review + min-line floor probe
 
@@ -683,3 +681,53 @@ examples were cropped to 3-4 lines for readability; the actual remaining witness
 larger (minimum substantive line counts: 6, 8, 9, 11, 16, 21, 35, 52, ...). Do not ship a
 default line floor of 5. A user-tunable option can still be considered later, but not as
 the default precision fix.
+
+## Completion archive
+
+### How it works
+
+#158 reduced duplication false positives through three shipped mechanisms:
+
+- `AuthoredScope` / `hasGeneratedHeader` now excludes ordinary-name Bison/Flex generated
+  parser/scanner output by narrow skeleton markers, so generated `parser.cpp` / `scanner.cpp`
+  files do not reach duplication scoring.
+- The fragmenter removes non-substantive switch dispatch/table lines (`switch`, bare `case`,
+  `default`, `break`, and `case N: ...; break;`) from both ordered line-run and classic
+  line-overlap signals.
+- `--diff` new-clone drift now collects deleted-side lines and suppresses a new-clone finding
+  when the added fragment's normalized content matches a fragment that touched deleted parent
+  lines. That treats pure moves as moves, not new copy-paste.
+
+### What controls it
+
+- Generated filtering is part of the shared authored-source classification path.
+- Switch-line filtering is always on inside duplication fragment extraction.
+- Move suppression is automatic in `--diff` through `collectDeletedLines` and the deleted-line
+  overload of `detectNewClones`.
+
+No generic "same callees, different args" composition guard was shipped. The measured tradeoff was
+not clean enough; follow-up research is #159.
+
+### What it relates to
+
+- #131 supplied the corrected Group-3 remeasure harness and corpus context.
+- #070/#056/#072 are the duplication detector and FP-guard lineage.
+- #159 continues the composition/API-choreography research separately.
+
+### Diagnostics
+
+Final local verification before closing:
+
+```text
+cmake --build build/debug
+./build/debug/tests/archcheck_tests --reporter compact
+./build/debug/src/archcheck src include tests
+lizard --CCN 15 --length 30 --arguments 5 --warnings_only src/ include/ tests/
+```
+
+Results:
+
+- build passed;
+- `616/616` test cases passed (`2253` assertions);
+- dogfood reported `No violations found`;
+- `lizard` still reports only pre-existing warnings, no new warning from #158.
