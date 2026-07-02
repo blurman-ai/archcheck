@@ -6,8 +6,8 @@
 **Priority:** major
 **Complexity:** L (multi-phase, mostly S/M items)
 **Blocks:** public announcement
-**Blocked by:** #160/#161/#162 (evidence base — the "no nonsense goes public" gate),
-#127/#131 applicability sign-off (vendored/generated noise tail)
+**Blocked by:** #160/#161/#162 (evidence base — the "no nonsense goes public" gate) — done;
+#127/#131 applicability sign-off (vendored/generated noise tail) — done, residual → #153
 **Related:** #138 (release-readiness sync), #142 (prebuilt binary), #156 (demo repo),
 #150 (EN translation), #003 (name check)
 
@@ -43,9 +43,14 @@ first, HN as a bonus.
 Project-specific readiness gate (from TASK_TRACKER + this session):
 - [x] #160/#161/#162 manual evidence base complete — no signal ships un-audited.
       **Done 2026-07-02** (tasks in `completed/`; bugs found were fixed in #164).
-- [ ] #127/#131 vendored/generated sign-off (bundled-deps repos don't drown in noise).
-      Supporting evidence 2026-07-02: spdlog's bundled fmt, rocksdb third-party/ and
-      terminal dep/ all excluded cleanly in the sanity run; #131 Groups 2/4 still open.
+- [x] #127/#131 vendored/generated sign-off (bundled-deps repos don't drown in noise).
+      **Done 2026-07-02** (#131 closed → `completed/`): spdlog's bundled fmt, rocksdb
+      third-party/, and terminal dep/ all excluded cleanly. Two classification bugs
+      caught and fixed in the same pass (fmt self-exclusion, dep/ container gap) plus a
+      case-sensitivity extension gap (`.C`). Honest residual documented, not blocking:
+      #153 (fixtures, bpftrace/newsboat calibration, 4-rule path-trio gap) stays open.
+      #131 Groups 2/4 (long-running corpus measurements) stay open in #123/#124 and
+      #054/#066/#103 — tracked there, not gating this checklist item.
 - [x] First-run sanity on 3–5 well-known OSS repos (fresh eyes, zero-config).
       **Done 2026-07-02**: fmt, spdlog, nlohmann/json, rocksdb, microsoft/terminal.
       Caught and fixed two classification bugs (fmt self-exclusion from #164 B.1;

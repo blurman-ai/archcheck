@@ -2,7 +2,46 @@
 
 **Created:** 2026-06-19
 **Started:** 2026-06-19
-**Status:** wip (Group 1 done; Group 3 in progress 2026-06-29; Groups 2/4 pending; 5/6 dependencies #130/#119 landed → bookkeeping)
+**Status:** done (2026-07-02) — Groups 1/3/5/6 signed off; Groups 2/4 are long-running
+corpus measurements with their own dedicated tasks (#123/#124, #054/#066/#103) and
+stay open there, not blocked on this task closing
+
+## Sign-off (2026-07-02) — closing this task for the #163 public-launch gate
+
+Reason for closing now rather than waiting on Groups 2/4: this task's own job was the
+**master checklist + Groups 1/3/5/6 verification** ("a single run task... gather ALL
+pending checks into one run"). Groups 2/4 were always separate multi-day corpus runs
+(#124: ~10 days @ 8 workers; Group 4: AI-repo research) tracked by their own tasks —
+this task depending on them finishing is not the same as this task being blocked by them.
+The #163 launch-gate item ("#127/#131 vendored/generated sign-off") is specifically about
+Group 1's vendor/generated-noise question, which is closed.
+
+- **Group 1 (SF.*/graph golden):** #128, #129, #113, #114 shipped and verified (table
+  above). **#127** — main applicability goal shipped and independently re-verified
+  (supercollider 2929→69, no own-code over-exclude); the residual tail (fixtures,
+  bpftrace/newsboat calibration, the 4-rule path-trio gap) was honestly split out to
+  **#153** rather than force-closed — #153 stays open as its own task, not a #131 blocker.
+  **#125/#126** — genuinely not implemented (still `new/`); their table rows are **N/A**,
+  not failures of this task — #131's job was to catalog what to re-measure once they land,
+  and they haven't landed yet.
+- **Supporting evidence for the vendor/generated-noise sign-off** (2026-07-02, from the
+  #163 first-run sanity gate — see `~/projects/archcheck-journal/milestones.md`, private
+  companion repo): spdlog's bundled `fmt/` excluded cleanly, rocksdb's `third-party/`
+  excluded cleanly, microsoft/terminal's `dep/` now excluded (was leaking — fixed this
+  session). Two classification bugs caught and fixed in the same pass: a self-project
+  guard (running archcheck ON a curated bundled-lib project no longer vendor-drops its
+  own headers) and the `dep/` container gap.
+- **Minor scanner gap fixed:** `.C` (uppercase, GCC's traditional C++ source spelling)
+  added to `kProjectExtensions` — was silently unscanned on case-sensitive filesystems
+  (5 corpus rows). `.cu` (CUDA) deliberately **not** added — not a case variant, a
+  different toolchain/dialect outside archcheck's stated C++ scope; left as an explicit
+  open scope question rather than silently folded in.
+- **Group 3:** already DONE in this file (precision/recall measured, high-recall
+  posture chosen, hand-verified).
+- **Group 5 (perf):** #130 shipped and completed — bookkeeping closed.
+- **Group 6 (correlation):** #119 shipped and completed — bookkeeping closed.
+- **Group 2 / Group 4:** intentionally left open, tracked in #123/#124 and
+  #054/#066/#103 respectively. Not part of this closure.
 
 ## Run 2026-06-29 — Group 3 (duplication precision on fp_corpus_r2.tsv) IN PROGRESS
 
@@ -161,7 +200,7 @@ pending checks into one run, rather than poking at them one by one.
 | **#114** | `-test`/`testutil` filter | test directories don't leak into the graph | graph **−test nodes** | ✅ shipped, not in the data |
 | **#126** | SF.9 gluing header+impl (full component model) | mlpack (16→~0), PCL `impl/` (206→~0); real inter-component cycles hold | SF.9 **↓** on template libs, TP held | ⚠️ only quick-fix `2690a34`; the full model not done |
 | **#125** | extensionless headers (`<vector>`, GSL) | GSL graph 0→~10 nodes; Eigen vendor didn't fit (vendor-guard in the pair) | graph on stdlib style non-empty; vendor not added | ⚠️ not implemented |
-| **#127** | vendor/generated multi-layer exclusion | supercollider (~2900→dozens), bpftrace SF.8 4→0, newsboat 2→0; **no over-exclude** of own code | violation count **↓** on bundled-deps | ⚠️ wip, not finished |
+| **#127** | vendor/generated multi-layer exclusion | supercollider (~2900→dozens), bpftrace SF.8 4→0, newsboat 2→0; **no over-exclude** of own code | violation count **↓** on bundled-deps | ✅ main goal shipped 2026-06-27 (completed/127); residual tail → #153 (open, not a #131 blocker) |
 
 ### Group 2 — clone-gate (product validation)
 
@@ -222,3 +261,38 @@ See [[project_archcheck_diff_git_orphans]], [[feedback_clone_oss_without_lfs]].
 | `include/archcheck/scan/source_snapshot.h` | `read()` without a double copy (#130 thread 1) |
 | `docs/research/agent_drift_within_repo.md` | new numbers after the shift (#129/#113/#114) |
 | `experiments/…` | regen of the corpus jsonl on the current binary |
+
+## How it works
+
+This was a **verification task, not a code-owning one**: it doesn't ship a feature, it
+runs the release binary against the growth corpus after classification changes land
+elsewhere (#113/#114/#128/#129/#127) and reports whether the expected deltas actually
+happened, per-repo, not just in aggregate ([[feedback_verify_each_case_over_aggregate]]).
+The one piece of code this task did ship directly: adding `.C` to `kProjectExtensions`
+(`include/archcheck/scan/file_classification.h`) after the Group 3 measurement surfaced
+5 unscanned corpus rows, and a self-project guard + `dep/` container fix
+(`file_classification.h`, `disk_file_source.cpp`, `git_object_file_source.cpp`) after the
+2026-07-02 first-run sanity gate caught the tool vendor-dropping its own subject when run
+on {fmt}.
+
+## What controls it
+
+No feature flag — the extension list and vendored-dir/lib-dir tables in
+`file_classification.h` are the only runtime-relevant artifacts; everything else in this
+task is measurement methodology (`experiments/corpus_remeasure_131/`) that doesn't ship.
+
+## What it relates to
+
+Golden/measurement input for #113/#114/#125/#126/#127/#128/#129 (Group 1); consumed the
+#122 corpus growth; downstream of #070/#072/#158 for Group 3; #127's residual tail lives
+in #153 (open); Group 2 lives in #123/#124 (open); Group 4 lives in #054/#066/#103 (open);
+feeds the #163 public-launch readiness gate directly (vendored/generated noise question).
+
+## Diagnostics
+
+Re-run the sanity check any time classification tables change: build the release binary,
+then `archcheck --graph <path>` on a known bundled-lib repo (e.g. a fresh clone of
+`fmtlib/fmt`) — `nodes` should equal roughly the repo's own header count, not near-zero.
+For the extension gap class, `archcheck --scan <path>` reports `files: N` — cross-check
+against `find <path> -iname '*.C' -o -iname '*.cu'` to see what a corpus repo is using
+that the extension table doesn't yet cover.
