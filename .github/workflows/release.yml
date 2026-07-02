@@ -115,7 +115,7 @@ jobs:
             sha256sum -c ${asset}.sha256
 
           License: Apache-2.0 (see LICENSE).
-          Project: https://github.com/blurman-ai/cpparch
+          Project: https://github.com/blurman-ai/archcheck
           EOF
             tar -C "$stage" -czf "$asset" archcheck LICENSE README.install
             sha256sum "$asset" > "$asset.sha256"
@@ -158,8 +158,8 @@ jobs:
           cd /tmp
           asset="$asset"                       # or "$asset_static" for old glibc
           # Keep original filenames so the .sha256 manifest matches as-is.
-          gh release download "$tag" --repo blurman-ai/cpparch --pattern "\$asset"
-          gh release download "$tag" --repo blurman-ai/cpparch --pattern "\$asset.sha256"
+          gh release download "$tag" --repo blurman-ai/archcheck --pattern "\$asset"
+          gh release download "$tag" --repo blurman-ai/archcheck --pattern "\$asset.sha256"
           sha256sum -c "\$asset.sha256"
           tar -xzf "\$asset"
           sudo install -m 0755 archcheck /usr/local/bin/archcheck
@@ -169,7 +169,7 @@ jobs:
           Pin by tag + verify checksum. Do not use a mutable \`latest\` in CI.
           See docs/ci_usage.md for the full guide.
 
-          Full changelog: see [CHANGELOG.md](https://github.com/blurman-ai/cpparch/blob/$tag/CHANGELOG.md).
+          Full changelog: see [CHANGELOG.md](https://github.com/blurman-ai/archcheck/blob/$tag/CHANGELOG.md).
           EOF
           )"
           gh release create "$tag" \

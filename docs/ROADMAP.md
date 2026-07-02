@@ -28,7 +28,8 @@ It is **not**:
 "What's in progress right now" — `backlog/wip/`.
 The queue — `backlog/new/`.
 "What has already shipped" — [CHANGELOG.md](../CHANGELOG.md).
-Real-world runs and research findings — [milestones.md](milestones.md).
+Real-world runs and research findings — `milestones.md` in the private
+[archcheck-journal](https://github.com/blurman-ai/archcheck-journal) companion repo (#167).
 The product frame in more detail — [product_vision.md](product_vision.md).
 
 ---
@@ -38,6 +39,10 @@ The product frame in more detail — [product_vision.md](product_vision.md).
 **v0.1.0 released** (2026-06-25): the trusted graph/drift/diff core has shipped, and a
 prebuilt Linux binary lives in GitHub Releases for pinned CI install. The phase has shifted
 from "finish the core" to **stabilization + transition to v0.2**.
+
+**Platforms:** prebuilt binaries are Linux x86_64 (dynamic + static) today. **Windows x64
+(#165) and macOS arm64 (#166) are planned for the next phase, after the public
+announcement** (decision 2026-07-02); until then other platforms build from source.
 
 Priorities of the current phase:
 
@@ -51,8 +56,8 @@ structural/boundary class that v0.2 enforcement targets is a **0.3–0.5 % event
 complexity 17.2 %, added edges 14.8 %, new-clone 9.9 %). Implication: the public wedge is the **diff
 guardrail + advisories**, not module-boundary enforcement. The cycle/god gate stays a low-FP silent
 guardian, not a headline. **v0.2 module-enforcement is demoted to an opt-in power feature and is NOT a
-public-launch blocker.** (Evidence: [JOURNEY.md](JOURNEY.md) "0.3 % event" episode;
-`experiments/trending_run/drift_trending56.md`.)
+public-launch blocker.** (Evidence: the "0.3 % event" episode in the private journal
+(archcheck-journal `JOURNEY.md`); `experiments/trending_run/drift_trending56.md`.)
 
 What has shipped and is no longer "in the finishing focus" (details in [CHANGELOG.md](../CHANGELOG.md)):
 

@@ -57,8 +57,8 @@ minute build. **Pin by tag and verify the checksum**; do not use the mutable
   run: |
     asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64-static.tar.gz"
     cd /tmp
-    gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset"
-    gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset.sha256"
+    gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset"
+    gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset.sha256"
     sha256sum -c "$asset.sha256"     # fails if the binary was tampered with
     tar -xzf "$asset"
     sudo install -m 0755 archcheck /usr/local/bin/archcheck
@@ -135,8 +135,8 @@ jobs:
         run: |
           asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64-static.tar.gz"
           cd /tmp
-          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset"
-          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset.sha256"
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset"
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset.sha256"
           sha256sum -c "$asset.sha256"
           tar -xzf "$asset"
           sudo install -m 0755 archcheck /usr/local/bin/archcheck
@@ -233,8 +233,8 @@ jobs:
         run: |
           asset="archcheck-${ARCHCHECK_VERSION#v}-linux-x86_64-static.tar.gz"
           cd /tmp
-          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset"
-          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/cpparch --pattern "$asset.sha256"
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset"
+          gh release download "$ARCHCHECK_VERSION" --repo blurman-ai/archcheck --pattern "$asset.sha256"
           sha256sum -c "$asset.sha256"
           tar -xzf "$asset"
           sudo install -m 0755 archcheck /usr/local/bin/archcheck

@@ -1,6 +1,8 @@
 # archcheck
 
-[![CI](https://github.com/blurman-ai/cpparch/actions/workflows/ci.yml/badge.svg)](https://github.com/blurman-ai/cpparch/actions/workflows/ci.yml)
+[![CI](https://github.com/blurman-ai/archcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/blurman-ai/archcheck/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/blurman-ai/archcheck)](https://github.com/blurman-ai/archcheck/releases/latest)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 Architecture rules and drift checks for C++ CI.
 
@@ -57,6 +59,30 @@ near-misses) and fire `DRIFT.NEW_CLONE`; five are look-alikes that stay silent (
 below-threshold dup, a touched pre-existing clone, a formatting-only change). Each firing PR gets a
 markdown comment (`archcheck --diff --format=md`) with clickable links to the introduced block and
 its clone source.
+
+---
+
+## Install
+
+Prebuilt Linux x86_64 binaries ship with every [release](https://github.com/blurman-ai/archcheck/releases/latest)
+(two variants: dynamic for recent glibc, fully static for anything else — Debian 10,
+RHEL 8, Astra 1.7). Each asset has a `.sha256` next to it.
+
+```bash
+V=0.1.5   # pin a version
+curl -fsSLO "https://github.com/blurman-ai/archcheck/releases/download/v${V}/archcheck-${V}-linux-x86_64-static.tar.gz"
+curl -fsSLO "https://github.com/blurman-ai/archcheck/releases/download/v${V}/archcheck-${V}-linux-x86_64-static.tar.gz.sha256"
+sha256sum -c "archcheck-${V}-linux-x86_64-static.tar.gz.sha256"
+tar -xzf "archcheck-${V}-linux-x86_64-static.tar.gz"
+sudo install -m 0755 archcheck /usr/local/bin/archcheck
+archcheck --version
+```
+
+For CI installation (pinned + checksummed, GitHub Actions snippets) see
+[docs/ci_usage.md](docs/ci_usage.md). Prebuilt **Windows x64 and macOS arm64 binaries are
+planned for the next phase** (see [docs/ROADMAP.md](docs/ROADMAP.md)); until then, other
+platforms build from source — `cmake -B build -G Ninja && cmake --build build`
+(C++20 compiler + CMake 3.18+; see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ---
 
