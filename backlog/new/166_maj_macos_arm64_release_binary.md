@@ -11,6 +11,18 @@ start before the launch announcement ships.
 **Related:** #142 (Linux prebuilt binary), #165 (Windows x64), #163 (launch plan,
 Homebrew tap item)
 
+## Homebrew tap is prepared and waiting on this task
+
+A fully prepared, sha256-verified Homebrew tap (formula + README + LICENSE) is staged in the
+private companion `launch_drafts/homebrew-archcheck-ready/` (deferred 2026-07-02 — Homebrew's
+audience is mostly macOS, and today only a linux-x86_64 binary ships). When this task lands a
+macOS arm64 binary:
+1. add the macOS/arm64 `url` + `sha256` pair (or an `on_macos do ... end` block) to
+   `archcheck.rb` — the current formula gates non-Linux with a clear `odie` message;
+2. `gh repo create blurman-ai/homebrew-archcheck --public --source=. --push` (the repo MUST be
+   named `homebrew-archcheck` for `brew tap blurman-ai/archcheck` to resolve);
+3. `brew install blurman-ai/archcheck/archcheck` then works on Apple Silicon.
+
 ## Goal
 
 Add a macOS arm64 asset to the tag-triggered release workflow so Apple Silicon

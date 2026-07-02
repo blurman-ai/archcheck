@@ -88,29 +88,38 @@ Project-specific readiness gate (from TASK_TRACKER + this session):
 - [x] **Platform matrix — DECIDED 2026-07-02: NOT a launch blocker.** Launch with
       Linux x86_64; Windows x64 and macOS arm64 are planned post-launch as **#165** and
       **#166** (tasks created, ROADMAP/README note the plan). Linux arm64: on user demand.
-- [ ] **GitHub Action wrapper** — `archcheck-action` repo with `action.yml` (composite:
-      download pinned binary by version input, run `--diff`, emit step summary + optional
-      sticky comment — the logic already exists in `example_archcheck_pr.yml`). Publish to
-      Actions Marketplace (instant, no review). This is the #1 adoption funnel for a CI tool:
-      `uses: blurman-ai/archcheck-action@v1`.
-- [ ] **Docker image on GHCR** — scratch/distroless image with the static binary,
-      `org.opencontainers.image.source` label, build in release workflow. S effort.
-- [ ] **Homebrew tap** — `blurman-ai/homebrew-archcheck`; `brew install
-      blurman-ai/archcheck/archcheck` works day one (homebrew-core needs ≥75 stars /
-      ≥225 for self-submission — post-traction).
+- [x] **GitHub Action wrapper** — **shipped 2026-07-02**, public:
+      [blurman-ai/archcheck-action](https://github.com/blurman-ai/archcheck-action)
+      (tags `v1`, `v1.0.0`; `uses: blurman-ai/archcheck-action@v1`). Composite action:
+      pinned + checksummed static binary, `--diff`, step summary, sticky PR comment via
+      github-script (no third-party Marketplace dep). Remaining: publish to Actions
+      Marketplace via the GitHub UI (needs a v1.0.0 GitHub Release; the user does this).
+- [x] **Docker image on GHCR** — **shipped 2026-07-02** (`Dockerfile` + `docker` job in
+      `release.yml`, feat commit). Alpine (not scratch — `--diff` fork/execs git),
+      OCI labels, `:latest` on real releases only. NB one-time manual step on first tag:
+      make the GHCR package public (created private by default). Image build not yet run
+      (no local docker) — first real tag validates it.
+- [ ] **Homebrew tap** — **DEFERRED 2026-07-02 until #166** (native macOS binary). Homebrew's
+      audience is mostly macOS; today only linux-x86_64 ships. Formula is fully prepared and
+      sha256-verified, staged in the private companion `launch_drafts/homebrew-archcheck-ready/`
+      — when #166 lands, add the macOS pair and `gh repo create blurman-ai/homebrew-archcheck`.
 - [ ] Nice-to-have: scoop manifest (main bucket charter = OSS CLI devtools — perfect fit),
       AUR PKGBUILD, winget manifest. pip wheel (clang-format-wheel pattern) — v0.2.
 - [ ] Skip at v0.1: npm wrapper, vcpkg/conan, apt/PPA, homebrew-core.
 
 ## Phase 2 — evidence building (soft launch)
 
-- [ ] Finish #160/#161/#162 → publishable precision/FP numbers per signal.
-- [ ] Run archcheck on 5–10 famous C++ OSS projects; hand-verify; write up 2–3 genuinely
-      interesting findings with `file:line` (reuse `experiments/showcase/` gallery — dedup,
-      eyeball, user sign-off per project rule).
-- [ ] Launch blog post, ripgrep-shaped: problem (constraint decay) → pitch → **anti-pitch**
-      (the What-it-is-NOT list) → real findings → methodology + reproducibility. The README
-      already contains most of the pitch skeleton.
+- [x] Finish #160/#161/#162 → publishable precision/FP numbers per signal. **Done 2026-07-02**
+      (cycle-drift ~92%, clone 76.3%/86–91%, bool-drift 98% post-fix — sourced in the launch post).
+- [x] Run archcheck on 5–10 famous C++ OSS projects; hand-verify; write up 2–3 genuinely
+      interesting findings with `file:line`. **Done 2026-07-02**: `experiments/showcase/`
+      010 folly (Future⇄Promise), 011 rocksdb (db.h⇄multi_scan.h), 012 terminal
+      (Utils.h⇄SettingContainer.h) — all SF.9 cycles, both directions verified from git objects,
+      each with an honest counter-argument. User-approved. (experiments/ is gitignored → local gallery.)
+- [x] Launch blog post, ripgrep-shaped: problem (constraint decay) → pitch → **anti-pitch**
+      → real findings → methodology + reproducibility. **Drafted 2026-07-02**, staged in the
+      private companion `launch_drafts/launch_post_draft.md` (~1200 words). Needs user review
+      before publishing anywhere.
 - [ ] Optionally file upstream issues for real findings (credibility + backlinks).
 - [ ] 2–3 friendly C++ devs install from scratch on clean machines; fix friction.
 
