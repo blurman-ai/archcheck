@@ -149,17 +149,11 @@ void collectNormLines(Fragment &f, const std::vector<std::string> &lines)
   }
 }
 
-Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t hi, const std::string &file,
-                      const std::vector<std::string> &lines)
+// Tracks paren depth across `t[lo, hi)` and counts top-level `;` as statements
+// (depth 0 excludes a for-header's own `;`s). Split out of makeFragment to keep
+// the caller under the function-length threshold.
+void trackParenAndStatements(const std::vector<Token> &t, std::size_t lo, std::size_t hi, int &paren, Fragment &f)
 {
-  Fragment f;
-  f.file = file;
-  f.startLine = t[lo].line;
-  f.endLine = t[hi - 1].line;
-  f.tokenCount = hi - lo;
-  f.seq.reserve(hi - lo);
-  f.rawSeq.reserve(hi - lo);
-  int paren = 0;
   for (std::size_t i = lo; i < hi; ++i)
   {
     const std::string &sym = t[i].sym;
@@ -177,11 +171,25 @@ Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t h
     else if (sym == ";" && paren == 0)
     {
       ++f.statementCount;
-    } // not a for-header `;`
+    }
     ++f.bag[sym];
     f.seq.push_back(sym);
     f.rawSeq.push_back(t[i].raw.empty() ? sym : t[i].raw);
   }
+}
+
+Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t hi, const std::string &file,
+                      const std::vector<std::string> &lines)
+{
+  Fragment f;
+  f.file = file;
+  f.startLine = t[lo].line;
+  f.endLine = t[hi - 1].line;
+  f.tokenCount = hi - lo;
+  f.seq.reserve(hi - lo);
+  f.rawSeq.reserve(hi - lo);
+  int paren = 0;
+  trackParenAndStatements(t, lo, hi, paren, f);
   collectNormLines(f, lines);
   f.diversity = trigramDiversity(f.seq);
   return f;
