@@ -5,9 +5,14 @@
 [blurman-ai/archcheck-journal](https://github.com/blurman-ai/archcheck-journal) created and
 pushed (b43b68f); JOURNEY.md, milestones.md, dup_band_70_80.md, analysis/ moved
 (byte-identity verified before removal); public references + CLAUDE.md + skills + memory
-updated (public commit 9dfc9eb). Symlinks were already gitignored — left local. History
-NOT scrubbed (explicit decision). Remaining smoke-test: next session's /checkpoint must
-land in the companion repo.
+updated. Symlinks were already gitignored — left local. **History scrub EXECUTED later
+the same day** (user decision superseding the initial keep-history choice):
+git-filter-repo removed docs/JOURNEY.md, docs/milestones.md, analysis/, reports/, and
+the two research test probes from all 539 commits, and replaced every historical
+`/home/<user>` path with `~` (full-history grep: 0 hits). Tags v0.1.0-v0.1.5 rewritten
+in place; pre-rewrite backup bundle stored in the private companion repo. Pre-rewrite
+commit SHAs cited anywhere in docs are no longer resolvable — that is expected.
+Remaining smoke-test: next session's /checkpoint must land in the companion repo.
 **Module:** RELEASE / DOCS
 **Priority:** major
 **Complexity:** M
@@ -46,9 +51,9 @@ receives the internal narrative and heavy research bulk:
    repo checkout (decide the local path, e.g. `~/projects/archcheck-journal`), or the
    file stays in the working tree but gitignored-in-public + tracked-in-companion via
    a second remote — pick the SIMPLEST scheme that keeps one canonical file.
-5. Note: removing files now does NOT scrub them from the public history. Decide
-   explicitly whether that matters (option: squash-export at the #163 rename moment —
-   NOT chosen for now; the repo was already public with this content).
+5. History scrub: initially deferred, then explicitly requested by the user and
+   executed via git-filter-repo (see Status). GitHub may retain unreachable objects
+   until garbage collection; a support request can force it if that residue matters.
 
 ## Acceptance
 
@@ -59,6 +64,5 @@ receives the internal narrative and heavy research bulk:
 
 ## Do not do
 
-- Do not rewrite public git history without a separate explicit decision.
 - Do not delete JOURNEY content anywhere — this is a move, not a cleanup.
 - Do not move the manual-audit docs (#160-#162 outputs) — they back public claims.
