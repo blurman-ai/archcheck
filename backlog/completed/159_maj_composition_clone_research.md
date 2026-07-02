@@ -2,7 +2,7 @@
 
 **Created:** 2026-07-01
 **Started:** 2026-07-01
-**Status:** wip
+**Status:** done 2026-07-02 — research complete: no product change; class named (accidental/API-protocol clones); 4 shape signals null; v0.2 tag candidate documented in docs/duplication_architecture.md §5.y
 **Module:** SCAN / DUPLICATION
 **Priority:** major
 **Complexity:** M
@@ -398,6 +398,182 @@ Updated decision: **do not ship suppression**. A composition percentage is usefu
 feature and maybe as a future `composition-like` tag/down-rank input, but by itself it does not
 separate clean composition from true copy-paste. The first removals already include TP collateral,
 and the highest-score snapshot examples are dominated by generated/table-like code.
+
+## Analysis 2026-07-02 — probe-defect audit, v2 re-measure, ubiquity signal (all verified against fresh corpus run)
+
+User hypothesis for this pass: maybe the composition *detector* (the probes) was written
+wrong, and maybe the *definition* itself was wrong. Both were tested.
+
+### Fresh corpus verification first
+
+`group3_precision.py` + `rescore.py` re-run from scratch on the current binary: recall
+58/140 = 41.4%, suppression 148/166 = 89.2%, precision 58/76 = 76.3% — exactly the #158
+closing numbers. The baseline is sound.
+
+### Probe-defect audit — the v1 probes WERE defective
+
+Confirmed parsing defects in `composition_gate_recalc.py` / `composition_snapshot_probe.py`:
+
+1. **Fluent/member chains missed entirely.** The call regex allowed at most one `.m`/`->m`
+   segment and no chaining, so `obj.setX(1).setY(2);` and `ui->label->setText(...);`
+   parsed as nothing. This is exactly the Qt-builder class the task flagged as the future
+   signal.
+2. **Assignment forms missed.** `auto rc = f(x);` was invisible to the snapshot probe
+   (no assignment prefix at all) and only `x = f();` worked in the recalc probe.
+3. **Template callees missed** (`f<T>(x);`).
+4. **Argument tokens did not separate domain payload from shared locals.** Shared local
+   names (`theme`, `c`, `q`) inflated argument overlap for genuine composition — the
+   documented Lightpad failure.
+5. **Snapshot probe grouped only EXACT callee sequences** — near-composition with one
+   inserted call was invisible.
+6. **Snapshot corpus polluted by vendor/generated** (`lib/glew`, Atmel `hri/`) that the
+   real product's AuthoredScope would exclude — the 90 020-pair count and the category
+   table overstate what archcheck itself would flag.
+
+### v2 probe — defects fixed, verdict UNCHANGED
+
+`composition_v2_probe.py` (same dir): chain-aware parser (10/10 sanity cases), payload
+divergence computed over literals/`UPPER_CASE`/`kCamel` constants only, plus a
+corpus-wide callee ubiquity signal. Materially different measurement: 69 witnesses newly
+measurable, 111/219 common witnesses matched MORE calls, 67 changed composition% by >0.02.
+
+Gate sweep on fresh `group3_findings.jsonl` — numerically identical outcome to v1:
+
+```text
+thr 0.10: suppressed 6 rows -> FP 3 / TP 3
+thr 0.20: suppressed 3 rows -> FP 1 / TP 2
+thr 0.25: suppressed 2 rows -> FP 1 / TP 1
+thr 0.35+: 0 / 0
+```
+
+Same rows as v1 top the metric (NexusMiner FP+TP, AetherSDR TP, fakelua TP ×4,
+FULL-FIRMWARE FP, Usagi-dono FP). **The "do not ship suppression" decision was NOT an
+artifact of the buggy parser — it is now confirmed by two independent probe
+implementations.** TP and FP interleave at every threshold; the best FP (TFT sliders) sits
+at the same composition strength as real TP (fakelua benchmark bodies).
+
+### Callee-ubiquity signal — REFUTED (wrong sign)
+
+Hypothesis (literature-inspired): calls that appear in many unrelated repos = API
+protocol/idiom → composition FP. Built a real document frequency for all 277 witness
+callees over the whole local OSS corpus (`build_callee_df.sh`, ripgrep pass, 270 callees
+resolved). Result:
+
+```text
+ubiq_df>=20:  FP median ubiquitous-call ratio 0.250 (mean 0.374)
+              TP median ubiquitous-call ratio 0.600 (mean 0.542)
+ubiq_df>=50:  FP 0.000/0.329  TP 0.600/0.531
+ubiq_df>=150: FP 0.000/0.297  TP 0.500/0.489
+```
+
+TP witnesses are MORE ubiquitous than FP — the opposite of the hypothesis. Real
+copy-paste in this corpus is built from common calls (`memcpy`, `push_back`, `prepare`),
+while the residual idiom FPs use niche APIs (TFT drawing, `hri_*` register ceremony).
+Cross-corpus callee frequency cannot down-rank composition. (Consistent with the #158
+lesson: rarity — token, line, or callee — does not separate.)
+
+### Micro-finding — Lightpad is NOT call choreography
+
+The Lightpad Qt-stylesheet witnesses have call density 0.03–0.10: the bodies are
+`return QString("QLineEdit { ... }").arg(...).arg(...);` — a *returned builder
+expression* whose duplication mass is the CSS string literal. The user's top-level
+call-statement definition does not cover this class at all; it is closer to a
+template/data-table family. Any future composition tag must treat "call-statement
+choreography" and "builder-expression templates" as distinct classes.
+
+### Artifacts
+
+- `composition_v2_probe.py` (sanity mode: `--sanity`), `build_callee_df.sh`,
+  `callee_df_corpus.tsv`, `witness_callees.txt`, `composition_v2_labelled.jsonl` —
+  all in `experiments/corpus_remeasure_131/` (gitignored).
+
+## Literature review 2026-07-02 — the class has a name, a definition, and a verdict
+
+Full web literature pass (primary sources fetched and quoted; details in the session log).
+Key findings:
+
+### Correct name and definition
+
+The user's "composition/API choreography" class is, in the literature:
+
+- **"Accidental clones" / "clones by accident"** — *"code fragments that are similar due
+  to the precise protocols they must use when interacting with a given API or set of
+  libraries"* (Al-Ekram, Kapser, Holt, Godfrey, ISESE 2005). In their study, 69% of
+  cross-system clone pairs were this class.
+- An instance of the **"Templating → API/Library Protocols"** cloning pattern (Kapser &
+  Godfrey, *"Cloning considered harmful" considered harmful*, WCRE 2006 / EMSE 2008):
+  *"the use of particular APIs require ordered series of procedure calls... Developers
+  will often copy-and-paste these sequences and then parameterize them."*
+- Rated **"incidental"** in their harm taxonomy: *"clones that cannot be abstracted
+  further... referencing a single function or multiple calls to the same function, and
+  the parameters to that function are changed in a non-systematic way."*
+- Syntactically these are ordinary Type-2/Type-3 clones (Roy & Cordy taxonomy) — the
+  taxonomy encodes similarity, not origin/intent, which is why token-level thresholds
+  keep failing to separate them.
+- Roy & Cordy's TR 2007-541 §7.5.2 explicitly catalogs "consecutive method invocations"
+  as a *frequent false positive* class (citing Higo et al. 2006).
+
+### What the literature says about detection
+
+- **No shipped detector has an API-choreography filter.** State of practice: CCFinderX's
+  RNR (non-repetition ratio) + TKS (token-kind diversity floor) thresholds; PMD CPD's
+  `--ignore-sequences`; manual suppression. Note: archcheck's existing `diversity`
+  metric is TKS-like, and the statement floor / switch-skeleton levers are RNR-adjacent —
+  the shipped pipeline already implements the practical state of the art.
+- **Kapser & Godfrey's own data explains our 1:1 trade:** parameterized-code clones
+  (same shape, different identifiers) were *harmful 71–76% of the time* in Gnumeric —
+  "same calls, different args" alone selects true positives. Direct literature
+  confirmation that no single such feature separates the classes.
+- Suppression is NOT supported; **tagging/down-ranking is**: 71% of clones are
+  beneficial (K&G), harm concentrates in *unintended inconsistent evolution*
+  (Juergens ICSE 2009), and even API-protocol clones have a harmful tail with an
+  "obvious abstraction" (K&G) — the class stays actionable as an
+  abstraction-opportunity signal, under a different label than copy-paste.
+
+### Two remaining literature-backed signals — TESTED, both null on our residual set
+
+1. **Argument-mapping systematicity** (Baker's p-match vs K&G's "non-systematic"
+   incidental definition). `composition_systematicity_probe.py` on labelled witnesses
+   (substitutions ≥ 3): FP n=41 median 1.000 / mean 0.727 / 27% below 0.5;
+   TP n=33 median 1.000 / mean 0.717 / 30% below 0.5. **No separation.** Counterexample
+   verified by eye: QtMeshEditor CLI-subcommand copy (real TP) has systematicity 0.06 —
+   non-systematic payload edits in genuine copy-paste.
+2. **Cross-repo callee-sequence 3-gram frequency** (HAGGIS: "clones seldom recur across
+   projects", idioms do). `sequence_ngram_df.py`, full-corpus pass (capped 300
+   files/repo, vendor/test dirs skipped): FP pairs median-of-medians df = 1,
+   TP = 0; pairs with median df ≥ 3: FP 6%, TP 3%. **Both classes are repo-local; no
+   separation.** Caveat: the capped scan undercounts df, but the FP/TP direction is flat.
+
+### Why all four signals fail HERE — the structural conclusion
+
+The labelled residual "FP" set is **not** the literature's incidental-clone class.
+The user's own #158 review reclassified most residual FPs as useful copy-paste; the
+clean incidental examples found in the wild (FLOX `o.Set` population, MMapper `connect`
+chains, registration tables — present in 991/2042 snapshot repos) **do not reach the
+current detector's output**: the existing TKS/RNR-like gates (diversity, statement
+floor, switch-skeleton, joint floor) already filter them. What remains fired is a
+mixture where choreography-shaped TPs and FPs are structurally identical — per the
+literature, separable only by origin/evolution (copy event, inconsistent divergence),
+not by shape.
+
+## FINAL VERDICT 2026-07-02 — research complete
+
+- **No v0.1 product change.** Suppression rejected by two independent probe
+  implementations and four null separation signals; literature explicitly warns
+  "different args" selects true positives.
+- **v0.2 candidate documented:** an advisory `incidental / api-protocol` TAG
+  (down-rank, never suppress) for pairs with high call-density + high recomposed-ratio,
+  named per the literature. Its value is presentation (letting users filter), not
+  precision. Requires its own fixtures + a labelled sample of *tag* accuracy.
+- **Origin-based signals are the real future direction** (per Juergens: harm =
+  unintended inconsistent evolution): `--diff`-time detection of copy events and
+  divergence tracking, not snapshot shape analysis. Out of scope for this task.
+- Probes and artifacts: `composition_v2_probe.py`, `composition_systematicity_probe.py`,
+  `sequence_ngram_df.py`, `build_callee_df.sh` + outputs in
+  `experiments/corpus_remeasure_131/` (gitignored).
+- **Recommendation: close #159** (research goal answered: the class exists, has a
+  literature name, and is not separable/suppressible at token level; tag idea filed
+  for v0.2). Leaving in wip/ for the user's confirmation to close.
 
 ## Acceptance if a product change is proposed
 
