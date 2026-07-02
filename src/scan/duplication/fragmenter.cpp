@@ -163,9 +163,21 @@ Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t h
   for (std::size_t i = lo; i < hi; ++i)
   {
     const std::string &sym = t[i].sym;
-    if (sym == "(") { ++paren; }
-    else if (sym == ")") { if (paren > 0) { --paren; } }
-    else if (sym == ";" && paren == 0) { ++f.statementCount; } // not a for-header `;`
+    if (sym == "(")
+    {
+      ++paren;
+    }
+    else if (sym == ")")
+    {
+      if (paren > 0)
+      {
+        --paren;
+      }
+    }
+    else if (sym == ";" && paren == 0)
+    {
+      ++f.statementCount;
+    } // not a for-header `;`
     ++f.bag[sym];
     f.seq.push_back(sym);
     f.rawSeq.push_back(t[i].raw.empty() ? sym : t[i].raw);

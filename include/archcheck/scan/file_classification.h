@@ -441,8 +441,8 @@ inline bool isVendoredFile(std::string_view filename, std::string_view headerByt
 // units-of-measurement, not tests) and substring/endswith-"test" matching (would
 // catch `latest/`, `contests/`) — over-exclusion silently hides real findings.
 inline constexpr std::array<std::string_view, 9> kTestDirNames = {
-    "test", "tests", "tst", "testutil", "testutils", "unittest", "unittests",
-    "testlib", "testlibs", // test-support libraries (zera-classes, papi, gem5; #164 B.3)
+    "test",     "tests",     "tst",     "testutil", "testutils",
+    "unittest", "unittests", "testlib", "testlibs", // test-support libraries (zera-classes, papi, gem5; #164 B.3)
 };
 
 // CamelCase test boundary on a raw (un-lowercased) stem/segment: ends with capital
@@ -465,8 +465,7 @@ inline bool hasCamelCaseTestSuffix(std::string_view stem)
 // Lowercased stem ends with a separator-delimited test marker (_test, -spec, ...).
 inline bool hasTestStemSuffix(std::string_view stem)
 {
-  static constexpr std::array<std::string_view, 6> kSuffixes = {"_test", "_tests", "_spec",
-                                                                "-test", "-tests", "-spec"};
+  static constexpr std::array<std::string_view, 6> kSuffixes = {"_test", "_tests", "_spec", "-test", "-tests", "-spec"};
   for (std::string_view s : kSuffixes)
   {
     if (stem.size() >= s.size() && stem.compare(stem.size() - s.size(), s.size(), s) == 0)
@@ -520,8 +519,7 @@ inline bool isTestBasename(std::string_view filename)
   }
   // CamelCase XxxTest(s) on the raw (un-lowercased) stem — capital T is the discriminator.
   const std::size_t rawDot = filename.rfind('.');
-  const std::string_view rawStem =
-      (rawDot == std::string_view::npos) ? filename : filename.substr(0, rawDot);
+  const std::string_view rawStem = (rawDot == std::string_view::npos) ? filename : filename.substr(0, rawDot);
   return hasCamelCaseTestSuffix(rawStem);
 }
 

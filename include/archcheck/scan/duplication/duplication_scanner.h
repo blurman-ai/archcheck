@@ -13,15 +13,15 @@ namespace archcheck::scan::duplication
 
 struct Pair
 {
-  std::size_t a = 0;     // first fragment index
-  std::size_t b = 0;     // second fragment index
-  double weighted = 0.0; // weighted Jaccard similarity
-  double plain = 0.0;    // plain Jaccard similarity
-  double line = 0.0;     // line-based overlap (union Jaccard)
+  std::size_t a = 0;           // first fragment index
+  std::size_t b = 0;           // second fragment index
+  double weighted = 0.0;       // weighted Jaccard similarity
+  double plain = 0.0;          // plain Jaccard similarity
+  double line = 0.0;           // line-based overlap (union Jaccard)
   std::size_t sharedLines = 0; // distinct substantive verbatim lines shared (absolute run)
   std::size_t sharedRare = 0;  // shared rare (project-specific) tokens — anchors a real copy
-  double lcs = 0.0;      // token-LCS Dice ratio
-  std::string type;      // clone type: EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (see clone_classifier)
+  double lcs = 0.0;            // token-LCS Dice ratio
+  std::string type;            // clone type: EXACT/RENAMED/LITERAL/MIXED/STRUCTURAL (see clone_classifier)
 };
 
 struct ScannerOptions
@@ -48,15 +48,15 @@ struct ScannerOptions
   // table — recovers Type-3 edited copies (insert/delete deflates the ratio but not
   // the absolute run) without admitting framework idioms (no rare anchor). 0 disables.
   std::size_t jointMinSharedLines = 6;
-  std::size_t jointMinSharedRare = 0;        // run-path needs this many shared anchors (0 disables)
-  std::size_t jointAnchorDfCap = 12;         // a token shared by both AND in <= this many fragments is a
-                                             // project anchor; framework idioms (Qt/STL) exceed it -> no anchor
-  double jointRunWeightedThreshold = 0.60;   // run-path weighted floor: edits dilute the bag below
-                                             // jointWeightedThreshold, so a strong line-run uses a lower bound
-  bool enableP1Guards = true;           // P1: enable classifier filters (data-table, boilerplate, header-impl, IDF)
-  bool enablePathGuards = true;         // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
-  bool enableWholeFileGuard = true;     // P0.2: count whole-file clones separately, drop their pairs
-  bool enableDataTableDrop = true;      // P1.1: make data-table guard a real DROP (not just down-weight)
+  std::size_t jointMinSharedRare = 0;      // run-path needs this many shared anchors (0 disables)
+  std::size_t jointAnchorDfCap = 12;       // a token shared by both AND in <= this many fragments is a
+                                           // project anchor; framework idioms (Qt/STL) exceed it -> no anchor
+  double jointRunWeightedThreshold = 0.60; // run-path weighted floor: edits dilute the bag below
+                                           // jointWeightedThreshold, so a strong line-run uses a lower bound
+  bool enableP1Guards = true;              // P1: enable classifier filters (data-table, boilerplate, header-impl, IDF)
+  bool enablePathGuards = true;            // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
+  bool enableWholeFileGuard = true;        // P0.2: count whole-file clones separately, drop their pairs
+  bool enableDataTableDrop = true;         // P1.1: make data-table guard a real DROP (not just down-weight)
 };
 
 struct ScanResult

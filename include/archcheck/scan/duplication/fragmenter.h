@@ -20,8 +20,8 @@ struct Fragment
   std::unordered_map<std::string, int> bag;  // normalized token -> count
   std::vector<std::string> seq;              // ordered normalized tokens (for LCS)
   std::vector<std::string> rawSeq;           // raw spelling per token, aligned with seq
-  std::unordered_set<std::string> normLines;  // line-set (Jaccard ratio)
-  std::vector<std::string> normLineSeq;       // ordered substantive lines (line-LCS run)
+  std::unordered_set<std::string> normLines; // line-set (Jaccard ratio)
+  std::vector<std::string> normLineSeq;      // ordered substantive lines (line-LCS run)
   double diversity = 1.0;                    // distinct-trigram ratio (low = skeletal)
 };
 

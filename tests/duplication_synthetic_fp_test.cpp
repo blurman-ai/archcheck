@@ -24,8 +24,7 @@ std::vector<std::pair<std::string, std::string>> loadFixtureDir(std::string_view
 }
 } // namespace
 
-TEST_CASE("P1.1 data-table guard: a LITERAL low-diversity color table is a real DROP",
-          "[duplication][p1][fixtures]")
+TEST_CASE("P1.1 data-table guard: a LITERAL low-diversity color table is a real DROP", "[duplication][p1][fixtures]")
 {
   // fail_palette/: a color-tier table copied between two unit files, differing only in
   // the `default:` RGB (modelled on djeada/Standard-of-Iron team_color).
@@ -49,8 +48,7 @@ TEST_CASE("P1.1 data-table guard: a LITERAL low-diversity color table is a real 
   REQUIRE(after.pairs.empty());
 }
 
-TEST_CASE("P1.1 data-table guard: a high-diversity logic copy is NOT dropped",
-          "[duplication][p1][fixtures]")
+TEST_CASE("P1.1 data-table guard: a high-diversity logic copy is NOT dropped", "[duplication][p1][fixtures]")
 {
   // pass/: a real importer logic copy (EXACT, diversity >= 0.30). The guard must leave it.
   const auto files = loadFixtureDir("data_table/pass");
@@ -65,8 +63,7 @@ TEST_CASE("P1.1 data-table guard: a high-diversity logic copy is NOT dropped",
   }
 }
 
-TEST_CASE("test-file exclusion: two *Tests.cpp clones never reach the scanner",
-          "[duplication][p1][fixtures]")
+TEST_CASE("test-file exclusion: two *Tests.cpp clones never reach the scanner", "[duplication][p1][fixtures]")
 {
   // test_boilerplate/: WidgetTests.cpp + GadgetTests.cpp hold an identical arrange-act-assert
   // block. CamelCase `*Tests` is recognized as a test basename (#158 A.1), so the product gate

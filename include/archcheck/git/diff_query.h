@@ -32,8 +32,8 @@ struct DeletedLine
 // Collect removed lines from unified diff (--unified=0) between two git refs.
 // Old-side line numbers are used, so callers can match them against the baseline snapshot.
 [[nodiscard]] std::vector<DeletedLine> collectDeletedLines(const std::filesystem::path &repoRoot,
-                                                          const std::string &baselineRef,
-                                                          const std::string &currentRef);
+                                                           const std::string &baselineRef,
+                                                           const std::string &currentRef);
 
 // Statistics from git diff --numstat.
 struct NumStat

@@ -26,8 +26,8 @@ std::size_t sharedLineCount(const Fragment &a, const Fragment &b);
 // Count tokens shared by both fragments that are rare (document frequency <= cap).
 // A real copy shares project-specific anchors (names, constants); a framework idiom
 // (Qt dialog scaffold, RAII ceremony) shares only common tokens — its rare count is ~0.
-std::size_t sharedRareCount(const Fragment &a, const Fragment &b,
-                            const std::unordered_map<std::string, int> &df, std::size_t cap);
+std::size_t sharedRareCount(const Fragment &a, const Fragment &b, const std::unordered_map<std::string, int> &df,
+                            std::size_t cap);
 
 // Compute token-LCS length (longest common subsequence of tokens, order-aware).
 std::size_t lcsLength(const std::vector<std::string> &a, const std::vector<std::string> &b);

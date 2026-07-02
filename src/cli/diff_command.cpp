@@ -222,7 +222,8 @@ void collectSnapshotAdvisories(DiffAdvisories &result, const SnapshotAdvisoryInp
   if (!baseSnap || !curSnap)
     return;
   result.complexity = collectComplexityDrift(input.repoRoot, input.parsed, *baseSnap, *curSnap);
-  result.newClones = collectNewClones(*curSnap, *baseSnap, input.addedLines, input.deletedLines, input.maxCloneScanBytes);
+  result.newClones =
+      collectNewClones(*curSnap, *baseSnap, input.addedLines, input.deletedLines, input.maxCloneScanBytes);
   result.flagArguments = collectFlagArguments(*curSnap, input.addedLines);
   result.boolFields = collectBoolFieldDrift(input.repoRoot, input.parsed, *baseSnap, *curSnap);
   result.baseSnapshot = std::move(baseSnap);

@@ -99,8 +99,8 @@ std::size_t sharedLineCount(const Fragment &a, const Fragment &b)
   return n;
 }
 
-std::size_t sharedRareCount(const Fragment &a, const Fragment &b,
-                            const std::unordered_map<std::string, int> &df, std::size_t cap)
+std::size_t sharedRareCount(const Fragment &a, const Fragment &b, const std::unordered_map<std::string, int> &df,
+                            std::size_t cap)
 {
   const auto &small = a.bag.size() < b.bag.size() ? a.bag : b.bag;
   const auto &big = a.bag.size() < b.bag.size() ? b.bag : a.bag;
