@@ -85,3 +85,19 @@ Lean (a) for a real product surface; (b) is the cheap stopgap the demo can carry
 - `src/CMakeLists.txt` — `md_report.cpp` registered
 - `tests/unit/diff/regression_report_test.cpp` — 3 `[md_report]` tests added
 - `tests/unit/scan/new_clone_drift_test.cpp` — pre-existing clang-format fixed
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

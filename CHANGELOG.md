@@ -13,6 +13,10 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
   GitHub security advisories), `CODE_OF_CONDUCT.md`, issue templates (bug / rule
   false-positive / feature) and a PR template. README gained an Install section with
   checksum-verified release download and release/license badges. (#163)
+- **Type-3 (edited-copy) clone recovery** — the clone detector now also catches copies that
+  were edited after pasting: fragments that share rare anchor lines with existing code are
+  admitted past the token gate, and an ordered line-LCS run-path scores how much of the
+  copied line sequence survived, so renamed-and-tweaked copies no longer slip through. (#131)
 
 ### Changed
 
@@ -33,7 +37,15 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
   `DRIFT.NEW_CLONE` suppresses pure code moves by matching added fragments against deleted
   parent lines. The corrected Group-3 remeasure improved precision to 76.3% while keeping
   the remaining generic composition idea out of product code until #159 has cleaner evidence.
-  (#158)
+  Follow-up fixes in the same batch: a statement floor on the classic clone path (fragments
+  spanning too few real statements no longer report), CamelCase and infix test-file names are
+  recognized as test files, and the data-table guard now actually drops data-table fragments
+  instead of only tagging them. (#158)
+- **First-run sanity fixes from the launch gate** — running archcheck on the {fmt} repo
+  itself no longer vendor-drops the project's own `include/fmt/` headers: a self-project
+  guard exempts the curated bundled-lib token that matches the scan root's directory name
+  (container names like `third_party/` are never exempt). `dep/` joined the vendored
+  container names (microsoft/terminal keeps its vendored headers there). (#163)
 
 ## [0.1.5] - 2026-06-28
 

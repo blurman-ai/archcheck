@@ -129,3 +129,19 @@ with repo-relative paths (GitHub renders inline). Workflow YAML parses (8 steps)
 ## Fixtures (if a rule)
 
 - n/a — not a new rule; the rule's fixtures/E2E are closed under #123. This is a live-CI demo.
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

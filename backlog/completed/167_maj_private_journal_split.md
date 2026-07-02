@@ -66,3 +66,19 @@ receives the internal narrative and heavy research bulk:
 
 - Do not delete JOURNEY content anywhere — this is a move, not a cleanup.
 - Do not move the manual-audit docs (#160-#162 outputs) — they back public claims.
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

@@ -147,3 +147,19 @@ All acceptance boxes satisfied: 40+ findings (92 fresh + 189 historical), 15+ ex
 (12 new + live AlchemyViewer/CopilotChess checks above), precision + taxonomy written,
 product bugs have a follow-up task (#164), linked from #160. **Ready to move to
 completed/ on user confirmation.**
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

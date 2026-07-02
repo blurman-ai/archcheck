@@ -41,9 +41,16 @@ first, HN as a bonus.
    versioned release. (opensource.guide + GitHub community profile checklist.)
 
 Project-specific readiness gate (from TASK_TRACKER + this session):
-- [ ] #160/#161/#162 manual evidence base complete — no signal ships un-audited.
+- [x] #160/#161/#162 manual evidence base complete — no signal ships un-audited.
+      **Done 2026-07-02** (tasks in `completed/`; bugs found were fixed in #164).
 - [ ] #127/#131 vendored/generated sign-off (bundled-deps repos don't drown in noise).
-- [ ] First-run sanity on 3–5 well-known OSS repos (fresh eyes, zero-config).
+      Supporting evidence 2026-07-02: spdlog's bundled fmt, rocksdb third-party/ and
+      terminal dep/ all excluded cleanly in the sanity run; #131 Groups 2/4 still open.
+- [x] First-run sanity on 3–5 well-known OSS repos (fresh eyes, zero-config).
+      **Done 2026-07-02**: fmt, spdlog, nlohmann/json, rocksdb, microsoft/terminal.
+      Caught and fixed two classification bugs (fmt self-exclusion from #164 B.1;
+      `dep/` container missing). All SF.9 gate cycles hand-verified as real mutual
+      includes; fmt's single advisory (core.h has no include guard) is genuine.
 
 ## Phase 0 — repo hygiene (mostly done)
 
@@ -64,7 +71,9 @@ Project-specific readiness gate (from TASK_TRACKER + this session):
       Execution split into task **#167** (private companion repo for JOURNEY,
       milestones, dup_band, analysis/, sandbox/, symlink cleanup; backlog/ and the
       #160-#162 audit docs STAY public — they back the precision claims).
-- [ ] Scrub check: no secrets/sensitive material in git history (opensource.guide item).
+- [x] Scrub check: no secrets/sensitive material in git history (opensource.guide item).
+      **Executed via #167** (2026-07-02): local paths and internal references scrubbed
+      from public files and history; journal/research bulk moved to the private repo.
 
 ## Phase 1 — packaging & distribution
 

@@ -595,3 +595,19 @@ not by shape.
 - Do not trust cropped snippets. Show enough code to classify the example.
 - Do not split this into another task until the first autonomous research pass has real results.
 - Do not commit experimental product code unless it has fixtures and measured tradeoff.
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

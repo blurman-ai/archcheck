@@ -1,6 +1,6 @@
 # archcheck — ROADMAP
 
-_2026-06-25 · phase: **v0.1.0 released — stabilising; v0.2 (dependency policy rules) next**_
+_2026-07-02 · phase: **v0.1.5 — public-launch prep (#163); v0.2 (dependency policy rules) after the announcement**_
 
 ## Product framing
 
@@ -36,9 +36,10 @@ The product frame in more detail — [product_vision.md](product_vision.md).
 
 ## Current focus
 
-**v0.1.0 released** (2026-06-25): the trusted graph/drift/diff core has shipped, and a
-prebuilt Linux binary lives in GitHub Releases for pinned CI install. The phase has shifted
-from "finish the core" to **stabilization + transition to v0.2**.
+**v0.1.5 released** (2026-06-28; v0.1.0 shipped 2026-06-25): the trusted graph/drift/diff
+core has shipped, a prebuilt Linux binary lives in GitHub Releases for pinned CI install,
+and a live demo repo is linked from the README. The phase has shifted from "finish the
+core" to **public-launch preparation** (task #163 — packaging, evidence, announcement).
 
 **Platforms:** prebuilt binaries are Linux x86_64 (dynamic + static) today. **Windows x64
 (#165) and macOS arm64 (#166) are planned for the next phase, after the public
@@ -46,9 +47,12 @@ announcement** (decision 2026-07-02); until then other platforms build from sour
 
 Priorities of the current phase:
 
+- public launch (#163): readiness gate (#131 vendored/generated sign-off, first-run sanity
+  on well-known repos), packaging (GitHub Action wrapper, GHCR image, Homebrew tap),
+  evidence write-ups, then the staggered venue sequence;
 - stabilize `--diff`-in-CI: exit 2 on an unresolvable ref (#144);
-- public-readiness: an outward-facing GitHub demo repo for new-clone drift (#123);
-- start v0.2 — enforcement of module rules from `.archcheck.yml` (ADR-001).
+- start v0.2 — enforcement of module rules from `.archcheck.yml` (ADR-001); per the
+  reprioritization note below this is an opt-in power feature, not a launch blocker.
 
 **Reprioritization note (2026-06-28, corpus-backed):** across 516 572 per-commit results the
 structural/boundary class that v0.2 enforcement targets is a **0.3–0.5 % event** (new cross-area dep

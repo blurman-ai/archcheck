@@ -150,3 +150,19 @@ now contains the full audit:
 All acceptance boxes are satisfied: 30+ findings (53), 12+ examples (12), precision
 estimate + FP taxonomy written, product bugs have a follow-up task (#164), linked
 from #160. **Ready to move to completed/ on user confirmation.**
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->

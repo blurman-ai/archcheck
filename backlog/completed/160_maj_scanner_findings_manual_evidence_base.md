@@ -138,3 +138,19 @@ least 20 full code examples into the research doc.
 All acceptance boxes satisfied: doc with commands/sampling/verdicts, 50+ findings
 (145), 20+ examples (24 + live), #161/#162 linked, FP classes tasked or accepted.
 **Ready to move to completed/ on user confirmation.**
+
+## How it works
+
+<!-- TODO -->
+
+## What controls it
+
+<!-- TODO -->
+
+## What it relates to
+
+<!-- TODO -->
+
+## Diagnostics
+
+<!-- TODO -->
