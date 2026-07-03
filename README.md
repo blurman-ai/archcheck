@@ -68,6 +68,20 @@ its clone source.
 
 ---
 
+## Findings on real code
+
+Include cycles archcheck flagged on well-known C++ projects, each pinned to an exact commit and
+verified in both directions with `file:line` — see [docs/findings/](docs/findings/):
+
+- **folly** — `Future.h` ⇄ `Promise.h` (trailing-include idiom, a real cycle by Lakos's definition).
+- **RocksDB** — the public `db.h` ⇄ an `EXPERIMENTAL` `multi_scan.h`; the back-edge is a removable forward-declaration.
+- **Windows Terminal** — `Utils.h` ⇄ `SettingContainer.h`, where the include is dead (`SettingContainer` never used in `Utils.h`).
+
+Each write-up quotes both include lines, gives the reproduce command, and states the honest
+counter-argument a maintainer might make.
+
+---
+
 ## Install
 
 Prebuilt Linux x86_64 binaries ship with every [release](https://github.com/blurman-ai/archcheck/releases/latest)
