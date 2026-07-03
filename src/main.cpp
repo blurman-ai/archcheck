@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string_view>
 
 #include "archcheck/config/config_loader.h"
@@ -19,7 +20,8 @@ void print_version() { std::cout << "archcheck " << archcheck::kVersionString <<
 constexpr std::string_view kHelpText = R"(archcheck - architecture rules for C++ projects
 
 Usage:
-  archcheck [path]                             (check: gate SF.9 cycles; report other default findings as advisory)
+  archcheck [path]                             (check: gate SF.9 cycles + include case mismatches; other findings advisory)
+  archcheck --fail-on-unresolved-local [path]  (also gate on quoted local includes that do not resolve)
   archcheck --format json [path]               (JSON output with gate/disposition fields)
   archcheck --config <path> [check-path]       (validate .archcheck.yml v1 + apply thresholds;
                                                 module rules not yet enforced)
@@ -36,7 +38,8 @@ Usage:
   archcheck --diff  [--diff-mode=disk|memory] [--format=text|json] <revspec> [path]
                   (PR diff; gates new/grown cycles and new god-headers, reports advisories)
 
-Default rules (no config required): SF.9 [gating]; SF.7, SF.8, Lakos.GodHeader, Lakos.ChainLength [advisory]
+Default rules (no config required): SF.9, CASE_MISMATCH_INCLUDE [gating];
+                                    SF.7, SF.8, Lakos.GodHeader, Lakos.ChainLength, UNRESOLVED_LOCAL_INCLUDE [advisory]
 Default thresholds: chain_length=10, god_header_fan_in=50 (override via thresholds: in .archcheck.yml)
 Drift rules (require --drift-baseline):        DRIFT.1, DRIFT.2, DRIFT.4.CYCLE [gating];
                                                 DRIFT.3, DRIFT.4.NEW, DRIFT.4.SDP [advisory]
@@ -204,6 +207,17 @@ bool requireDirectory(const std::filesystem::path &path)
   return false;
 }
 
+// check mode with UNRESOLVED_LOCAL_INCLUDE promoted to a gating finding (#167).
+// CASE_MISMATCH_INCLUDE gates regardless; this opt-in also fails on quoted local
+// includes that resolve nowhere.
+int dispatch_fail_unresolved_local(int argc, char *argv[])
+{
+  const std::filesystem::path root = (argc > 2) ? std::filesystem::path{argv[2]} : std::filesystem::current_path();
+  if (argc > 2 && !requireDirectory(root))
+    return 2;
+  return cli::runCheck(root, cli::OutputFormat::Text, {}, std::nullopt, /*failOnUnresolvedLocal=*/true);
+}
+
 int dispatch_with_path(std::string_view arg, int argc, char *argv[])
 {
   if (argc < 3)
@@ -262,6 +276,8 @@ int dispatch(int argc, char *argv[])
     return dispatch_format(argc, argv);
   if (arg == "--config")
     return dispatch_config(argc, argv);
+  if (arg == "--fail-on-unresolved-local")
+    return dispatch_fail_unresolved_local(argc, argv);
   if (!arg.empty() && arg[0] != '-')
   {
     const std::filesystem::path root{argv[1]};

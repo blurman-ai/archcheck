@@ -8,6 +8,19 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- **Local include-resolution gate — case mismatches and unresolved local includes** —
+  a quoted `#include` that resolves only when filesystem case is ignored
+  (`#include "core/Board.hpp"` for `core/board.hpp`) is now reported as
+  **`CASE_MISMATCH_INCLUDE`** and **gates by default** (a real build break on
+  case-sensitive Linux, previously only a silent `unresolved` graph counter). A
+  quoted local include that resolves nowhere is **`UNRESOLVED_LOCAL_INCLUDE`**,
+  advisory by default; `--fail-on-unresolved-local` promotes it to a gating finding.
+  Angle-bracket / system includes are never flagged. When the scan root is a
+  subtree of a git repo, includes that resolve against an include root elsewhere
+  in the repo (e.g. `archcheck src` reaching `include/`) are not false-flagged, and
+  self-includes (a file re-including itself for macro re-expansion) are not mistaken
+  for case mismatches. Verified on the Gambit SFML project (7 real case mismatches)
+  and opencv WinRT samples. (#168)
 - **Community files for public launch** — `CONTRIBUTING.md` (build/test/dogfood, fixture
   rule, one-rule-one-file, authority-over-opinion), `SECURITY.md` (private disclosure via
   GitHub security advisories), `CODE_OF_CONDUCT.md`, issue templates (bug / rule

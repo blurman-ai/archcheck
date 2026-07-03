@@ -32,8 +32,10 @@ struct BaselineOpts
 // Run all default rules on `root` and report. Owns baseline filtering and
 // delegates check/drift exit gating to rules/gate_policy.h.
 // Discovers .archcheck.yml from `root` unless an explicit `config` is given.
+// `failOnUnresolvedLocal` (--fail-on-unresolved-local) promotes advisory
+// UNRESOLVED_LOCAL_INCLUDE findings to gating; CASE_MISMATCH_INCLUDE always gates.
 int runCheck(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts baseline = {},
-             std::optional<config::Config> config = std::nullopt);
+             std::optional<config::Config> config = std::nullopt, bool failOnUnresolvedLocal = false);
 
 // Save the include-graph snapshot of `root` for later --drift-baseline runs.
 int runSaveGraphBaseline(const std::filesystem::path &root, const std::filesystem::path &file);

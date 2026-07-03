@@ -8,6 +8,7 @@
 namespace archcheck::report
 {
 
-void writeJsonReport(const rules::ViolationList &violations, std::ostream &out, rules::GateMode gateMode);
+void writeJsonReport(const rules::ViolationList &violations, std::ostream &out, rules::GateMode gateMode,
+                     bool failOnUnresolvedLocal = false);
 
 } // namespace archcheck::report

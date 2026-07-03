@@ -3,6 +3,7 @@ add_library(archcheck_core STATIC
    scan/include_scanner.cpp
    scan/project_files.cpp
    scan/include_resolver.cpp
+   scan/local_include_scan.cpp
    scan/disk_file_source.cpp
    scan/satd_scan.cpp
    scan/test_co_evolution.cpp

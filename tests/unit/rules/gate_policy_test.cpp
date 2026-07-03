@@ -8,11 +8,22 @@ using archcheck::rules::FindingDisposition;
 using archcheck::rules::GateMode;
 using archcheck::rules::isGating;
 
-TEST_CASE("gate policy: check mode gates only SF.9", "[rules][gate-policy]")
+TEST_CASE("gate policy: check mode gates SF.9 and CASE_MISMATCH_INCLUDE", "[rules][gate-policy]")
 {
   CHECK(classifyForGate("SF.9", GateMode::Check) == FindingDisposition::Gating);
+  CHECK(classifyForGate("CASE_MISMATCH_INCLUDE", GateMode::Check) == FindingDisposition::Gating);
   CHECK(classifyForGate("SF.7", GateMode::Check) == FindingDisposition::Advisory);
   CHECK(classifyForGate("Lakos.GodHeader", GateMode::Check) == FindingDisposition::Advisory);
+}
+
+TEST_CASE("gate policy: UNRESOLVED_LOCAL_INCLUDE is advisory unless the opt-in is set", "[rules][gate-policy]")
+{
+  CHECK(classifyForGate("UNRESOLVED_LOCAL_INCLUDE", GateMode::Check) == FindingDisposition::Advisory);
+  CHECK(classifyForGate("UNRESOLVED_LOCAL_INCLUDE", GateMode::Check, /*failOnUnresolvedLocal=*/true) ==
+        FindingDisposition::Gating);
+  // The opt-in never touches unrelated advisories.
+  CHECK(classifyForGate("Lakos.GodHeader", GateMode::Check, /*failOnUnresolvedLocal=*/true) ==
+        FindingDisposition::Advisory);
 }
 
 TEST_CASE("gate policy: drift mode gates regression-grade drift rules", "[rules][gate-policy]")

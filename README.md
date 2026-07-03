@@ -40,6 +40,7 @@ degrades with context; CI doesn’t.
   - **SF.8** — every header has `#pragma once` or include guard (**advisory**)
   - **Lakos.GodHeader** — fan-in ≤ 50 incoming includes (**advisory** in check mode)
   - **Lakos.ChainLength** — include-chain depth ≤ 10 (**advisory**)
+- Checks local `#include` resolution: **CASE_MISMATCH_INCLUDE** — a quoted include that resolves only when filesystem case is ignored (`#include "core/Board.hpp"` for `core/board.hpp`), a real build break on case-sensitive Linux (**gating**); **UNRESOLVED_LOCAL_INCLUDE** — a quoted local include that resolves nowhere (**advisory**; `--fail-on-unresolved-local` makes it gate). Angle-bracket / system includes are never flagged
 - Reports findings as `file:line: [rule] message`; exit `1` means a gated finding, not merely "anything was reported"
 - Tracks architectural drift between graph baselines: `DRIFT.1`, `DRIFT.2`, and `DRIFT.4.CYCLE` gate; `DRIFT.3`, `DRIFT.4.NEW`, `DRIFT.4.SDP`, and pre-existing findings are advisory
 - Runs the canonical PR workflow with `--diff <revspec>`: new/grown cycles and new god-headers gate, while added edges, chain/NCCD growth, SATD, test co-evolution, local complexity, flag-argument drift, and new clone drift are advisory
@@ -48,7 +49,7 @@ The current signal model:
 
 | Layer | Examples | Exit behavior |
 |-------|----------|---------------|
-| Core gate | SF.9 cycles, DRIFT.1/2/4.CYCLE, `--diff` new/grown cycles and new god-headers | exit `1` |
+| Core gate | SF.9 cycles, CASE_MISMATCH_INCLUDE, DRIFT.1/2/4.CYCLE, `--diff` new/grown cycles and new god-headers | exit `1` |
 | Structural advisories | SF.7/SF.8, Lakos chain/god-header in check mode, added edges, NCCD/chain growth | reported, exit `0` |
 | PR hygiene advisories | SATD, test co-evolution, local complexity, flag arguments, new clones | reported, exit `0` |
 | History analytics | `--history` god-file growth and defect-attractor signals | report-only, exit `0` |

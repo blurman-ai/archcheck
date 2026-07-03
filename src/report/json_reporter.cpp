@@ -18,18 +18,19 @@ std::string_view dispositionName(rules::FindingDisposition disposition)
 
 } // namespace
 
-void writeJsonReport(const rules::ViolationList &violations, std::ostream &out, rules::GateMode gateMode)
+void writeJsonReport(const rules::ViolationList &violations, std::ostream &out, rules::GateMode gateMode,
+                     bool failOnUnresolvedLocal)
 {
   std::unordered_map<std::string, std::size_t> byRule;
   for (const auto &v : violations)
     ++byRule[v.ruleId];
 
-  const bool gates = rules::countGating(violations, gateMode) > 0;
+  const bool gates = rules::countGating(violations, gateMode, failOnUnresolvedLocal) > 0;
   out << "{\n  \"version\": 1,\n  \"gate\": \"" << (gates ? "fail" : "ok") << "\",\n  \"violations\": [\n";
   for (std::size_t i = 0; i < violations.size(); ++i)
   {
     const auto &v = violations[i];
-    const auto disposition = rules::classifyForGate(v.ruleId, gateMode);
+    const auto disposition = rules::classifyForGate(v.ruleId, gateMode, failOnUnresolvedLocal);
     out << "    {\"rule\": \"" << jsonEscape(v.ruleId) << "\", \"file\": \"" << jsonEscape(v.file)
         << "\", \"line\": " << v.line << ", \"disposition\": \"" << dispositionName(disposition)
         << "\", \"message\": \"" << jsonEscape(v.message) << "\"}";

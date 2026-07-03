@@ -37,7 +37,7 @@ TEST_CASE("e2e cli: --help exits 0 and shows the diff workflow", "[cli][e2e]")
   const auto r = runArchcheck(dir.path, "--help");
   REQUIRE(r.exitCode == 0);
   REQUIRE(r.output.find("--diff") != std::string::npos);
-  REQUIRE(r.output.find("SF.9 [gating]") != std::string::npos);
+  REQUIRE(r.output.find("SF.9, CASE_MISMATCH_INCLUDE [gating]") != std::string::npos);
   REQUIRE(r.output.find("DRIFT.4.CYCLE [gating]") != std::string::npos);
   REQUIRE(r.output.find("gates new/grown cycles and new god-headers") != std::string::npos);
 }

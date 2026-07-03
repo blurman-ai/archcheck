@@ -20,6 +20,7 @@
 #include "archcheck/rules/rule_set.h"
 #include "archcheck/scan/disk_file_source.h"
 #include "archcheck/scan/file_classification.h"
+#include "archcheck/scan/local_include_scan.h"
 #include "archcheck/scan/source_snapshot.h"
 
 namespace archcheck::cli
@@ -93,15 +94,15 @@ int reportDriftGate(const archcheck::rules::ViolationList &all, OutputFormat fmt
 // on a naive first run (abseil: 211 chain-length, exit 1) and existing debt belongs
 // behind --baseline, not a hard exit. This mirrors the narrow-gate trust model,
 // but not the exact --diff gate: diff also gates new god-headers. #133.
-int reportCheckGate(const archcheck::rules::ViolationList &all, OutputFormat fmt)
+int reportCheckGate(const archcheck::rules::ViolationList &all, OutputFormat fmt, bool failOnUnresolvedLocal)
 {
-  const auto gating = archcheck::rules::countGating(all, archcheck::rules::GateMode::Check);
+  const auto gating = archcheck::rules::countGating(all, archcheck::rules::GateMode::Check, failOnUnresolvedLocal);
   const auto advisory = all.size() - static_cast<std::size_t>(gating);
   if (fmt == OutputFormat::Text && advisory > 0)
     std::cout << "note: " << advisory
               << " advisory finding(s) reported, not gated (chain-length / god-header / SF.7-8 are"
-                 " physical-design advisories); the gate fails only on dependency cycles (SF.9)."
-                 " Use --baseline to track existing debt.\n";
+                 " physical-design advisories); the gate fails on dependency cycles (SF.9) and include"
+                 " case mismatches (CASE_MISMATCH_INCLUDE). Use --baseline to track existing debt.\n";
   return gating > 0 ? 1 : 0;
 }
 
@@ -110,15 +111,52 @@ archcheck::rules::GateMode gateModeFor(const BaselineOpts &baseline)
   return baseline.driftFile ? archcheck::rules::GateMode::Drift : archcheck::rules::GateMode::Check;
 }
 
-void writeReport(const archcheck::rules::ViolationList &all, OutputFormat fmt, const BaselineOpts &baseline)
+// Locate the enclosing git repo when `root` is a subtree of one (archcheck src).
+// Quoted includes then routinely resolve against include roots elsewhere in the
+// repo — those files exist, so they must not be reported (#167). Returns nullopt
+// when root IS the repo root (the subtree index already covers everything) or no
+// repo is found; the scan then runs on the subtree index alone.
+std::optional<archcheck::scan::RepoUniverse> repoUniverseFor(const std::filesystem::path &root)
+{
+  std::error_code ec;
+  const std::filesystem::path canonicalRoot = std::filesystem::canonical(root, ec);
+  if (ec || std::filesystem::exists(canonicalRoot / ".git"))
+    return std::nullopt;
+  for (auto dir = canonicalRoot.parent_path(); !dir.empty(); dir = dir.parent_path())
+  {
+    if (std::filesystem::exists(dir / ".git"))
+      return archcheck::scan::RepoUniverse{canonicalRoot.lexically_relative(dir).generic_string(),
+                                           archcheck::scan::discoverFiles(dir)};
+    if (dir == dir.parent_path())
+      break;
+  }
+  return std::nullopt;
+}
+
+// Local include-resolution findings (#167): a quoted include that resolves only
+// under a different filesystem case is a portability break (gating by default);
+// one that resolves not at all is advisory (may be generated / custom root).
+archcheck::rules::Violation toViolation(const archcheck::scan::LocalIncludeIssue &issue)
+{
+  if (issue.kind == archcheck::scan::LocalIncludeIssue::Kind::CaseMismatch)
+    return {"CASE_MISMATCH_INCLUDE", issue.file, issue.line,
+            "quoted include \"" + issue.include + "\" resolves only case-insensitively to " +
+                issue.resolvedCaseInsensitive + " (breaks on case-sensitive filesystems)"};
+  return {"UNRESOLVED_LOCAL_INCLUDE", issue.file, issue.line,
+          "quoted local include \"" + issue.include + "\" does not resolve under project roots"};
+}
+
+void writeReport(const archcheck::rules::ViolationList &all, OutputFormat fmt, const BaselineOpts &baseline,
+                 bool failOnUnresolvedLocal)
 {
   if (fmt == OutputFormat::Json)
-    archcheck::report::writeJsonReport(all, std::cout, gateModeFor(baseline));
+    archcheck::report::writeJsonReport(all, std::cout, gateModeFor(baseline), failOnUnresolvedLocal);
   else
     archcheck::report::writeTextReport(all, std::cout, textReportUseColor());
 }
 
-int applyBaselineAndReport(archcheck::rules::ViolationList all, OutputFormat fmt, const BaselineOpts &baseline)
+int applyBaselineAndReport(archcheck::rules::ViolationList all, OutputFormat fmt, const BaselineOpts &baseline,
+                           bool failOnUnresolvedLocal)
 {
   if (baseline.mode == BaselineMode::Save)
     return trySaveBaseline(all, baseline.file);
@@ -132,7 +170,7 @@ int applyBaselineAndReport(archcheck::rules::ViolationList all, OutputFormat fmt
     suppressed = static_cast<std::size_t>(n);
   }
 
-  writeReport(all, fmt, baseline);
+  writeReport(all, fmt, baseline, failOnUnresolvedLocal);
 
   if (suppressed > 0 && fmt == OutputFormat::Text)
     std::cout << "suppressed: " << suppressed << " known violation(s) (run without --baseline to see all)\n";
@@ -140,7 +178,7 @@ int applyBaselineAndReport(archcheck::rules::ViolationList all, OutputFormat fmt
   if (baseline.driftFile)
     return reportDriftGate(all, fmt);
 
-  return reportCheckGate(all, fmt);
+  return reportCheckGate(all, fmt, failOnUnresolvedLocal);
 }
 
 int applyDriftFile(const std::filesystem::path &driftFile, std::vector<std::unique_ptr<archcheck::rules::IRule>> &rules)
@@ -204,11 +242,14 @@ archcheck::rules::ViolationList checkViolations(const std::filesystem::path &roo
     const auto v = rule->check(built.graph, readFile);
     all.insert(all.end(), v.begin(), v.end());
   }
+  const auto universe = repoUniverseFor(root);
+  for (const auto &issue : archcheck::scan::scanLocalIncludeIssues(snapshot, universe ? &*universe : nullptr))
+    all.push_back(toViolation(issue));
   return all;
 }
 
 int runCheck(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts baseline,
-             std::optional<config::Config> config)
+             std::optional<config::Config> config, bool failOnUnresolvedLocal)
 {
   if (!config)
   {
@@ -227,7 +268,7 @@ int runCheck(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts b
   const int driftRc = baseline.driftFile ? applyDriftFile(*baseline.driftFile, rules) : 0;
   if (driftRc != 0)
     return driftRc;
-  return applyBaselineAndReport(checkViolations(root, rules), fmt, baseline);
+  return applyBaselineAndReport(checkViolations(root, rules), fmt, baseline, failOnUnresolvedLocal);
 }
 
 int runSaveGraphBaseline(const std::filesystem::path &root, const std::filesystem::path &file)

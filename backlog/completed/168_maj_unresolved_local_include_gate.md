@@ -1,5 +1,52 @@
-167 — Add unresolved local include / case mismatch gate before public launch
-Context
+168 — Add unresolved local include / case mismatch gate before public launch
+
+## Status — implemented this session (uncommitted); awaiting /commit + release 0.1.6
+
+Done:
+- **`CASE_MISMATCH_INCLUDE`** — quoted local include that resolves only ignoring
+  filesystem case. First-class violation, **gating by default** (gate_policy Check).
+- **`UNRESOLVED_LOCAL_INCLUDE`** — quoted local include that resolves nowhere.
+  Advisory by default; **`--fail-on-unresolved-local`** promotes it to gating.
+- New scan module `scan/local_include_scan.{h,cpp}` (reuses `resolveInclude`; a
+  directive the graph resolves is never flagged). Angle/system includes ignored.
+- Wired in `checkViolations`; threaded the opt-in through gate_policy / json_reporter
+  / check_command / main (`--fail-on-unresolved-local [path]`, help updated).
+- Fixtures A–D + `subtree/` + `pass_self_include/`; integration + gate_policy tests.
+  633 tests pass; dogfood `src`/`include`/`tests` = 0.
+
+Two problems found + fixed while validating on a corpus (self-check paid off):
+- **Subtree-scan false positives.** `archcheck src` flagged 178 `"archcheck/..."`
+  includes as UNRESOLVED_LOCAL because `include/` is outside the scan root — the
+  files exist, so this was noise (would hit any user scanning a submodule). Fix:
+  when the scan root is inside a git repo, the scanner is given the enclosing
+  repo's file list (`RepoUniverse`); an exact-case match there suppresses the
+  finding, a case-insensitive-only match across the boundary is still a mismatch.
+  `archcheck src` → 0. (repoUniverseFor in check_command.cpp.)
+- **Self-include phantom mismatch.** libjxl `enc_fast_lossless.cc` does
+  `#include "lib/jxl/enc_fast_lossless.cc"` (macro re-expansion); the resolver
+  downgrades the self-edge to Unresolved, and the detector reported a CASE_MISMATCH
+  of the file against itself. Fix: `exact_case_exists` guard — a token that exists
+  with exact case anywhere (self-include, suffix, repo include root) is never a
+  case problem. Regression fixture `pass_self_include/`.
+
+Corpus validation (13 repos, new binary, whole-repo scans):
+- **opencv — 4 real CASE_MISMATCH (true positives, independently verified):**
+  WinRT samples include `"linklist.h"`→`LinkList.h`, `"bufferlock.h"`→`BufferLock.h`,
+  `"SuspensionManager.h"`→`suspensionmanager.h`. Windows-authored, break a
+  case-sensitive Linux build — exactly the target bug class. Real-world witness.
+- libjxl — the 4 were the self-include FP, now 0.
+- `gUnres == CASE_MISMATCH + UNRESOLVED_LOCAL` on every repo (exhaustive split).
+- **Gambit — the manual target is `github.com/abhi-saurav-saroya/Gambit`** (an SFML
+  chess game: core/rendering/input/pieces), NOT `gambitproject/gambit` (game-theory
+  on wxWidgets, which gives 0 — wrong repo, ran first). On the SFML Gambit the tool
+  reports **exactly `CASE_MISMATCH_INCLUDE: 7`, cycles 0, gate: failed, exit 1** —
+  the task's stated expected result, to the number. The 7 are `"core/Board.hpp"`,
+  `"rendering/Renderer.hpp"`, `"input/InputHandler.hpp"` variants; actual files are
+  lower/camelCase (`board.hpp`, `renderer.hpp`, `inputHandler.hpp`).
+
+Remaining before release: CHANGELOG + README note, bump 0.1.6, commit/push, tag.
+
+## Context
 archcheck 0.1.5 already exposes unresolved includes in the graph output, but the main gate can still report ok.
 
 A small public C++/SFML project exposed the gap:
