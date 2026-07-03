@@ -102,6 +102,6 @@ the call site already has `SettingContainer.h` in scope. The include looks like 
 a refactor. Deleting it is a one-line change with no call-site impact.
 
 **Counter-argument.** This is a WinRT/XAML settings module leaning on macro boilerplate, where
-"who includes whom" is genuinely harder to track; a maintainer could reasonably point at the
+"who includes whom" is harder to track; a maintainer could reasonably point at the
 macro style rather than this one include. It is one cycle in one pair, not a claim about the
 whole ~500K-line codebase (archcheck reports 2 SF.9 cycles in that checkout).
