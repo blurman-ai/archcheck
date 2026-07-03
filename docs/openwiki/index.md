@@ -1,97 +1,125 @@
 ---
-title: "openwiki — agent entry map"
+title: "archcheck — one-page agent map"
 type: index
 status: verified
-last_checked_commit: "241b07e"
+last_checked_commit: "eca9a96"
 source_paths:
-  - "CHANGELOG.md"
-  - "README.md"
+  - "src/rules/gate_policy.cpp"
   - "src/rules/rule_set.cpp"
-  - "docs/GLOSSARY.md"
-related_pages:
-  - "source-map.md"
-  - "cli-contract.md"
-  - "schema.md"
-external_sources:
-  - "https://www.langchain.com/blog/introducing-openwiki-an-open-source-agent-for-repo-documentation"
-  - "https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f"
+  - "include/archcheck/config/config.h"
+  - "src/rules/"
+  - "src/scan/"
+  - "tests/CMakeLists.txt"
+  - "fixtures/"
+related_pages: []
+external_sources: []
 ---
 
-# openwiki — agent entry map
+# archcheck — one-page agent map
 
 ## Purpose
 
-Fast, source-backed navigation for coding agents: "I want to change X — which files,
-tests, and fixtures do I read first?" This layer is **derived documentation**. When it
-disagrees with code, tests, or CHANGELOG, **the code wins** — and you fix the page.
+Everything an agent usually looks up — rule ids, exact messages, thresholds, gate
+status, and which files/tests/fixtures implement what — in **one read**. This page
+is **derived**: when it disagrees with code, tests, or CHANGELOG, the code wins and
+this page gets fixed (same PR). Health: `python3 scripts/check_openwiki.py`
+(`/openwiki-check`) — front matter, source-path existence, and staleness vs
+`last_checked_commit`.
 
-Format and evidence rules live in [schema.md](schema.md). Health is checked by
-`scripts/check_openwiki.py` (`/openwiki-check`).
+## Routing (what this page does NOT restate)
 
-## Coverage
-
-Covered by dedicated pages: the **default rules**, the **drift rules**, the **scan
-/ PR-hygiene signals**, **duplication**, the **CLI contract**, and a whole-repo
-**source map**. Still thin / see the code + `docs/` for detail: YAML config-rule
-**enforcement** (deferred to v0.2 — see [ADR-001](../decisions/001-config-rules-deferred-to-v0.2.md)).
-Open items are tracked in [backlog/open-questions.md](backlog/open-questions.md).
-
-## Where to look
-
-| I want to… | Start here |
+| Topic | Authority |
 |---|---|
-| Change / add a **rule** | [source-map.md](source-map.md) → "Rule → files"; then the rule's page under `rules/` |
-| Know a rule's exact message / threshold / gate status | its `rules/<rule>.md` page |
-| Change a **CLI flag, exit code, or output format** | [cli-contract.md](cli-contract.md) (`Risk: high`) |
-| Understand **gate vs advisory** (and the `--diff` escalation) | [rules/gate_policy.md](rules/gate_policy.md) |
-| Touch **graph metrics** (cycles, CCD/ACD/NCCD, chain depth) | [source-map.md](source-map.md) → graph row; `src/graph/algorithms.cpp` |
-| Work on **duplication / clones** | [features/duplication.md](features/duplication.md) → `docs/duplication_architecture.md` (SSOT) |
-| Change **config / `.archcheck.yml`** | `docs/config_format.md`; `src/config/`, `include/archcheck/config/config.h` |
-| Understand **what actually shipped** | [CHANGELOG.md](../../CHANGELOG.md) (authoritative) |
-| Learn a **project term** | [docs/GLOSSARY.md](../GLOSSARY.md) |
+| What shipped (rules, thresholds, modes) | [CHANGELOG.md](../../CHANGELOG.md) |
+| Project vocabulary | [docs/GLOSSARY.md](../GLOSSARY.md) |
+| CLI usage / flags / examples | [README.md](../../README.md) §Usage + `--help` |
+| Duplication subsystem | [docs/duplication_architecture.md](../duplication_architecture.md) (SSOT) |
+| Config format | [docs/config_format.md](../config_format.md) |
+| CI wiring | [docs/ci_usage.md](../ci_usage.md) · [docs/ci_integration.md](../ci_integration.md) |
+| Design rationale / roadmap | [docs/architecture-spec.md](../architecture-spec.md) · [docs/decisions/](../decisions/) |
 
-## Pages
+## Exit codes (contract)
 
-**Core**: [source-map.md](source-map.md) · [cli-contract.md](cli-contract.md) · [schema.md](schema.md) · [log.md](log.md)
+`0` OK · `1` gated violation · `2` config/parsing error · `3` internal error.
+Findings print as `file:line: [rule] message` (README.md:44).
 
-**Default rules** (`makeDefaultRuleSet`):
-[SF.7](rules/sf7_using_namespace.md) ·
-[SF.8](rules/sf8_include_guard.md) ·
-[SF.9](rules/sf9_no_cycles.md) ·
-[Lakos god-headers](rules/lakos_god_headers.md) ·
-[Lakos chain-length](rules/lakos_chain_length.md)
+## Gate policy — who fails the build
 
-**Drift rules** (`makeDriftRuleSet`) + gate policy:
-[shortcut-edge](rules/drift_no_shortcut_edge.md) ·
-[bidirectional-coupling](rules/drift_bidirectional_coupling.md) ·
-[lateral-module-dependency](rules/drift_lateral_module_dependency.md) ·
-[no-cycle-growth](rules/drift_no_cycle_growth.md) ·
-[gate_policy](rules/gate_policy.md)
+From `src/rules/gate_policy.cpp:10-20`; everything not listed is advisory
+(reported, exit `0`):
 
-**Scan / PR-hygiene signals & features**:
-[SATD](features/satd.md) ·
-[test co-evolution](features/test_co_evolution.md) ·
-[bool-field drift](features/bool_field_drift.md) ·
-[flag-argument drift](features/flag_argument_drift.md) ·
-[new-clone drift](features/new_clone_drift.md) ·
-[local complexity](features/local_complexity.md) ·
-[history analytics](features/history_analytics.md) ·
-[local-include gate](features/local_include_gate.md) ·
-[duplication](features/duplication.md)
+| Mode | Gating (exit `1`) |
+|---|---|
+| plain `check` | `SF.9`, `CASE_MISMATCH_INCLUDE`; `UNRESOLVED_LOCAL_INCLUDE` only with `--fail-on-unresolved-local` (README.md:43) |
+| drift (graph baseline) | `DRIFT.1`, `DRIFT.2`, `DRIFT.4.CYCLE` |
+| `--diff <revspec>` | grown cycles + new god-headers |
 
-**Backlog / sources**:
-[open-questions](backlog/open-questions.md) ·
-[unverified](backlog/unverified.md) ·
-[external-openwiki-practices](sources/external-openwiki-practices.md)
+⚠ **Two independent gate mechanisms.** `classifyForGate` (`gate_policy.cpp`) drives
+`check`/drift modes; `--diff` gates via a separate path (`RegressionReport::gates()`,
+`src/diff/regression_report.cpp` → `src/cli/diff_command.cpp`). They deliberately
+disagree on god-headers: drift mode never gates them, `--diff` gates *new* ones — the
+in-code note is `src/cli/check_command.cpp:96` ("not the exact --diff gate: diff also
+gates new god-headers. #133"). Consolidation is task #171. Don't change one path
+without checking the other.
 
-## Canonical docs (authoritative — openwiki only links, never restates)
+## Rule / check registry
 
-- [CHANGELOG.md](../../CHANGELOG.md) — what shipped (rules, thresholds, modes).
-- [docs/GLOSSARY.md](../GLOSSARY.md) — project vocabulary.
-- [docs/architecture-spec.md](../architecture-spec.md) · [docs/MVP.md](../MVP.md) · [docs/ROADMAP.md](../ROADMAP.md).
-- [docs/decisions/](../decisions/) — ADRs (config→v0.2, SF.21→v0.2, fast backend default).
-- [docs/config_format.md](../config_format.md) · [docs/ci_usage.md](../ci_usage.md) · [docs/baseline_format.md](../baseline_format.md) · [docs/duplication_architecture.md](../duplication_architecture.md).
+Default & drift rules register in `src/rules/rule_set.cpp`
+(`makeDefaultRuleSet` / `makeDriftRuleSet`): one rule = one class = one file; adding
+a rule = a new `.h`/`.cpp` pair + one `push_back` line — existing rule files stay
+untouched. Scan signals run inside the `--diff` / `--history` pipelines. Threshold
+SSOT: `include/archcheck/config/config.h` (`Thresholds`). Message templates quoted
+verbatim from the emitting code (`<N>`/`<T>` = runtime values); rule ids inventoried
+by grep over `src/` at `eca9a96`.
 
-## Related pages
+| Rule id | Flags | Message (template) | Threshold | Impl (`src/`) | Test (`tests/`) | Fixture |
+|---|---|---|---|---|---|---|
+| `SF.9` | include cycle (SCC ≥ 2; skips `foo.h↔foo.inl` split #088 and all-conditional cycles) | `cycle: A → B → … → A` | — | `rules/sf9_no_cycles.cpp` | `unit/rules/sf9_no_cycles_test.cpp` | `sf9_no_cycles/` |
+| `SF.7` | `using namespace` at global scope in a header | `'using namespace' at global scope in header (SF.7)` | — | `rules/sf7_using_namespace.cpp` | `unit/rules/sf7_using_namespace_test.cpp` | `sf7_using_namespace/` |
+| `SF.8` | header lacks guard/`#pragma once` (real `#ifndef`+`#define` pair; first 60 code lines; skips `.inc`, ObjC) | `header missing #pragma once or include guard (SF.8)` | — | `rules/sf8_include_guard.cpp` | `unit/rules/sf8_include_guard_test.cpp` | `sf8_include_guard/` |
+| `Lakos.GodHeader` | header fan-in > threshold (PCH names excluded) | `fan-in <N> exceeds threshold <T>` | `godHeaderFanIn = 50` (`include/archcheck/config/config.h:43`) | `rules/lakos_god_headers.cpp` | `unit/rules/lakos_god_headers_test.cpp` | `lakos_god_headers/` |
+| `Lakos.ChainLength` | include chain depth > threshold | `include chain depth <N> exceeds threshold <T>` | `chainLength = 10` (`include/archcheck/config/config.h:42`) | `rules/lakos_chain_length.cpp` | `unit/rules/lakos_chain_length_test.cpp` | `lakos_chain_length/` |
+| `CASE_MISMATCH_INCLUDE` | local include resolves only case-insensitively (build break on Linux) | see impl | — | `scan/local_include_scan.cpp` (id emitted in `cli/check_command.cpp` `toViolation`) | `integration/scan/local_include_gate_fixtures_test.cpp` | `local_include_gate/` |
+| `UNRESOLVED_LOCAL_INCLUDE` | quoted local include resolves nowhere | see impl | — | `scan/local_include_scan.cpp` (id emitted in `cli/check_command.cpp` `toViolation`) | (same) | `local_include_gate/` |
+| `DRIFT.1` | new shortcut edge vs graph baseline | see impl | — | `rules/drift_no_shortcut_edge.cpp` | `unit/rules/drift_no_shortcut_edge_test.cpp` | `drift_shortcut_edge/` |
+| `DRIFT.2` | cycle growth vs baseline | see impl | — | `rules/drift_no_cycle_growth.cpp` | `unit/rules/drift_no_cycle_growth_test.cpp` | `drift_cycle_growth/` |
+| `DRIFT.3` | new bidirectional module coupling | `bidirectional module coupling: '…'` | — | `rules/drift_bidirectional_coupling.cpp` | `integration/rules/drift_fixtures_test.cpp` | `drift_bidirectional/` |
+| `DRIFT.4.CYCLE`/`.SDP`/`.NEW` | lateral module dependency, graded (bare `DRIFT.4` never emitted) | see impl | — | `rules/drift_lateral_module_dependency.cpp` | `unit/rules/drift_lateral_module_dependency_test.cpp` | `drift_lateral/` |
+| `DRIFT.NEW_CLONE` | PR introduces a code clone (`--diff`) | see impl | skip-guard `diffMaxCloneScanBytes = 40 MB` (`include/archcheck/config/config.h:55`) | `scan/new_clone_drift.cpp` | `unit/scan/new_clone_drift_test.cpp`, `integration/diff/new_clone_fixtures_test.cpp` | `diff_new_clone/` |
+| `DRIFT.LOCAL_COMPLEXITY` | PR raises local complexity (`--diff`) | see impl | skip-guard `diffMaxAddedLines = 10000` (`include/archcheck/config/config.h:47`) | `scan/local_complexity_drift.cpp` (+`_metrics`) | `unit/scan/local_complexity_{metrics,drift}_test.cpp`, `integration/scan/local_complexity_fixtures_test.cpp` | `local_complexity_drift/` |
+| `DRIFT.BOOL_FIELD_ACCRETION` | bool field added to a struct — neutral accretion signal, not a verdict | see impl | — | `scan/bool_field_drift.cpp` | `unit/scan/bool_field_drift_test.cpp`, `integration/scan/bool_field_drift_fixtures_test.cpp` | `bool_field_drift/` |
+| `SATD.1` / `SATD.2` | new self-admitted-debt marker in the diff | truncated marker line | — | `scan/satd_scan.cpp` | `unit/scan/satd_scan_test.cpp` | `satd_delta/` |
+| `TEST.1.prod_changed_tests_silent` | prod changed, tests silent | `prod +<A>/-<R> across <N> file(s), tests +<A>/-<R>` | — | `scan/test_co_evolution.cpp` | `unit/scan/test_co_evolution_test.cpp` | `test_co_evolution/` |
+| `ARG.1.flag_argument_signature` / `ARG.2.boolean_literal_call` | flag-argument drift | see impl | — | `scan/flag_argument_scan.cpp` | `flag_argument_scan_test.cpp` | — |
+| `SIZE.1.god_file_growth` / `HIST.1.defect_attractor` | `--history` analytics (report-only; ordering bug → task #170) | see impl | — | `scan/god_file_growth.cpp`, `scan/defect_attractor.cpp` | `unit/scan/{god_file_growth,defect_attractor}_test.cpp` | — |
 
-- [[source-map.md]] · [[cli-contract.md]] · [[schema.md]]
+`--duplication` (token clone report) is its own output format, not a `ruleId` —
+see `docs/duplication_architecture.md` (SSOT); impl `src/scan/duplication/`,
+tests `tests/duplication_*_test.cpp`, fixtures `duplication/`.
+
+## Subsystem matrix
+
+Headers: `include/archcheck/<subsystem>/`; impl: `src/<subsystem>/`; tests:
+`tests/unit/<subsystem>/` + `tests/integration/<subsystem>/`. Build targets:
+`archcheck_core` (static lib, `src/CMakeLists.txt:2`), `archcheck` (binary, entry
+`src/main.cpp`), `archcheck_tests` (Catch2 v3, gets `ARCHCHECK_FIXTURES_DIR`).
+
+| Subsystem | Impl highlights | Tests | Fixtures | Owns |
+|---|---|---|---|---|
+| **cli** | `check_command`, `diff_command`, `preview_commands`, `main.cpp` | `integration/cli/cli_smoke_e2e_test.cpp` | — | arg parsing, mode dispatch, exit codes |
+| **config** | `config_loader.cpp` | `unit/config/test_loader.cpp` | `config/` | `.archcheck.yml` → `Config`; enforcement v0.2 (ADR-001) |
+| **graph** | `dependency_graph`, `algorithms` (SCC, depths — `Risk: high`), `graph_builder`, `baseline`, `diff` | `unit/graph/*`, `integration/graph/*` | `graph/` | DAG, cycles, levelization, CCD/ACD/NCCD |
+| **rules** | `rules/*.cpp` + factory `rule_set.cpp` + `gate_policy.cpp` | `unit/rules/*`, `integration/rules/*` | per rule (table above) | rule classes, gate vs advisory |
+| **scan** | `include_scanner`, `include_resolver`, `local_include_scan`, `project_files` + signal scanners (table above) | `unit/scan/*`, `integration/scan/*` | `scan/` + per signal | preprocessor scan (no `compile_commands.json`) |
+| **scan/duplication** | `duplication_scanner`, `fragmenter`, `token_normalizer`, `similarity`, `clone_index`, `clone_classifier` | `duplication_*_test.cpp` (flat) | `duplication/` | token clone detector |
+| **git** | `git_exec`, `git_state`, `diff_query`, `history_query` (newest-first — see #170) | `unit/git/*` | — | fork/exec git, blobs, revspecs |
+| **diff** | `regression_report` (incl. `--diff` gates), `diff_json_report`, `md_report` | `unit/diff/*`, `integration/diff/*` | `drift_real_world/` | `--diff` reporting |
+| **report** | `text_reporter`, `json_reporter`, `violation_baseline` | `unit/report/*` | — | output format, `--baseline` |
+
+## After any change
+
+Rebuild Debug (`cmake --build build/debug`) → `./build/debug/tests/archcheck_tests`
+(+ the specific test/fixture from the tables) → `lizard --CCN 15 --length 30
+--arguments 5 --warnings_only src/ include/ tests/` → dogfood
+`./build/debug/src/archcheck src/ include/ tests/` must report 0. Changed a fact
+this page states → update the row and bump `last_checked_commit`.

@@ -268,6 +268,15 @@ a one-line pointer in `AGENTS.md`/`CLAUDE.md`, and task #169 (retargeted from th
 - **`last_checked_commit` is the MVP field** of the whole schema — it is what makes
   doc↔code drift mechanically detectable. Worth elevating in the methodology.
 
-### To add after A/B
-- The measured token / turn / correctness deltas (wiki vs no-wiki) — the actual
-  evidence that the approach helps (or doesn't).
+### Measurements & outcome — see [docs/research/agent_wiki_economics.md](../../docs/research/agent_wiki_economics.md)
+
+The full story (hypothesis, trials, the verify-the-cache and fixed-overhead
+measurement errors, the 28-pages-to-1 transform, result tables, boundary
+conditions, caveats) lives in the research write-up above; it doubles as the body
+of the author report. Bottom line: 28 mirror pages gave no win (+9% tokens vs
+grep); the one-page compression map won decisively (−49% tokens / −60% calls on
+lookups; −56% / −92% on #168-style recon; correctness 100% everywhere). Formula:
+savings = (compression > 1) × (zero-hop entry) × (trust + freshness lint).
+Byproducts: tasks #170/#171/#172; the recon grep arm exposed a real map gap
+(rule id emitted in `cli/check_command.cpp::toViolation`, not the scanner) —
+map fixed the same day.
