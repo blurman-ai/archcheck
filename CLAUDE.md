@@ -76,6 +76,7 @@ From [docs/MVP.md](docs/MVP.md): *"If feature cannot be tested with fixtures —
 - [docs/dev/coverage_constraints.md](docs/dev/coverage_constraints.md) — why branch coverage is stuck at ~63% and what to do about it: the lcov 1.13 limitation on Astra Linux 1.7 (GCC 8.x doesn't mark throw-arcs in a way lcov can drop them). The branches threshold is deliberately left at 40%.
 - [docs/duplication_architecture.md](docs/duplication_architecture.md) — the single source of truth for the duplicate-detection subsystem: complementary layers (#053 line / #056 token / #052 AST / #059 precision / #054 usage), the token-pass pipeline, selective normalization, metrics and their semantics, FP classes, modes, boundaries. Read it before working on any duplication layer.
 - [docs/dev/haiku_task_guide.md](docs/dev/haiku_task_guide.md) — a two-sided contract for tasks executed by Haiku: the author's checklist (Haiku-ready task) and the executor's rules (what to watch for / what to never do). Read it on both sides: whoever writes the task in `backlog/`, and Haiku before starting.
+- [docs/openwiki/index.md](docs/openwiki/index.md) — agent navigation map: source-backed "which files/tests/fixtures implement X" pointers per rule/feature. **Derived** documentation — never trust it over code/tests/CHANGELOG; when behavior changes, update the affected `docs/openwiki/` pages in the same PR. Health check: `/openwiki-check`.
 
 ## Working principles from the spec
 

@@ -209,3 +209,65 @@ _Adapted from the user-provided external spec `task_create_openwiki_for_archchec
 (2026-07-03). The external spec assumed a docs-less repo; this version is retargeted
 to archcheck's existing docs and shipped rule set — speculative structure and
 made-up assumptions were removed._
+
+---
+
+## Reporting to the methodology author — PENDING (finalize AFTER the A/B check)
+
+Goal: send the author of the external spec a report that we implemented their approach
+on a real C++ project. **Do not finalize before the A/B token/speed numbers are in.**
+Below is draft material captured on the hot trail (2026-07-03), not the final report.
+
+### Who did what
+- **Pilot (Opus)**: `index`, `source-map`, `cli-contract`, 5 default-rule pages
+  (SF.7/8/9, Lakos god/chain) — a vertical slice sized for the A/B.
+- **Fan-out — 4 Sonnet `general-purpose` agents**, gold-standard = the pilot pages:
+  - drift rules → `rules/{drift_no_shortcut_edge, drift_bidirectional_coupling, drift_lateral_module_dependency, drift_no_cycle_growth, gate_policy}` (~102k tok, 55 tool-uses)
+  - scan signals #1 → `features/{satd, test_co_evolution, bool_field_drift, flag_argument_drift}` (~113k tok, 54 tool-uses)
+  - scan signals #2 → `features/{new_clone_drift, local_complexity, history_analytics, local_include_gate}` (~154k tok, 64 tool-uses)
+  - duplication + scaffolding → `features/duplication`, `schema.md`, `log.md`, `backlog/{open-questions,unverified}`, `sources/external-openwiki-practices`
+- **Tooling (Opus)**: `scripts/check_openwiki.py` + `/openwiki-check` (structural + `last_checked_commit` drift lint).
+
+### How
+Hybrid: Opus authored the template + pilot; Sonnet fanned out leaf pages under strict
+evidence discipline (grep the exact literal → cite `file:line`; unverifiable →
+`backlog/`, never invent); Opus integrates + verifies with the checker.
+
+### What we changed in the repo
+`docs/openwiki/` (~27 pages), `scripts/check_openwiki.py`, `.claude/commands/openwiki-check.md`,
+a one-line pointer in `AGENTS.md`/`CLAUDE.md`, and task #169 (retargeted from the spec).
+
+### What the discipline surfaced (real findings, cited)
+- **Two independent gate mechanisms** — `gate_policy.cpp` (check/drift) vs
+  `RegressionReport::gates()` (`--diff`) — that disagree on god-headers.
+- **Potential ordering bug**: `queryCommitHistory` returns newest-first but
+  `GodFileGrowthDetector` assumes oldest-first (`src/scan/god_file_growth.cpp:75-76`)
+  → candidate real fix / its own backlog task.
+- `DRIFT.4` emits graded ids only (`.CYCLE/.SDP/.NEW`), never bare `DRIFT.4`.
+- Checker + agent caught a wrong path (`src/scan/authored_scope.h` →
+  `include/archcheck/scan/authored_scope.h`).
+- **Attribution gaps**: several signals (SATD, test-co-evolution, ARG.2,
+  new-clone-drift, local-complexity drift, history analytics, local-include-gate)
+  carry no formal Core Guidelines/Lakos/Martin authority — parked `unverified`.
+  Relevant to the project's "authority over opinion" rule.
+
+### Gaps / adaptations vs the original methodology (the honest part for the author)
+- The spec assumed a **docs-less repo**; archcheck already had
+  CHANGELOG/GLOSSARY/decisions/spec/AGENTS.md/CLAUDE.md → its 35-page tree,
+  candidate-term checklist, and "create AGENTS.md" step largely **duplicated existing
+  docs**. Lesson: an openwiki must **link into** existing docs, not restate — restated
+  lists drift.
+- The spec's auto-lint (`verify_openwiki.py`) was **YAGNI** for a small hand-authored
+  wiki; the one check that pays off — `source_paths` existence + **staleness via
+  `last_checked_commit`** — is valuable as a **manual** drift check once the wiki
+  grows. We built exactly that (`/openwiki-check`).
+- "One page per candidate category" **invites guessing**; what worked was
+  enumerate-from-code (`rule_set.cpp` + `fixtures/`) + grep-literal + cite `file:line`.
+- OpenWiki CLI / LLM-calling update workflow: **not applicable** to a C++ CLI, and the
+  product philosophy forbids scheduled external LLM calls.
+- **`last_checked_commit` is the MVP field** of the whole schema — it is what makes
+  doc↔code drift mechanically detectable. Worth elevating in the methodology.
+
+### To add after A/B
+- The measured token / turn / correctness deltas (wiki vs no-wiki) — the actual
+  evidence that the approach helps (or doesn't).

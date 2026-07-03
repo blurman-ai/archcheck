@@ -66,6 +66,7 @@ If a new idea contradicts this list — stop and check whether it is needed at a
 - [docs/code_quality.md](docs/code_quality.md) — anti-slop constraints and thresholds;
 - [docs/dev/git_workflow.md](docs/dev/git_workflow.md) — the git process;
 - [backlog/README.md](backlog/README.md) — the task lifecycle.
+- [docs/openwiki/index.md](docs/openwiki/index.md) — agent navigation map (source-backed file/test/fixture pointers per rule/feature). **Derived** — never trust it over code/tests/CHANGELOG; update affected pages in the same PR. Health check: `/openwiki-check`.
 
 Before editing an existing file, read it in full.
 
