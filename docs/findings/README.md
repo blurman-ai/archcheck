@@ -9,8 +9,12 @@ Reproduce any of them:
 
 ```bash
 git clone <repo> && cd <repo> && git checkout <sha>
-archcheck .        # look for the [SF.9] cycle line
+archcheck . | grep SF.9      # isolate the cycle line(s); a full run also prints advisories
 ```
+
+(The full `archcheck .` output on a large project is long — chain-length / god-header / SF.7-8
+advisories alongside the cycles. Piping through `grep SF.9` shows just the cycle lines, and the
+count matches the "N SF.9 cycles" stated per finding below.)
 
 ---
 
