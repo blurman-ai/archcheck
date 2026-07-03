@@ -8,6 +8,14 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.1.6] - 2026-07-03
+
+### Added
+
 - **Local include-resolution gate — case mismatches and unresolved local includes** —
   a quoted `#include` that resolves only when filesystem case is ignored
   (`#include "core/Board.hpp"` for `core/board.hpp`) is now reported as
