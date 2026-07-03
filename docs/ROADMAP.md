@@ -1,6 +1,6 @@
 # archcheck — ROADMAP
 
-_2026-07-02 · phase: **v0.1.5 — public-launch prep (#163); v0.2 (dependency policy rules) after the announcement**_
+_2026-07-03 · phase: **v0.1.6 — public-launch prep (#163); v0.2 (dependency policy rules) after the announcement**_
 
 ## Product framing
 
@@ -36,7 +36,7 @@ The product frame in more detail — [product_vision.md](product_vision.md).
 
 ## Current focus
 
-**v0.1.5 released** (2026-06-28; v0.1.0 shipped 2026-06-25): the trusted graph/drift/diff
+**v0.1.6 released** (2026-07-03; v0.1.0 shipped 2026-06-25): the trusted graph/drift/diff
 core has shipped, a prebuilt Linux binary lives in GitHub Releases for pinned CI install,
 and a live demo repo is linked from the README. The phase has shifted from "finish the
 core" to **public-launch preparation** (task #163 — packaging, evidence, announcement).
