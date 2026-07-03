@@ -82,6 +82,19 @@ counter-argument a maintainer might make.
 
 ---
 
+## Case studies
+
+### Gambit
+
+`archcheck` was used on [Gambit](https://github.com/abhi-saurav-saroya/Gambit), a public
+C++17/SFML chess project whose author had invited code review. The architecture gate was
+quiet (no include cycles); the useful findings were a Linux portability issue from
+case-mismatched local includes and duplicated sliding-piece move generation for bishop,
+rook, and queen. The fixes were submitted as PRs, reviewed and tested locally by the
+author, and merged — see [docs/case-studies/gambit.md](docs/case-studies/gambit.md).
+
+---
+
 ## Install
 
 Prebuilt Linux x86_64 binaries ship with every [release](https://github.com/blurman-ai/archcheck/releases/latest)
