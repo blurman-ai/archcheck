@@ -177,6 +177,8 @@ archcheck --graph src/
 
 **Embedding in CI?** Start with [docs/ci_usage.md](docs/ci_usage.md): both scenarios
 (full repo scan and diff on PR), ready-made workflow snippets, the exit-code contract.
+Common critiques (macros and `#ifdef`, C++20 modules, "isn't this a linter",
+heuristic precision) are answered in [docs/faq.md](docs/faq.md).
 A ready-to-copy GitHub Actions job for the PR workflow (sticky PR comment +
 step summary) lives in
 [`.github/workflows/example_archcheck_pr.yml`](.github/workflows/example_archcheck_pr.yml).

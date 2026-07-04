@@ -49,6 +49,13 @@ announcement, which is the user's to execute. Checkpoint 2026-07-02 below.
 - **First real Docker build** — no local docker here; the alpine image build is validated by
   the first tag push (the static binary it wraps was exercised directly).
 
+### Done since (2026-07-04)
+
+- **Launch FAQ (#170, completed)** — [docs/faq.md](../../docs/faq.md) pre-answers
+  the four predictable critiques (preprocessor limits, C++20 modules, scope
+  creep, heuristic precision) surfaced by a Qwen launch-critique analysis; linked
+  from README. The post draft picked up the same three pre-emptions inline.
+
 ### Remaining (Phase 3 — the user posts; announcements are outward-facing)
 
 r/cpp (framing: "what it found on real projects") → isocpp.org + Meeting C++ → Show HN →
