@@ -58,7 +58,7 @@ The current signal model:
 
 ## Live demo
 
-See the new-clone gate fire on real pull requests:
+See the new-clone advisory fire on real pull requests:
 **[blurman-ai/archcheck-demo](https://github.com/blurman-ai/archcheck-demo)** — 14 PRs on a real C
 codebase (monit). Five introduce copy-paste (exact, whole-file, renamed, and *partial/structural*
 near-misses) and fire `DRIFT.NEW_CLONE`; five are look-alikes that stay silent (a move, a

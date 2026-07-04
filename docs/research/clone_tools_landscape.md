@@ -26,7 +26,7 @@ sensors** alongside cycles / SF.* / god-headers / levelization.
 | **CCFinderX** | suffix-tree, tokens | 2 | clones + genealogies | research (100 MLOC) | — | research tool |
 | **NiCad** | text + norm + LCS | 3 (**precision reference 89–96%**) | clone classes | research (10 MLOC) | — | research tool |
 | **Deckard** | AST subtrees | 3 | clones | research (1 MLOC) | — | research tool |
-| **archcheck** | tokens, rare-index + token-LCS³ | 1, 2, 3 (Type-4 — no, deliberately) | **pairs `file:line↔file:line` + clone type + "extract to a shared spot"** | **single static binary** (libclang only) | exit≠0 on a **new confirmed pair** + baseline | **architecture-invariant check**: a duplicate is 1 signal alongside cycles/SF.*/god-headers/levelization |
+| **archcheck** | tokens, rare-index + token-LCS³ | 1, 2, 3 (Type-4 — no, deliberately) | **pairs `file:line↔file:line` + clone type + "extract to a shared spot"** | **single static binary** (libclang only) | advisory on a **new confirmed pair** (exit 0; hard gate is a later opt-in) + baseline | **architecture-invariant check**: a duplicate is 1 signal alongside cycles/SF.*/god-headers/levelization |
 
 ¹ PMD CPD went through three incarnations: Greedy String Tiling → Burrows-Wheeler → Karp-Rabin.
 It can do `--ignore-identifiers` / `--ignore-literals` (Type-2), but normalization is **global**.

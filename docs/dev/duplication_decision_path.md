@@ -14,7 +14,7 @@ cites `file:line` at the time of writing (HEAD, 2026-06-29). All paths are under
 The detector is a single **token-based** pass — no AST, no libclang
 (decision 2026-06-01). It runs in two surfaces, sharing one core:
 - `archcheck --duplication <path>` — snapshot of a whole tree (advisory).
-- `archcheck --diff <rev>` — per-commit new-clone gate (`scan/new_clone_drift.cpp`),
+- `archcheck --diff <rev>` — per-commit new-clone advisory (`scan/new_clone_drift.cpp`),
   which calls the same core then adds three commit-level filters (§7).
 
 ---

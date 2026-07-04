@@ -47,9 +47,13 @@ job.
 
 The premise of that argument is right, and it is the failure mode the
 gate/advisory split exists to prevent. Fuzzy heuristics never gate. The gate
-carries only deterministic graph facts (a cycle is present or it is not; a case
-mismatch really does break a Linux build), where a false positive is structurally
-impossible. The measured precisions — ~92% cycle drift, 76–91% clones, 98%
+carries only deterministic, auditable graph facts (a cycle is present or it is
+not; a case mismatch really does break a Linux build), and a gated finding comes
+with the exact include chain that created it, quoted as `file:line`. One caveat is
+inherited from the scanner: the graph is a conservative superset over `#if`
+branches (see the first question), so a reported cycle may live in a configuration
+you don't build — the quoted chain is what makes that auditable. The measured
+precisions — ~92% cycle drift, 76–91% clones, 98%
 bool-accretion claims ([CHANGELOG](../CHANGELOG.md),
 [docs/research/](research/)) — describe advisories, where the cost of an error is
 an ignored report line, not a red CI.
