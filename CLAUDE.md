@@ -14,7 +14,7 @@ Product name is locked to `archcheck` (binary `archcheck`); availability on GitH
 
 CI-first CLI that enforces architectural invariants on C++ projects. Scans sources with a fast preprocessor pass (no `compile_commands.json` required — the libclang backend that reads it is v0.2), builds the include dependency graph, applies a set of authority-backed default rules (YAML module rules are parsed and validated; enforcement lands v0.2), reports violations as `file:line`, exits non-zero on violations.
 
-Positioning is deliberately **not** "ArchUnit for C++". It is "Lakos physical design + C++ Core Guidelines SF.* checks in CI" — speaking the native dialect of the C++ community. Every default rule carries attribution (Core Guidelines, Lakos, Martin) so users cannot dismiss it as opinion. Preserve this framing in docs, error messages, and marketing copy.
+Every default rule carries attribution (Core Guidelines, Lakos, Martin) so users cannot dismiss it as opinion. Positioning and outward-facing framing: [docs/architecture-spec.md](docs/architecture-spec.md) §"The cultural risk and how to remove it".
 
 ## What it explicitly is NOT
 

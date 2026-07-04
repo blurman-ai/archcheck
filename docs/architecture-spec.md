@@ -113,7 +113,18 @@ The trend is unambiguous: C++ is the last large unoccupied niche. The appearance
 
 The C++ community is more conservative than the Java one. "Clean architecture" and "hexagonal architecture" in C++ are not a religion. But it has its own authoritative tradition: **Lakos** ("Large-Scale C++ Software Design") and **C++ Core Guidelines** (Stroustrup, Sutter).
 
-Therefore the tool is positioned not as "ArchUnit for C++", but as **"Lakos physical design + Core Guidelines SF.* checks in CI"**. This speaks the native language of the C++ community and removes the "we don't need your Java concepts" argument.
+Therefore the tool is positioned not as "ArchUnit for C++", but on the authority basis of **"Lakos physical design + Core Guidelines SF.* checks in CI"**. This removes the "we don't need your Java concepts" argument: every default rule cites a source the community already trusts.
+
+**The authority names are a shield, not a hook** (recognition check, 2026-07-04). The names defend the rules from being dismissed as opinion, but they do not attract readers, because outside a narrow expert circle they are not recognized:
+
+- Lakos on Hacker News, all time: 3 submissions, ≤2 points each, 0 comments. No findable r/cpp discussions. O'Reilly's own blurb for *Large-Scale C++* Vol. I concedes physical design "may be unfamiliar even to expert developers".
+- The C++ Core Guidelines are a known brand (top HN submissions: 268 and 179 points), but the letter codes (`SF.9`) circulate only inside the document itself; even dedicated blog series spell them out as "rules about source files".
+- The underlying pain is widely discussed and searched **in plain words**: "circular includes", "header dependencies", "include cycles" (blogs, forums, a dedicated clang-tidy check `misc-header-include-cycle`).
+
+Hence the framing rule for the two different jobs:
+
+- **Rule messages, docs, differentiation tables, comment replies** — cite the authorities (Core Guidelines SF.*, Lakos, Martin) as before. This is where the shield works.
+- **Outward-facing copy (announcement titles, post leads, README pitch)** — lead with the plain-language problem: two headers include each other, layers erode, nothing breaks the build, review can't see it, nothing in CI watches the include graph. Bring Lakos and SF.* in one paragraph later, as attribution for the rules, not as the opening vocabulary.
 
 ---
 
