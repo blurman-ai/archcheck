@@ -9,7 +9,7 @@
 **Target release:** v0.2+ (SARIF output lands in v0.2 per roadmap)
 **Blocks:** sarif_reporter implementation (a separate task later)
 **Blocked by:** —
-**Related:** #001 (dogfood_static_analyzers — the current strict report could also move to SARIF), #6 (gh — audit Issue 7: phase is ambiguous)
+**Related:** #001 (dogfood_static_analyzers — the current strict report could also move to SARIF), #6 (gh — audit Issue 7: phase is ambiguous), #175 (configurable_gate_list — SARIF `results` need to reflect which findings are gating vs advisory once that lands), #146 (bot_review_lets_drift_through — SARIF/Code Scanning is the tool→tool channel most AI review bots read natively, vs. relying on a sticky PR comment being read by a third-party bot)
 
 ## Goal
 
