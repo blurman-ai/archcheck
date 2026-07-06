@@ -147,7 +147,51 @@ gates. Two composition facts produce it:
   pre-2024-06 commits that the stored `authorship.tsv` window omits — Phase A reclassified all 648
   fresh, so the drift author labels do not depend on the window.
 
-## 8. Verdict
+## 8. Follow-up steer: the pure-agent stratum cannot answer the causal question
+
+A natural objection to §5: mixed repos may have a de-facto human gate (a human still eyes
+agent output before committing), so the composition read is unsurprising. The proposed fix —
+find repos where agents *predominate* and no human reviews — was run and does not rescue the
+interaction hypothesis. It runs into a construction-level confound instead.
+
+**The stratum exists.** 71 repos are ≥ 90% agent-share by commit (agent/(agent+human)), 26 with
+≥ 200 commits, substantial C++ (100k–780k LOC). Narrowing to the true no-human-author slice —
+git AUTHOR is an autonomous coding agent (`copilot-swe-agent[bot]`, `Devin AI`, `Claude`,
+`google-labs-jules`), not a `Co-authored-by` trailer — gives 31 repos at ≥ 90% bot-authored.
+
+**Drift is not elevated; if anything it is the lowest observed:**
+
+```
+stratum                              repos   commits   drift   rate/1k
+bot-author-share >= 90%                 31      8342      15     1.798
+bot-author-share >= 70%                 42     12346      28     2.268
+agent>=90% but bot-author<30% (trailer) 26     10601      25     2.358
+HUMAN (<10% agent)                     539    351874    1152     3.274
+whole corpus                          1186    516522    1613     3.123
+```
+
+**Why this cannot be read as "autonomous agents drift less":**
+
+1. **Maturity confound (#115), and it dominates.** The 31 bot-authored-dominant repos have a
+   median active span of **40 days** (min 2, max 3964) — greenfield bursts. Drift is measured as
+   *new* violations relative to the parent commit; a 40-day codebase still forming its structure
+   has far less opportunity to grow a cycle or a cross-area edge than a multi-year human repo. The
+   low rate is plausibly immaturity, not discipline. This is a pure cross-repo comparison, exactly
+   what #115 says dies under fixed effects.
+2. **The within-repo fix is unavailable by construction.** Removing the confound needs a
+   maturity-matched human baseline *inside the same repo*. But a pure-agent repo has, by
+   definition, almost no human commits — there is nothing to contrast against. The only repos with
+   both classes are the mixed ones (§5), where the agent flow is already partly gated.
+
+So there is no corpus slice that cleanly separates "unguarded autonomous agent" from
+"greenfield immaturity". The pure-agent stratum is a dead end for the causal question — a
+methodological result worth stating, not a measurement of agent quality. What survives across all
+four axes (#119 author, #146 gate, #174 interaction, and this stratum) is the same shape: the
+agentic drift signal disappears once composition or maturity is controlled.
+
+Artifacts: `experiments/gate_moderator/bot_authored_stratum.py`.
+
+## 9. Verdict
 
 The interaction the #173 hypothesis predicted is absent. Agent-authored drift does not route through
 weaker gates than agents' normal commits; the apparent skew in the raw funnel is the composition
