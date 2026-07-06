@@ -46,3 +46,19 @@ TEST_CASE("gate policy: counts gating violations", "[rules][gate-policy]")
 
   CHECK(countGating(violations, GateMode::Check) == 1);
 }
+
+// #171: `--diff` gates via a separate mechanism (RegressionReport::gates(),
+// tests/unit/diff/regression_report_test.cpp) that has no rule-id string for
+// god-headers to compare against directly. This pins the ONE documented divergence
+// from this side: neither Check nor Drift mode ever gates Lakos.GodHeader, while the
+// paired assertion in regression_report_test.cpp ("new god-header -> newGodHeaders
+// non-empty") pins that --diff DOES gate the equivalent finding. If either side
+// changes, grep for #171 to find and update its counterpart.
+TEST_CASE("gate policy: check/drift vs --diff god-header divergence is exactly the documented one",
+          "[rules][gate-policy]")
+{
+  CHECK(classifyForGate("Lakos.GodHeader", GateMode::Check) == FindingDisposition::Advisory);
+  CHECK(classifyForGate("Lakos.GodHeader", GateMode::Drift) == FindingDisposition::Advisory);
+  // Cycles gate on both sides of the divergence — SF.9 here, grownCycles there.
+  CHECK(classifyForGate("SF.9", GateMode::Check) == FindingDisposition::Gating);
+}

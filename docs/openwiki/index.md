@@ -2,7 +2,7 @@
 title: "archcheck — one-page agent map"
 type: index
 status: verified
-last_checked_commit: "eca9a96"
+last_checked_commit: "850911f"
 source_paths:
   - "src/rules/gate_policy.cpp"
   - "src/rules/rule_set.cpp"
@@ -54,13 +54,17 @@ From `src/rules/gate_policy.cpp:10-20`; everything not listed is advisory
 | drift (graph baseline) | `DRIFT.1`, `DRIFT.2`, `DRIFT.4.CYCLE` |
 | `--diff <revspec>` | grown cycles + new god-headers |
 
-⚠ **Two independent gate mechanisms.** `classifyForGate` (`gate_policy.cpp`) drives
-`check`/drift modes; `--diff` gates via a separate path (`RegressionReport::gates()`,
-`src/diff/regression_report.cpp` → `src/cli/diff_command.cpp`). They deliberately
-disagree on god-headers: drift mode never gates them, `--diff` gates *new* ones — the
-in-code note is `src/cli/check_command.cpp:96` ("not the exact --diff gate: diff also
-gates new god-headers. #133"). Consolidation is task #171. Don't change one path
-without checking the other.
+⚠ **Two independent gate mechanisms, by design (resolved #171).** `classifyForGate`
+(`gate_policy.cpp`) drives `check`/drift modes over rule-id strings; `--diff` gates via
+a structurally different path (`RegressionReport::gates()`,
+`src/diff/regression_report.cpp` → `src/cli/diff_command.cpp`) over typed graph-diff
+fields — merging them would mean threading rule-id strings through a struct designed
+around typed fields, for no gain over the current setup. #171 kept the two paths but
+pinned the contract with a cross-referenced test pair (grep `#171` in
+`tests/unit/rules/gate_policy_test.cpp` and `tests/unit/diff/regression_report_test.cpp`):
+Check/Drift never gate `Lakos.GodHeader`, `--diff` gates new god-headers — the one
+intentional divergence (`src/cli/check_command.cpp:96`, #133). Cycles gate on both
+sides. Don't change one path's gate set without updating its paired test.
 
 ## Rule / check registry
 

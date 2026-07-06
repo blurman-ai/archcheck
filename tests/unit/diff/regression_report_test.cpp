@@ -294,6 +294,9 @@ TEST_CASE("buildRegressionReport: new god-header → newGodHeaders non-empty", "
   REQUIRE(r.newGodHeaders.size() == 1);
   REQUIRE(r.newGodHeaders[0] == "hub.h");
   REQUIRE(r.hasRegression());
+  // #171: paired with tests/unit/rules/gate_policy_test.cpp's "check/drift vs --diff
+  // god-header divergence is exactly the documented one" — Check/Drift never gate
+  // Lakos.GodHeader, --diff gates new god-headers here. Keep both in sync.
   REQUIRE(r.gates());
 }
 
