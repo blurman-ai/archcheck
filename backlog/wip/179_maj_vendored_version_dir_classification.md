@@ -101,3 +101,37 @@ without explicit `/commit`.
 | `include/archcheck/scan/file_classification.h` | `netsnmp` token + generalized version-tail strip |
 | `fixtures/vendored_version_dir/**` | new pass + fail_netsnmp fixtures |
 | `tests/…` | unit test for the new classification cases |
+
+## Progress (2026-07-07)
+
+Implemented. Both code changes landed in `file_classification.h`:
+1. `netsnmp` added to `kVendoredLibDirs` (size 15 → 16).
+2. `isVendoredDirName` version-tail strip generalized: take the stem before the first
+   digit run, require that run to be a **dotted** version (undotted `zlib2` stays a name),
+   and require the stem to be a known vendored-lib token (exact match, never a prefix).
+   This subsumes the old pure-numeric path (`zlib-1.3.2`, `freetype-2.13.0` still pass)
+   and adds the trailing-alpha-qualifier case (`net-snmp-5.6-final-patched`).
+
+**Gates:** 638/638 tests pass (seeds 1/12345/99999); `[vendor]` 119 assertions / 29 cases
+green; dogfood `src/ include/ tests/` → 0 violations; lizard clean.
+
+**Tests + fixtures.** On-disk fixtures added per the DoD (user asked for literal dirs),
+each a distinct scan root consumed by `tests/integration/graph/vendor_exclude_test.cpp`:
+- `fixtures/vendored_version_dir/pass/libfoo-2d-renderer/foo.cpp` — authored lookalike,
+  non-vendored stem → stays in the graph.
+- `fixtures/vendored_version_dir/pass_self_project/net-snmp/net-snmp-5.8-final-patched/snmpwalk.c`
+  — built with root = `net-snmp` so the scan root's own name exempts the same-token
+  versioned subtree (self-project guard) → stays.
+- `fixtures/vendored_version_dir/fail_netsnmp/src/net-snmp-5.8-final-patched/snmpwalk.cpp`
+  → dropped; `src/app.cpp` authored contrast stays (proves drop ≠ empty graph).
+
+Unit path-string cases (`tests/unit/scan/file_classification_test.cpp`) cover the raw
+predicate: net-snmp true, double-digit minor, `libfoo-2d-renderer` false, self-project guard.
+
+Global-state note: the self-project e2e sets `selfProjectDir=netsnmp` (root basename) via
+`DiskFileSource`; it resets to `{}` at case end so the token collision can't leak into the
+net-snmp unit test under Catch2's randomized order (verified across 3 seeds).
+
+**Not done (out of scope, as specified):** giant amalgamated files
+(`ezsnmp_netsnmp.cpp`) — separate heuristic; note in DEBT if it won't be spun out.
+Corpus re-run to refresh clone numbers is a separate step post-merge.

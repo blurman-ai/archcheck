@@ -149,10 +149,11 @@ inline constexpr std::array<std::string_view, 16> kVendoredDirNames = {
 // are not single-file libs either. Curated like kVendoredStems: distinctive,
 // rarely-an-author's-own-module names confirmed vendored in the #056 corpus scan.
 // Matched as a directory segment (normalized: lowercased, '_'/'-'/space removed).
-inline constexpr std::array<std::string_view, 15> kVendoredLibDirs = {
+inline constexpr std::array<std::string_view, 16> kVendoredLibDirs = {
     "jpeglib", "libjpeg", "libpng",     "zlib", "bzip2",    "qhull", "hidapi",
     "libigl",  "agg",     "glulibtess", "mcut", "freetype", "glfw",  "glew",
-    "fmt", // bundled {fmt} headers, e.g. btop include/fmt/ (#164 B.1)
+    "fmt",     // bundled {fmt} headers, e.g. btop include/fmt/ (#164 B.1)
+    "netsnmp", // net-snmp vendored as net-snmp-<ver>-final-patched/ (#179, ezsnmp corpus)
 };
 
 // Self-project guard: running archcheck ON a library from kVendoredLibDirs must
@@ -185,14 +186,28 @@ inline bool isVendoredDirName(std::string_view name)
   {
     return true;
   }
-  // `zlib-1.3.2` normalizes to `zlib1.3.2`; a dotted version tail maps back to
-  // the plain library name (#109 corpus: vendored zlib update flagged 32 times).
-  const std::size_t tail = norm.find_last_not_of("0123456789.");
-  if (tail == std::string::npos || norm.find('.', tail + 1) == std::string::npos)
+  // A dotted version tail maps a dir back to its plain library name: `zlib-1.3.2`
+  // -> `zlib1.3.2` (#109), and `net-snmp-5.6-final-patched` -> `netsnmp5.6finalpatched`
+  // (#179, ezsnmp corpus) where an alpha qualifier trails the version. Take the stem
+  // before the first digit run; require that run to be a *dotted* version (so an
+  // undotted `zlib2` stays a name, not a version) and the stem to be a known
+  // vendored-lib token -- never a bare prefix of an arbitrary name (`libfoo-2d-renderer`
+  // yields stem `libfoo`, not vendored, so it stays scanned).
+  const std::size_t firstDigit = norm.find_first_of("0123456789");
+  if (firstDigit == std::string::npos || firstDigit == 0)
   {
     return false;
   }
-  return isVendoredLibDirName(std::string_view{norm}.substr(0, tail + 1));
+  std::size_t runEnd = norm.find_first_not_of("0123456789.", firstDigit);
+  if (runEnd == std::string::npos)
+  {
+    runEnd = norm.size();
+  }
+  if (norm.find('.', firstDigit) >= runEnd) // no dot inside the numeric run
+  {
+    return false;
+  }
+  return isVendoredLibDirName(std::string_view{norm}.substr(0, firstDigit));
 }
 
 // True if any *directory* segment of a repo-relative POSIX path is vendored

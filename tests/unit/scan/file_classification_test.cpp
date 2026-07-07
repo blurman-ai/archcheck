@@ -127,6 +127,29 @@ TEST_CASE("vendored dir name: dotted version suffix maps to the lib name", "[sca
   REQUIRE_FALSE(pathHasVendoredDir("src/zlib2/x.c"));             // undotted tail is a name, not a version
 }
 
+TEST_CASE("vendored dir name: version + alpha qualifier suffix (net-snmp)", "[scan][vendor]")
+{
+  // #179 ezsnmp corpus: net-snmp is vendored as net-snmp-<ver>-final-patched/, an
+  // alpha qualifier trailing the dotted version that the pure-numeric strip missed.
+  REQUIRE(isVendoredDirName("net-snmp-5.8-final-patched"));
+  REQUIRE(isVendoredDirName("net-snmp-5.10-final-patched")); // double-digit minor
+  REQUIRE(pathHasVendoredDir("src/net-snmp-5.8-final-patched/snmpwalk.c"));
+  // Guard: the stem before the version must itself be a vendored token, never a
+  // bare prefix -- libfoo is not vendored, so this authored tree stays scanned.
+  REQUIRE_FALSE(isVendoredDirName("libfoo-2d-renderer"));
+  REQUIRE_FALSE(pathHasVendoredDir("src/libfoo-2d-renderer/foo.cpp"));
+}
+
+TEST_CASE("vendored dir name: net-snmp self-project guard", "[scan][vendor]")
+{
+  // Running archcheck ON the net-snmp repo itself: a versioned subtree matching the
+  // scan root's own name must not be vendor-dropped (root name normalizes to netsnmp).
+  setSelfProjectDir("net-snmp");
+  CHECK_FALSE(pathHasVendoredDir("net-snmp-5.8-final-patched/agent/snmp_agent.c"));
+  setSelfProjectDir({}); // reset — never leak global state into other tests
+  CHECK(pathHasVendoredDir("src/net-snmp-5.8-final-patched/snmpwalk.c"));
+}
+
 TEST_CASE("vendored dir name: in-tree bundled libraries (not under third_party/)", "[scan][vendor]")
 {
   // Multi-file libs dropped under their own dir, no third_party/ wrapper.

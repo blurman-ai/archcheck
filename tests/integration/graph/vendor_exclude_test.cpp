@@ -6,6 +6,7 @@
 #include <string>
 
 #include "archcheck/graph/graph_builder.h"
+#include "archcheck/scan/file_classification.h"
 
 // #069/#068: vendored single-file libs and vendor directories must not enter the
 // include graph — their cycles and fan-in are noise, not author drift.
@@ -14,6 +15,11 @@ using archcheck::graph::buildGraphForPath;
 
 namespace
 {
+
+std::filesystem::path fixture(std::string_view name)
+{
+  return std::filesystem::path{ARCHCHECK_FIXTURES_DIR} / "vendored_version_dir" / name;
+}
 
 struct TempTree
 {
@@ -100,6 +106,30 @@ TEST_CASE("graph excludes vendored directory subtrees", "[graph][vendor]")
   REQUIRE_FALSE(graph_contains(built.graph, "third_party"));
   REQUIRE_FALSE(graph_contains(built.graph, "extern"));
   REQUIRE(built.graph.nodeCount() == 1);
+}
+
+TEST_CASE("graph drops net-snmp version+qualifier dir, keeps authored lookalike (#179)", "[graph][vendor]")
+{
+  // ezsnmp vendors net-snmp as net-snmp-<ver>-final-patched/: a dotted version with an
+  // alpha qualifier trailing it. The stem before the version (netsnmp) is a curated
+  // vendored token, so the subtree drops; libfoo-2d-renderer has a digit tail too but
+  // its stem is NOT a token, so the authored subtree stays. Fixtures on disk (#179).
+  const auto pass = buildGraphForPath(fixture("pass"));
+  REQUIRE(graph_contains(pass.graph, "libfoo-2d-renderer/foo.cpp"));
+
+  const auto fail = buildGraphForPath(fixture("fail_netsnmp"));
+  REQUIRE(graph_contains(fail.graph, "app.cpp"));        // authored contrast stays
+  REQUIRE_FALSE(graph_contains(fail.graph, "net-snmp")); // versioned vendored subtree dropped
+  REQUIRE(fail.graph.nodeCount() == 1);
+}
+
+TEST_CASE("graph keeps net-snmp version dir when it IS the scan root (self-project, #179)", "[graph][vendor]")
+{
+  // Running archcheck ON the net-snmp repo: the scan root's own name (net-snmp ->
+  // netsnmp) exempts a same-token versioned subtree from the vendored drop.
+  const auto built = buildGraphForPath(fixture("pass_self_project") / "net-snmp");
+  REQUIRE(graph_contains(built.graph, "snmpwalk"));
+  archcheck::scan::setSelfProjectDir({}); // reset — the root name matched a curated token
 }
 
 TEST_CASE("graph excludes external_libraries container subtree (#127)", "[graph][vendor]")
