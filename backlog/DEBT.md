@@ -12,7 +12,15 @@ Entry format:
 
 ## Open
 
-_(empty)_
+- **[2026-07-07] giant amalgamated source files are not classified generated/vendored** —
+  files like `ezsnmp_netsnmp.cpp` / `ezsnmp_sessionbase.cpp` (7900+ lines, but *normal* average
+  line length, so `hasMinifiedContent` misses them) are hand-vendored or tool-amalgamated bindings,
+  yet archcheck scans them as authored. *Consequence:* clone/complexity drift inflated by their
+  internal self-duplication — ~894 of ezsnmp's 2695 clone-drift events in the #173b corpus run
+  came from this class (a further ~10.8% of the whole run's clone signal). How to fix: a size/shape
+  heuristic (e.g. line-count ceiling) or amalgamation/SWIG banner detection — deliberately kept
+  OUT of #179 (which only handles the net-snmp version-dir gap) to avoid an over-broad line-count
+  exclusion without its own fixture + corpus check. (related #179, #147/#127).
 
 ## Closed
 
