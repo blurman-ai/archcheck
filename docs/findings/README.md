@@ -1,9 +1,11 @@
 # Findings on real code
 
-Include cycles archcheck flagged on well-known C++ projects. Each is pinned to an exact commit,
-quoted in both directions with `file:line`, and reproducible with the command shown. A cycle
-either exists in the include graph or it doesn't, so these are facts rather than heuristics —
-but every one carries an honest note on why a maintainer might have made the call on purpose.
+Include cycles archcheck flagged on well-known C++ projects — the hard part of the gate, and the
+only finding here that fails a build. Each is pinned to an exact commit, quoted in both directions
+with `file:line`, and reproducible with the command shown. A cycle either exists in the include
+graph or it doesn't, so these are facts rather than heuristics — but every one carries an honest
+note on why a maintainer might have made the call on purpose. Below them sit the **advisories** —
+copy-paste and complexity growth, caught in a single commit's diff, and never gating.
 
 Reproduce any of them:
 
@@ -109,3 +111,82 @@ a refactor. Deleting it is a one-line change with no call-site impact.
 "who includes whom" is harder to track; a maintainer could reasonably point at the
 macro style rather than this one include. It is one cycle in one pair, not a claim about the
 whole ~500K-line codebase (archcheck reports 2 SF.9 cycles in that checkout).
+
+---
+
+## Advisories — copy-paste and complexity growth
+
+Everything past the cycles is advisory: archcheck reports it and never fails the build. These are
+judgment calls rather than graph facts, and a maintainer can wave either one through. They earn a
+place here because they are the ordinary way a codebase drifts — one merged commit at a time — and
+archcheck catches them in the diff of the commit that introduces them, where a file-by-file review
+tends not to look. Reproduce either with `--diff`:
+
+```bash
+git clone <repo> && cd <repo>
+archcheck --diff <sha>^..<sha> . | grep NEW_CLONE        # copy-paste added in that commit
+archcheck --diff <sha>^..<sha> . | grep LOCAL_COMPLEXITY # complexity grown in that commit
+```
+
+### Copy-paste — a DuckDB extension names it "unified"
+
+`teaguesterling/duckdb_webbed`, a DuckDB community extension for reading XML and HTML, commit
+[`10bf964`](https://github.com/teaguesterling/duckdb_webbed/commit/10bf96497425c413a129f89a08b558b428b2c97a),
+titled *"Phase 2: Implement internal unified functions for XML/HTML parsing"* — a single commit of
++521 lines into one file. The message says the XML and HTML paths were unified; archcheck reports
+the new "unified" functions as copies of the existing XML ones with cosmetic edits — fourteen clones
+in the one commit.
+
+```
+src/xml_reader_functions.cpp:187: DRIFT.NEW_CLONE — copy-paste introduced (EXACT): lines 187-216 — clone of src/xml_reader_functions.cpp:756-785
+src/xml_reader_functions.cpp:441: DRIFT.NEW_CLONE — copy-paste introduced (STRUCTURAL): lines 441-530 — clone of src/xml_reader_functions.cpp:920-1002
+```
+
+The EXACT pair (an option parser for `force_list`) is identical token for token, comments and all.
+The STRUCTURAL pair is a ~90-line scan-function body whose only inserted difference is one line at
+[`:451`](https://github.com/teaguesterling/duckdb_webbed/blob/10bf96497425c413a129f89a08b558b428b2c97a/src/xml_reader_functions.cpp#L451):
+
+```cpp
+const bool is_html = (bind_data.parse_mode == ParseMode::HTML);
+```
+
+That single flag stands in for what should have been one function taking a mode argument.
+
+**Counter-argument.** XML and HTML parsing do share structure, and "copy it working, unify later"
+is a normal first pass. Fair — except the commit message already claims the unification is done, so
+the two bodies will drift under a name that says they cannot. The clone is trivially extractable
+(the bodies differ by that one `is_html`), which is what separates a real copy-paste from
+coincidental boilerplate: a fix made in the XML copy will not reach the HTML one.
+
+### Complexity growth — RocksDB keeps feeding a 648-line function
+
+`facebook/rocksdb`, commit
+[`62f0562`](https://github.com/facebook/rocksdb/commit/62f05627befadf88d47aa62a6c4fc10375660581),
+*"Reduce manifest rotation for foreground metadata ops (#14797)"*.
+
+```
+db/version_set.cc:5897: DRIFT.LOCAL_COMPLEXITY — function 'ROCKSDB_NAMESPACE::VersionSet::ProcessManifestWrites' grew local complexity from 314 to 318 (+4, already above 25)
+```
+
+[`ProcessManifestWrites`](https://github.com/facebook/rocksdb/blob/62f05627befadf88d47aa62a6c4fc10375660581/db/version_set.cc#L5897)
+is already 648 lines and six control-flow levels deep, at a local complexity of 314 — thirteen times
+the threshold. This commit adds a reasonable feature: relax the MANIFEST size limit by 25% when a
+write batch carries a foreground operation, so a user action is less likely to block on rotation. It
+lands as a new scan loop and branch, and the addition even books its own deferred work:
+
+```cpp
+bool has_foreground_operation = false;
+for (const VersionEdit* e : batch_edits) {
+  if (e->IsForegroundOperation()) { has_foreground_operation = true; break; }
+}
+// TODO/future: ... trigger background manifest rotation if we are beyond the soft limit ...
+```
+
+The reviewer sees a self-contained, well-commented block. archcheck sees a function long past
+holding in one head grow again — with a `TODO` filed against the code that most needs splitting
+instead of more accretion.
+
+**Counter-argument.** +4 on 314 is a rounding error, and the feature is correct and local. True, and
+archcheck is not arguing with the change. `LOCAL_COMPLEXITY` speaks only when an
+already-over-threshold function grows, so it reads as a nudge — extract here before adding the next
+branch — never a demand to rewrite. Being advisory, it never blocks the PR.
