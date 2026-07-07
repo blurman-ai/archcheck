@@ -390,10 +390,50 @@ classification gap — the clean, safe part) and a `backlog/DEBT.md` entry (gian
 separate heuristic). `baselib` deliberately NOT banned (over-exclusion). The drift→agent-PR join
 (`agent_pr_matches.tsv`, 64 PRs) is still TODO — the payoff step this corpus exists for.
 
+## Progress (2026-07-07, later) — drift→agent-PR join DONE; strong hypothesis refuted
+
+The payoff join (previously TODO) is done, after the #179 classifier fix, via two read-only passes
+(existing drift jsonl + `gh`, no clones/reruns). Detail:
+`experiments/agentic_weak_review/{task1_breadth_join.md, task2_depth_netdiag_mlacore.md}`.
+
+Scope: the 10 repos with BOTH a per-commit drift replay AND ≥1 agent-reviewed PR = **104 agent-reviewed
+PRs, all `copilot-swe-agent`-authored** (so the class-D human-authored arm is empty by construction).
+SHA-level join (full 40-char content SHAs; `(#N)`-subject fallback for squash repos), then the actual
+AI review bodies were read per drift-HIT PR.
+
+**Result — the literal hypothesis ("weak AI review lets architectural drift THROUGH the gate") is not
+supported on this corpus.** Across all 104 agent-reviewed PRs: **0 grown cycles, 0 new cross-module /
+layer dependencies.** OTGW-firmware (primary target, 51 reviewed) is a clean null — its agent PRs touch
+JS/HTML/docs, not include structure. Agentino/Puma also null.
+
+**Two narrower findings hold (both witnessed):**
+1. *Disjoint altitudes* — bots catch line-level correctness and some duplication (ODR, leaks,
+   missing/unused includes, duplicated `Theme` constants) but never name an architectural metric;
+   function-complexity growth passes unmentioned even when the bot reads the exact file
+   (m1m1r.kit#5 27→50, #3 cplx 32, NetDiagnostics#8 7→19).
+2. *Disjoint commit sets* — the real structural drift bypasses the review gate: NetDiagnostics'
+   `1d4fe45` "Phase-2 MVC" (+32 edges, new `controllers→engine/models` coupling) was pushed
+   direct-to-main with no PR; mla-core's drift is unreviewed agent renames.
+
+**Reframe:** the corpus payoff is not "a bot slept through a cycle" but "structural drift and AI review
+operate on disjoint commit sets and disjoint altitudes — archcheck covers the plane and the commits the
+bot never processes." This is a second, independent confirmation of #146; written up in
+`docs/research/bot_review_drift.md` §11 and JOURNEY (2026-07-07).
+
+**Caveats:** class D empty (no human-authored arm); the only same-PR silent-on-structure cases are
+local-complexity, 4 of them in one greenfield hobby ESP32 repo (m1m1r.kit); mla-core Σ3390 is ~75%
+path-rename re-count of a triple-mounted base-lib (real floor ≈71 edges).
+
+**Still open:** re-run the corpus clone/complexity numbers post-#179 to refresh the ~50%-noise figure
+(separate step); a human-authored comparison arm would need PRs outside the copilot-swe-agent seed.
+
 ## Changed files
 
 | File | Change |
 |------|--------|
 | `experiments/agentic_weak_review/` | local candidate reports and collection script |
 | `experiments/agentic_weak_review/archcheck_run/` | first archcheck corpus run (all 5 modes/repo) |
+| `experiments/agentic_weak_review/task1_breadth_join.md` | corpus-wide drift×review join (breadth) |
+| `experiments/agentic_weak_review/task2_depth_netdiag_mlacore.md` | NetDiagnostics + mla-core deep dive |
+| `docs/research/bot_review_drift.md` | §11 — second-corpus confirmation + disjoint-planes reframe |
 | `backlog/wip/173_maj_agentic_weak_review_corpus.md` | this task |

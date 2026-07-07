@@ -185,3 +185,54 @@ now a prerequisite, not a nice-to-have, for the agentic-angle re-run.
 archcheck occupies a wedge no line-by-line AI reviewer covers: the dependency graph. The pitch is
 concrete and evidenced — *"AI review bots comment on your diff; they do not see the cycle it adds.
 36 of 38 cycle-introducing PRs passed their review. archcheck gates exactly that, in CI, per commit."*
+
+## 11. Second corpus (agentic-weak-review, #173): drift and review on disjoint commit sets
+
+The §4–7 result is the trending corpus. A second, independent corpus — the agentic-weak-review set
+(#173): **agent-authored** PRs (all `app/copilot-swe-agent`) in small/greenfield C++ repos, reviewed
+by `copilot-pull-request-reviewer` / `coderabbitai` with a weak human gate — was joined the same
+inverted way after the #179 classifier fix. Scope: the 10 repos that have BOTH a per-commit drift
+replay AND ≥1 agent-reviewed PR = **104 agent-reviewed PRs**. Method identical to §3 (fetch each PR's
+content-commit SHAs, intersect full 40-char SHAs against the drift jsonl, read the actual review
+bodies). Detail: `experiments/agentic_weak_review/{task1_breadth_join.md, task2_depth_netdiag_mlacore.md}`.
+
+**The literal weak-review hypothesis does not reproduce here, and that is informative.** Across all
+104 agent-reviewed PRs: **0 grown cycles, 0 new cross-module/layer dependencies.** The primary target
+rvdbreemen/OTGW-firmware (51 agent-reviewed PRs) is a clean null — its agent PRs touch JS/HTML/docs,
+not include structure (30/51 located in the squash replay, all zero graph signal). This is the §2
+underpowered-forward-design problem seen from inside: cycle/cross-area drift is a ~0.1–0.3% per-commit
+event, and these repos' agent PRs are CI/build/doc fixes, so the rare structural event mostly is not
+in them. No cycle-through-a-bot case exists in this corpus to add to the 38.
+
+**What the per-PR reading surfaced instead — two mechanisms that refine, not contradict, §4–7:**
+
+1. **Disjoint altitudes.** The bots engage line-level correctness and even some duplication (ODR
+   `static inline`, a memory leak, missing/unused includes, duplicated `Theme` constants), consistent
+   with the "genuine flag" cases in §5. But **function-level complexity growth passes unmentioned even
+   when the bot reads the exact file**: slafftrosheen/m1m1r.kit#5 grew `ListScreen::onRender` local
+   complexity 27→50 while a careful Copilot review discussed only sprite-rendering bugs;
+   m1m1r.kit#3 added a command at complexity 32 with 8 inline comments, all functional bugs;
+   robinhoo1973/NetDiagnostics#8 grew a function 7→19 and the reviewer flagged *scope creep in that
+   file* but never the complexity. No bot in any of the 104 PRs named an architectural metric.
+
+2. **Disjoint commit sets.** The real structural drift in these repos does not pass the review gate —
+   it bypasses it. NetDiagnostics' single largest change (`1d4fe45` "Phase-2 MVC", +32 edges wiring a
+   new `controllers` area into `engine`/`models`) was pushed **direct to main by the human owner with
+   no PR**; mla-core's drift is unreviewed agent renames. This is §4's funnel (304/648 gate-drift
+   commits were direct-push, no PR) seen close-up: a per-commit main-history replay catches what a
+   PR-scoped reviewer structurally cannot see.
+
+**Caveats (this corpus is weaker as an anchor than §4).** The seed is all copilot-authored, so there
+is no human-authored comparison arm (class D empty). The only same-PR "silent-on-structure" cases are
+local-complexity growth, and 4 of them sit in one single-maintainer greenfield hobby ESP32 repo
+(m1m1r.kit) where the agent writes nearly everything and the bot rubber-stamps at 0-minute merges — no
+mature architecture is being degraded. And the raw mla-core clone total (Σ3390 edges) is **not** a
+usable signal: ~75% is a path-rename re-count of a base-lib mounted at three prefixes; the real
+authored-coupling floor is ≈71 edges (the same vendored-noise class that motivated #179).
+
+**Net.** The trending corpus (§4–7) remains the load-bearing evidence for "bots miss the cycle." The
+agentic corpus adds an independent, differently-shaped confirmation and sharpens the product framing:
+AI review and archcheck drift operate on **disjoint altitudes** (line/function correctness vs graph
+coupling) and **disjoint commit sets** (the PR gate vs direct-to-main / unreviewed history). archcheck
+is complementary to AI review, not redundant with it — it covers the plane and the commits the bot
+never processes.
