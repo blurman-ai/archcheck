@@ -136,11 +136,14 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
                                   const std::unordered_set<std::string> &deletedKeys, const AddedLineMap &added)
 {
   NewCloneDriftResult result;
-  // Whole-file guard off: in a snapshot a whole-file duplicate is vendored noise,
-  // but a commit that adds a file-copy is exactly the signal we want. Precision
-  // filters (joint floor, P1 classifiers) stay on.
+  // Whole-file guard ON (#179 follow-up): a MULTI-fragment whole-file / whole-subtree
+  // twin (a base-lib mounted under a new prefix, a file re-rooted, a vendored byte-copy)
+  // is move/copy noise even when a commit adds it — P0.2's two-sided isWholeFileClone
+  // (lo>=2, matched*5>=hi*4) cuts it while keeping a single-fragment copy and an
+  // extraction (small⊂large) reported. Makes --diff agree with --duplication, which
+  // already refuses to flag such twins. Precision filters (joint floor, P1) stay on.
   duplication::ScannerOptions opts;
-  opts.enableWholeFileGuard = false;
+  opts.enableWholeFileGuard = true;
   const auto scan = duplication::scanForDuplication(sources, opts);
   for (const auto &p : scan.pairs)
   {

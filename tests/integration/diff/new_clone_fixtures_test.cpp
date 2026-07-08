@@ -88,3 +88,21 @@ TEST_CASE("diff_new_clone fixture: pre-existing clone merely touched stays silen
 {
   REQUIRE(runScenario("pass_preexisting").violations.empty());
 }
+
+TEST_CASE("diff_new_clone fixture: whole-subtree byte-copy mount is suppressed (#179 follow-up)",
+          "[diff][newclone][fixtures]")
+{
+  // A commit re-mounts an existing MULTI-fragment lib file under a new prefix (base-lib
+  // mount / cross-mount byte-copy). Two-sided whole-file suppression (lo>=2) must drop it.
+  REQUIRE(runScenario("mount_copy").violations.empty());
+}
+
+TEST_CASE("diff_new_clone fixture: small module extracted into a new file still fires", "[diff][newclone][fixtures]")
+{
+  // Guardrail that whole-file suppression does not over-reach: a one-sided small (1 frag)
+  // extracted out of a large (3 frag) file is NOT a whole-file twin and stays reported.
+  const auto res = runScenario("extraction");
+  REQUIRE(res.violations.size() >= 1);
+  REQUIRE(res.violations[0].file == "extracted.cpp");
+  REQUIRE(res.violations[0].message.find("clone of big.cpp") != std::string::npos);
+}

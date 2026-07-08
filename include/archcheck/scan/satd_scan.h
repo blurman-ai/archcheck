@@ -4,6 +4,7 @@
 
 #include "archcheck/git/diff_query.h"
 #include "archcheck/rules/violation.h"
+#include "archcheck/scan/source_snapshot.h"
 
 namespace archcheck::scan
 {
@@ -20,6 +21,12 @@ namespace archcheck::scan
 //
 // Marker must be in comment part only (after // or inside /* */).
 // One violation per line (not per marker).
-[[nodiscard]] rules::ViolationList detectSatdMarkers(const std::vector<git::AddedLine> &addedLines);
+//
+// `newSnapshot` is the child-tree SourceSnapshot: each added line is gated on its
+// file's content-aware `authored` verdict (drops SWIG amalgams / license-banner
+// vendors that the path-only gate misses), falling back to the path/basename gate
+// for files not listed in the snapshot (non-C/C++ extensions).
+[[nodiscard]] rules::ViolationList detectSatdMarkers(const std::vector<git::AddedLine> &addedLines,
+                                                     const SourceSnapshot &newSnapshot);
 
 } // namespace archcheck::scan

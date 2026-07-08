@@ -430,9 +430,42 @@ binary: files 52→24, clone pairs 371→37, **net-snmp 356→0** — the 13.6% 
 tool-excluded (output in `archcheck_run_post179/`). Details + the article-safe claim live in #179's
 "Post-ship verification" / "Follow-up" sections.
 
-**Still open:** the raw corpus clone figure stays non-publishable — #179 removed only net-snmp (13.6%);
-base-lib multi-mount (20.9%), giant-amalgam (10.8%, DEBT), cross-mount (4.5%) remain (see #179 follow-up).
-A human-authored comparison arm would need PRs outside the copilot-swe-agent seed.
+**Still open:** the raw corpus clone figure stays non-publishable — #179 removed net-snmp (13.6%),
+the SWIG-banner fix removed giant-amalgam (10.8%); base-lib (20.9%) is now excluded by author decision
+(below), cross-mount (4.5%) remains. A human-authored comparison arm would need PRs outside the
+copilot-swe-agent seed.
+
+## Decision (2026-07-08) — base-lib excluded from the corpus; number recomputed
+
+Author call: stop classifying base-lib, just drop it. The mla-core embedded base-lib
+(`main/lib/base-lib`, single repo corpus-wide, 222 C/C++ files) is removed from the corpus clone-drift
+statistics entirely.
+
+Provenance check before removal (so this is an honest exclusion, not a convenient one): the "3×
+multi-mount" label was only half right. The re-mounts are pure renames (`b6c763f framework→base-lib`,
+`R100 lib/base-lib→main/lib/base-lib`), and the post-fix binary emits **0 `DRIFT.NEW_CLONE` on the
+rename commit** — the existing move-guard already collapses them. So the 1733 base-lib clone-drift
+events are NOT mount re-count; they are real edits re-flagging base-lib's own internal copy-paste
+(e.g. `mla_ui_button` / `mla_ui_label` `calc_text_size`, byte-identical bodies). Excluding base-lib
+therefore drops **real authored copy-paste** → the recomputed figure is a conservative UNDER-count,
+which is safe to publish.
+
+Recomputed clone-drift with base-lib removed:
+- universe 8284 → **6551** (−1733 base-lib)
+- tool now auto-excludes net-snmp (1124, #179) + SWIG amalgam (894) = 2018 → **4533**
+- of 4533: **4162 plausible authored (91.8%)**, cross-mount residual **371 (8.2%)**
+
+The cross-mount residual (371, 8.2%) is exactly what the Part B whole-file guard suppresses — a
+whole-subtree byte-copy added under a second root is a multi-fragment twin (`lo>=2`), fixture-proven
+by `fixtures/diff_new_clone/mount_copy`. So once Part B ships, the corpus residual noise is only the
+small single-function cross-mounts that fall under the `lo>=2` floor — well under 8.2%. (Corpus
+re-measure of cross-mount not yet run; the fixture proves the mechanism.)
+
+Caveats retained: base-lib was removed **manually** (not by the classifier — `baselib` is too generic
+for a global default), so a clean rerun needs a per-repo path exclusion, not a code change; and the
+4162 "authored" is still an upper bound (mla-core `core-os/` platform ports not separated). The
+standing "do not publish the raw clone number" rule is lifted only to the net-snmp micro-claim until
+the author signs off on this recomputed figure.
 
 ## Changed files
 

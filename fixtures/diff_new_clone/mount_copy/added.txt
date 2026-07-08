@@ -1,0 +1,3 @@
+# The commit mounts an existing lib subtree (baselib_a) again under a new prefix
+# (baselib_b) as a byte-copy. A multi-fragment whole-file twin => must be suppressed.
+baselib_b/x.cpp:1-23

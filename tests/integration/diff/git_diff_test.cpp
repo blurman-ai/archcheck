@@ -584,7 +584,9 @@ TEST_CASE("satd_scan: collectAddedLines finds TODO in added lines", "[satd][git]
   const auto added = archcheck::git::collectAddedLines(repo.path, "HEAD~1", "HEAD");
   REQUIRE(added.size() == 2); // The TODO line and the y=2 line
 
-  const auto satdViolations = archcheck::scan::detectSatdMarkers(added);
+  archcheck::scan::DiskFileSource src(repo.path);
+  const auto snapshot = archcheck::scan::SourceSnapshot::read(src);
+  const auto satdViolations = archcheck::scan::detectSatdMarkers(added, snapshot);
   REQUIRE(satdViolations.size() == 1);
   REQUIRE(satdViolations[0].ruleId == "SATD.1");
   REQUIRE(satdViolations[0].file == "code.cpp");

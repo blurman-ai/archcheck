@@ -12,6 +12,11 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- **Generated SWIG amalgamations are excluded by content banner** — ordinary-name
+  SWIG outputs such as `ezsnmp_netsnmp.cpp` / `ezsnmp_sessionbase.cpp` now hit
+  the shared generated-file classifier even when they do not use the `*_wrap.*`
+  suffix, removing a large clone-drift noise class from snapshot-based signals. (#179)
+
 ## [0.1.6] - 2026-07-03
 
 ### Added

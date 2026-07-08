@@ -248,10 +248,10 @@ Guards implemented in `src/scan/duplication/duplication_scanner.cpp`:
   authoritative move-vs-extract discriminator lives in the `--diff` path's parent-guard
   (`new_clone_drift.cpp`), which has the baseline tree and disables this guard entirely.
 
-- **P0.9: generated files** (`isGeneratedPath`, `file_classification.h`). Markers:
+- **P0.9: generated files** (`isGeneratedPath` / `hasGeneratedHeader`, `file_classification.h`). Markers:
   `.pb.*`, `*.upb.*`, `*-upb.c/.h` (upb amalgamation), `moc_`, `ui_`, `qrc_`,
   `.tab.c/.h`, `lex.yy`, `lempar` (Lemon template), `_generated.`/`_generated_`,
-  `/generated/`, SWIG `*_wrap.*`. Machine-generated files (protobuf/upb, Qt,
+  `/generated/`, SWIG `*_wrap.*` and the top-file SWIG generated banner. Machine-generated files (protobuf/upb, Qt,
   flex/bison/lemon) are not refactored by a human — duplication in them is not
   actionable, and big amalgamations (all of upb concatenated into one file) otherwise
   read as a whole-file clone of every real source they bundle.

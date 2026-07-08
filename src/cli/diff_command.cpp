@@ -221,6 +221,10 @@ void collectSnapshotAdvisories(DiffAdvisories &result, const SnapshotAdvisoryInp
   auto curSnap = readRefSnapshotMemory(input.repoRoot, input.parsed.current);
   if (!baseSnap || !curSnap)
     return;
+  // SATD gates each added line on the child tree's content-aware authored verdict, so
+  // it runs here (needs curSnap), skipping bulk-import / unresolvable-ref like the
+  // other snapshot advisories — a 100k-line dump's TODOs are not authored debt (#117).
+  result.satd = archcheck::scan::detectSatdMarkers(input.addedLines, *curSnap);
   result.complexity = collectComplexityDrift(input.repoRoot, input.parsed, *baseSnap, *curSnap);
   result.newClones =
       collectNewClones(*curSnap, *baseSnap, input.addedLines, input.deletedLines, input.maxCloneScanBytes);
@@ -236,7 +240,6 @@ DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, cons
   DiffAdvisories result;
   const auto addedLines = archcheck::git::collectAddedLines(repoRoot, parsed.baseline, parsed.current);
   const auto deletedLines = archcheck::git::collectDeletedLines(repoRoot, parsed.baseline, parsed.current);
-  result.satd = archcheck::scan::detectSatdMarkers(addedLines);
   const auto numstatEntries = archcheck::git::collectNumstat(repoRoot, parsed.baseline, parsed.current);
   result.testCoEvolution = archcheck::scan::detectTestCoEvolution(numstatEntries);
   // Bulk source imports are not authored evolution — their per-function

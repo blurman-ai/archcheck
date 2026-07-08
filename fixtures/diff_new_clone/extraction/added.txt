@@ -1,0 +1,3 @@
+# A single function funcA is extracted (copied) from big.cpp into a new file.
+# One-sided small (1 frag) in large (3 frags) => NOT a whole-file twin => still reported.
+extracted.cpp:1-11

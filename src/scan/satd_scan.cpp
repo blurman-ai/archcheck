@@ -127,16 +127,19 @@ std::string truncateMessage(std::string_view msg, std::size_t maxLen = 120)
 
 } // namespace
 
-rules::ViolationList detectSatdMarkers(const std::vector<git::AddedLine> &addedLines)
+rules::ViolationList detectSatdMarkers(const std::vector<git::AddedLine> &addedLines, const SourceSnapshot &newSnapshot)
 {
   rules::ViolationList violations;
 
   for (const auto &added : addedLines)
   {
     // Vendored third-party, test, and generated code carry their own TODO/FIXME —
-    // that is not the project's production self-admitted debt. Skip via the one
-    // shared gate every rule uses (#129), not an open-coded subset.
-    if (AuthoredScope::pathExcluded(added.file))
+    // not the project's production debt. Prefer the whole-tree content-aware verdict
+    // (catches SWIG amalgams / license-banner vendors the path-only gate misses);
+    // fall back to the path/basename gate for files the snapshot does not list
+    // (non-C/C++ extensions). One shared gate every rule uses (#129).
+    const auto *sf = newSnapshot.findFile(added.file);
+    if (sf != nullptr ? !sf->authored : AuthoredScope::pathExcluded(added.file))
       continue;
 
     const auto commentPart = extractCommentPart(added.text);
