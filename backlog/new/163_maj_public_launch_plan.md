@@ -103,6 +103,13 @@ Meeting C++, Discord invite, and HN guideline pages all returned HTTP 200. Check
   for the public repo, findings page, central finding, demo repo, Action repo, isocpp
   suggestion form, Meeting C++ home page, Discord invite, and HN guideline/welcome/Show HN
   pages.
+- **HN warm-up started (2026-07-07)** — after Show HN was blocked, user switched to normal
+  HN participation instead of retrying/submitting through another account. Commented two
+  relevant devtool threads without mentioning archcheck: ByteAsk (`item?id=48805309`,
+  C/C++ AI harness with gdb/sanitizers/perf; angle: worked examples / verification loop)
+  and Ox (`item?id=48746066`, AI tech-debt review; angle: when to clean up touched messy
+  code vs keep a PR narrow). This is account warm-up for a later Show HN second chance,
+  not a substitute launch channel.
 
 ### Remaining (Phase 3 — the user posts; announcements are outward-facing)
 

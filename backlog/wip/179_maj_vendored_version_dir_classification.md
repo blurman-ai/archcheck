@@ -135,3 +135,39 @@ net-snmp unit test under Catch2's randomized order (verified across 3 seeds).
 **Not done (out of scope, as specified):** giant amalgamated files
 (`ezsnmp_netsnmp.cpp`) — separate heuristic; note in DEBT if it won't be spun out.
 Corpus re-run to refresh clone numbers is a separate step post-merge.
+
+## Post-ship verification (2026-07-07) — net-snmp auto-excluded; targeted, not a full corpus rerun
+
+Validation grep across the whole #173 corpus clone/dup outputs: the ONLY version+qualifier vendored
+dirs anywhere are `net-snmp-5.{7,8,9,10}-final-patched/`, all in `carlkidcrypto/ezsnmp`. No other
+repo has such a dir, so #179 provably affects only ezsnmp — a full 34-repo rerun is unnecessary.
+
+Re-ran full-repo duplication on ezsnmp with the #179 binary (output preserved separately in
+`experiments/agentic_weak_review/archcheck_run_post179/`, pre-#179 files untouched):
+
+| ezsnmp `--duplication` | pre-#179 | post-#179 |
+|------------------------|---------:|----------:|
+| files scanned          | 52       | **24** (4 net-snmp copies excluded) |
+| clone pairs reported   | 371      | **37** (−90%) |
+| of which net-snmp      | 356      | **0** |
+
+The classifier now drops net-snmp everywhere (same `authoredSources()` filter feeds per-commit
+clone-drift), so the 1124 net-snmp clone-drift events (13.6% of the corpus's 49.8% noise) go from
+manually-subtracted to tool-excluded. 36 of the 37 residual pairs are `patches/master_src/` SNMP-CLI
+boilerplate (accidental/protocol clones, [[project_accidental_clones_no_shape_signal]]) — a separate
+axis, not #179.
+
+## Follow-up: what still blocks a publishable corpus clone number (was going to be a task; folded here)
+
+#179 closed only net-snmp (13.6% of the noise). The remaining classifier gaps keep the raw corpus
+clone figure NON-publishable until addressed:
+- **base-lib multi-mount (20.9%)** — mla-core embeds its base-lib at 3 mount points; needs cross-mount
+  dedup, NOT a `baselib` token (over-exclusion trap, deliberately rejected above).
+- **giant-amalgam (10.8%)** — `ezsnmp_netsnmp.cpp` etc.; in `backlog/DEBT.md` (line-count / SWIG-banner
+  heuristic).
+- **cross-mount (4.5%)** — the same file under two roots counted twice.
+
+**Article-safe claim (only this, until the above land):** *"after the classifier fix, net-snmp
+vendored code is auto-excluded — ezsnmp full-repo clones 371 → 37 pairs, net-snmp 356 → 0."* The full
+clean corpus-wide authored-clone number requires closing base-lib/amalgam/cross-mount first; do not put
+that number in the article yet. (The authored upper bound is unchanged at ~4162 / 50.2%.)

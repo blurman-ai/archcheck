@@ -424,8 +424,15 @@ bot never processes." This is a second, independent confirmation of #146; writte
 local-complexity, 4 of them in one greenfield hobby ESP32 repo (m1m1r.kit); mla-core Σ3390 is ~75%
 path-rename re-count of a triple-mounted base-lib (real floor ≈71 edges).
 
-**Still open:** re-run the corpus clone/complexity numbers post-#179 to refresh the ~50%-noise figure
-(separate step); a human-authored comparison arm would need PRs outside the copilot-swe-agent seed.
+**Post-#179 clone verification (2026-07-07).** Targeted, not a full rerun (validated: net-snmp
+version-qualifier dirs exist ONLY in ezsnmp corpus-wide). ezsnmp full-repo duplication with the #179
+binary: files 52→24, clone pairs 371→37, **net-snmp 356→0** — the 13.6% net-snmp noise is now
+tool-excluded (output in `archcheck_run_post179/`). Details + the article-safe claim live in #179's
+"Post-ship verification" / "Follow-up" sections.
+
+**Still open:** the raw corpus clone figure stays non-publishable — #179 removed only net-snmp (13.6%);
+base-lib multi-mount (20.9%), giant-amalgam (10.8%, DEBT), cross-mount (4.5%) remain (see #179 follow-up).
+A human-authored comparison arm would need PRs outside the copilot-swe-agent seed.
 
 ## Changed files
 
