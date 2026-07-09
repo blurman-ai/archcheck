@@ -96,6 +96,33 @@ The two robust high-precision "agents cleaner" signals are **SATD** (p = 1.6·10
   (50 mixed repos): 23 repos agent>human, 27 human>agent, **p ≈ 0.67**. 60% of all agent events (176/294)
   come from **one** repo (ThemisDB, 13,024 copilot-agent commits out of 18,818). Simpson. The top ramp repos by
   speed have **AI% = 0** — velocity and agency diverge. _lateral_module_drift_corpus_run.md §8.4._
+- **Velocity paradox vs the external productivity literature.** External studies report large
+  *within-developer* speedups from AI adoption: the Copilot RCT (Cui, Demirer et al., *Management Science*,
+  4,867 devs) **+26% PRs/wk**; NBER WP 35275 *Writing Code vs. Shipping Code* (Demirer, Musolff, Yang,
+  ~100k GitHub devs, within-developer before/after) autonomous agents **+180% commits → only +30%
+  releases**; Faros AI telemetry **+98% PRs / +91% review time**; DX (135k devs) daily-AI-users **+60% PRs
+  merged**. Our headline ("cross-year commit density flat, cpp median 0.95×") is not a contradiction but a
+  different **cut** of the same distribution. Re-sliced the MIT way — within-repo, before vs after the
+  agent-adoption date (`unified_metrics.tsv`, 66/68 usable agentic repos) — our own corpus surges, against
+  a flat matched control:
+
+  | after/before | agentic (n≈67) | control (n≈31) |
+  |---|---|---|
+  | commits | median **×1.67**, p90 ×24.9, 58% ≥1.5× | **×1.00**, p90 ×2.1 |
+  | lines/commit | median **×1.40**, p90 ×10.3 | ×0.93 |
+  | files/commit | ×0.96 | ×0.94 |
+
+  The control (C++ OSS, no adoption, split at a fixed 2025-09 date) is flat, so the surge is
+  adoption-linked, not a repo-lifecycle artifact. The "flat" headline is the **population median** (adopters
+  are ~15% of commits, a minority); the external studies report the **within-adopter** slice — our tail.
+  Both true. The gap between our +67% median and MIT's +180% is the §8 machinery: a contaminated baseline
+  (silent autocomplete in "before"), measurement **downstream of the review funnel** (squash/merge; +300%
+  generation → +30% releases collapses before it reaches git `main`), and the hardest population (mature
+  C++). Cross-check: lines/commit **×1.40** here matches the independent within-repo size-matched **~1.3×**
+  (§3, §9) from a different method. Caveat: agentic repos are partly selected for recent activity, inflating
+  the raw commit-count ratio; the timing-insensitive lines/commit gap (1.40 vs 0.93) holds. _Reproduce:
+  median of `commits_ratio` / `lpc_ratio` over `unified_metrics.tsv`, group agentic vs control, rows with
+  before > 0._
 - **Outcome-linkage: do flags predict breakage?** Raw re-fix lift **1.43×** → within-repo
   size×file matched **p = 0.86** (clean null). Mantel-Haenszel residual OR=1.19 (p=0.003) → leave-one-out
   removes one repo (FlashCpp) → **OR=1.07, p=0.35**. Flagged commits are **~10× larger** (200 vs 19
