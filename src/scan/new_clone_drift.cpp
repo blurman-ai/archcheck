@@ -55,12 +55,8 @@ std::string pairKey(const duplication::Fragment &a, const duplication::Fragment 
 
 // Clone pairs that already exist in the parent tree, keyed by content. A pair in
 // this set was not introduced by the diff, even if the diff touched one side.
-std::unordered_set<std::string> parentPairKeys(const SourceSnapshot &parentSnapshot)
+std::unordered_set<std::string> parentPairKeys(const duplication::ScanResult &scan)
 {
-  const auto sources = parentSnapshot.authoredSources();
-  duplication::ScannerOptions opts;
-  opts.enableWholeFileGuard = false;
-  const auto scan = duplication::scanForDuplication(sources, opts);
   std::unordered_set<std::string> keys;
   for (const auto &p : scan.pairs)
     keys.insert(pairKey(scan.fragments[p.a], scan.fragments[p.b]));
@@ -91,14 +87,11 @@ bool touchesDeleted(const duplication::Fragment &f, const DeletedLineMap &delete
   return false;
 }
 
-std::unordered_set<std::string> deletedFragmentKeys(const SourceSnapshot &parentSnapshot, const DeletedLineMap &deleted)
+std::unordered_set<std::string> deletedFragmentKeys(const duplication::ScanResult &scan, const DeletedLineMap &deleted)
 {
   std::unordered_set<std::string> keys;
   if (deleted.empty())
     return keys;
-  duplication::ScannerOptions opts;
-  opts.enableWholeFileGuard = false;
-  const auto scan = duplication::scanForDuplication(parentSnapshot.authoredSources(), opts);
   for (const auto &f : scan.fragments)
     if (touchesDeleted(f, deleted))
       keys.insert(contentKey(f));
@@ -133,7 +126,8 @@ std::size_t authoredBytes(const std::vector<std::pair<std::string, std::string>>
 // one side touches an added line and the parent did not already contain it.
 NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::string>> &sources,
                                   const std::unordered_set<std::string> &parentKeys,
-                                  const std::unordered_set<std::string> &deletedKeys, const AddedLineMap &added)
+                                  const std::unordered_set<std::string> &deletedKeys, const AddedLineMap &added,
+                                  const std::unordered_set<std::string> &focus)
 {
   NewCloneDriftResult result;
   // Whole-file guard ON (#179 follow-up): a MULTI-fragment whole-file / whole-subtree
@@ -144,6 +138,7 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
   // already refuses to flag such twins. Precision filters (joint floor, P1) stay on.
   duplication::ScannerOptions opts;
   opts.enableWholeFileGuard = true;
+  opts.focusFiles = focus;
   const auto scan = duplication::scanForDuplication(sources, opts);
   for (const auto &p : scan.pairs)
   {
@@ -179,7 +174,20 @@ NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const Sou
     result.skippedLargeTree = true;
     return result;
   }
-  return emitNewClones(sources, parentPairKeys(parentSnapshot), deletedFragmentKeys(parentSnapshot, deleted), added);
+  // #180: only pairs incident to a changed file can be a NEW clone, so scan with the commit's
+  // touched files as the focus set — cuts the all-pairs scoring on large trees, same result.
+  std::unordered_set<std::string> focus;
+  for (const auto &[file, lines] : added)
+    focus.insert(file);
+  for (const auto &[file, lines] : deleted)
+    focus.insert(file);
+  // One parent scan feeds both the pre-existing-pair guard and the deleted-fragment guard
+  // (was scanned twice — the whole-tree pass is the per-commit cost, #180).
+  duplication::ScannerOptions parentOpts;
+  parentOpts.enableWholeFileGuard = false;
+  parentOpts.focusFiles = focus;
+  const auto parentScan = duplication::scanForDuplication(parentSnapshot.authoredSources(), parentOpts);
+  return emitNewClones(sources, parentPairKeys(parentScan), deletedFragmentKeys(parentScan, deleted), added, focus);
 }
 
 NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,

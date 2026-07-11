@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "archcheck/scan/duplication/clone_index.h"
@@ -57,6 +58,11 @@ struct ScannerOptions
   bool enablePathGuards = true;            // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
   bool enableWholeFileGuard = true;        // P0.2: count whole-file clones separately, drop their pairs
   bool enableDataTableDrop = true;         // P1.1: make data-table guard a real DROP (not just down-weight)
+  // --diff performance (#180): when non-empty, only score candidate pairs incident to one of
+  // these files. new-clone drift needs only pairs touching the commit's changed files, so on a
+  // large tree this skips the all-pairs scoring (the dominant cost) without changing the result.
+  // Empty (the default) scores every pair — whole-repo --duplication is unaffected.
+  std::unordered_set<std::string> focusFiles;
 };
 
 struct ScanResult

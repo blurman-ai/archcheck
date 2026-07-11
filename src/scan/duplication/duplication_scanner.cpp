@@ -28,6 +28,14 @@ void phase1TokenizeAndExtract(const std::vector<std::pair<std::string, std::stri
   }
 }
 
+// #180: --diff scores only pairs incident to a changed file; empty focusFiles (whole-repo
+// --duplication) keeps every pair. Lets a large tree skip the all-pairs similarity math.
+bool pairInFocus(const std::vector<Fragment> &frags, std::size_t a, std::size_t b,
+                 const std::unordered_set<std::string> &focus)
+{
+  return focus.empty() || focus.count(frags[a].file) != 0 || focus.count(frags[b].file) != 0;
+}
+
 std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragments, const CloneIndex &index,
                                         const ScannerOptions &opts)
 {
@@ -40,6 +48,8 @@ std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragment
     Pair p;
     p.a = pr.first;
     p.b = pr.second;
+    if (!pairInFocus(allFragments, p.a, p.b, opts.focusFiles))
+      continue;
     p.weighted = weightedJaccard(allFragments[p.a], allFragments[p.b], index.idf);
     p.plain = plainJaccard(allFragments[p.a], allFragments[p.b]);
     p.line = lineOverlap(allFragments[p.a], allFragments[p.b]);

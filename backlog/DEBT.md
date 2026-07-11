@@ -10,6 +10,20 @@ Entry format:
 
 ---
 
+- **[2026-07-11] `--diff` clone scan is slow on large C++ repos** — `archcheck --diff
+  --diff-mode=memory` on CUBRID (2,354 tracked files, tree <40 MB) takes **~84 s per commit**,
+  dominated by the new-clone/duplication scan; on Alchemy (10,781 files, 43 MB tree, clone scan
+  already gated off by `diff_max_clone_scan_bytes`) it's ~82 s dominated by the include-graph
+  rebuild. *Consequence:* a real user checking a PR on a big repo waits over a minute; at corpus
+  scale (#180 Phase-1 expansion) a per-commit replay of large repos is infeasible (~20 h for 57 k
+  commits). The #149 byte-cap helps only trees >40 MB; sub-40 MB large-file repos are unprotected.
+  How to fix: (a) a commit-diff-scoped clone scan (only re-fragment files the diff touched, not the
+  whole authored tree); (b) expose a `--no-duplication` / rule-select flag for `--diff` so callers
+  who only want complexity/graph/flag skip the clone pass; (c) cache the include graph across the
+  two diff sides. (related #149, #180). **→ partially fixed (#181, 2026-07-11): focus-file
+  scoping + merged parent scan cut CUBRID 84 s→~42 s (2×), identical clones. Remaining: index-level
+  focus (fix a, deeper) + the --no-duplication escape hatch (fix b) are follow-ups in #181.**
+
 ## Open
 
 _(none)_

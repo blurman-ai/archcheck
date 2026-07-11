@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <fstream>
@@ -462,4 +463,31 @@ void helper() {
     REQUIRE(pair.weighted >= opts.jointWeightedThreshold);
     REQUIRE(pair.line >= opts.jointLineThreshold);
   }
+}
+
+// #180: focusFiles restricts scoring to pairs incident to a changed file (the --diff fast path).
+// The result must equal the full scan filtered to focus-incident pairs — same clones, less work.
+TEST_CASE("#180: focusFiles keeps only pairs incident to a focus file", "[duplication][fp-guards]")
+{
+  // Two INDEPENDENT clone pairs: (a,b) share block X, (c,d) share block Y.
+  const std::string x = "int fx(int v){int s=0;for(int i=0;i<v;i++){s+=i*3;s-=i;}return s+7;}";
+  const std::string y = "int gy(int w){int t=1;for(int j=0;j<w;j++){t*=j+2;t+=j;}return t-4;}";
+
+  const std::vector<std::pair<std::string, std::string>> files = {
+      {"a.cpp", x}, {"b.cpp", x}, {"c.cpp", y}, {"d.cpp", y}};
+  ScannerOptions opts;
+  opts.fragmentOpts.minTokens = 5;
+
+  const auto full = scanForDuplication(files, opts);
+  auto incidentToA = [&](const Pair &p)
+  { return full.fragments[p.a].file == "a.cpp" || full.fragments[p.b].file == "a.cpp"; };
+  const std::size_t expected = std::count_if(full.pairs.begin(), full.pairs.end(), incidentToA);
+
+  opts.focusFiles = {"a.cpp"};
+  const auto focused = scanForDuplication(files, opts);
+
+  REQUIRE(expected >= 1);                    // a.cpp∼b.cpp is a real pair (both branches exercised)
+  REQUIRE(focused.pairs.size() == expected); // c.cpp∼d.cpp (no a.cpp) is dropped
+  for (const auto &p : focused.pairs)
+    REQUIRE((focused.fragments[p.a].file == "a.cpp" || focused.fragments[p.b].file == "a.cpp"));
 }
