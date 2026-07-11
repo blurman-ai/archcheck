@@ -130,6 +130,18 @@ prior runs measured: the repo-level drift-rate TRAJECTORY through the adoption e
      Expected ×1.5–1.7 (consistent with fc01ab4: commits ×1.67, lines/commit ×1.40).
    - **P2 (complexity):** `n_complexity` events — per week AND per KLOC. Per-week expected
      up; per-KLOC is the honest test of a per-unit effect.
+     **Author's framing rule #2 (2026-07-11, amendment before Phase 3):** the harm claim is
+     the ABSOLUTE per-week accumulation, not the per-unit rate. Maintainers and reviewers
+     carry the total complexity of the repo; their budget is measured in person-weeks, not
+     KLOC — dividing by code volume does not reduce the burden, it answers a different
+     question ("is agent code worse line-by-line?") that we do not claim. Volume denominators
+     can HIDE degradation (Larsen & Moghaddam's −6.7% smell density = flat raw counts / LOC
+     +12.8%; Agarwal et al. 2601.13597 conversely headline un-normalized +35% complexity on
+     +77% lines). Reporting hierarchy: per-week rate is the finding; per-commit/per-KLOC is
+     mechanism attribution (shows the channel is volume), reported alongside but NEVER as a
+     mitigation of the per-week rise. Same logic as the P4 cleanup rule. This also demotes
+     the per-KLOC puzzle (pilot 1.44–1.92) from blocker to diagnostic — resolve it in Phase 4
+     before citing any per-KLOC number, but no per-KLOC result gates the headline.
    - **P3 (flag programming):** `n_bool_field` + `n_flag_arg` accretion rate per week and
      per KLOC; PLUS the cumulative per-struct boolean-state analysis (the method that
      produced the surviving 2.3×: git-blame per-struct, ≥4 commits into struct) run
@@ -216,6 +228,7 @@ blacklisted (69%), 71,839/111,224 commits skipped (65%). Coverage failure, not e
 |---|---|---|
 | 0 | Pre-register analysis plan (commit BEFORE mining). Read Larsen&Moghaddam 2606.13298. Pilot on EXISTING data: date-join results_full.jsonl (NO timestamps in it!) × authorship.tsv × git-log dates from local clones; event-study on ~46–60 adopters vs both control types; pseudo-adoption placebo | pre-trends flat; σ ≤ half-split estimates; placebo ≈ 0 (else year-shift design dead → fall back to contemporaneous controls + bias-to-null argument) |
 | 1 | Mine adoption events across 7,510 agentic=1 repos (full-history marker scan; Haiku subagents fine for the mechanical scan/verify loop); manual lag audit on 30 | ≥250 eligible; median marker lag ≤2 wk; ≥20%-dose stratum ≥150 repos |
+| 1b | Join the 3 external repo lists (Zenodo 19375881 / agentic-coding-impact / tech-debt-ai-coding — see "External literature & new assets") with a C++ language filter; dedupe vs our funnel; same eligibility gates; optionally widen marker set (census + Robbes regexes) | yield per source ledgered; any NEW marker passes the 30-hit lag audit before its adopters enter the panel |
 | 2 | Control pool: matching from 21,596 agentic=0; both alignments; Dockerfile + pseudo-adoption placebo assignments | — |
 | 3 | Clone + replay (~600–900 repos, ledgered, hygiene checks) + P4 duplication-mode snapshots (monthly, [−6,+12] months around event, adopters AND controls; vendor-filter mandatory before counting) + P5 as-submitted replay (fetch pull/N/head for 300–500 agent PRs + matched human PRs from #173 assets) + S1 pure-agent stratum remeasure (fixed scanner) | parentless rate sane; per-repo failure <5%; bulk_skip rate sane; snapshot clone counts eye-checked on 10 repos before aggregating; S1 coverage ≥90% commits/repo; P5 head-refs fetchable for ≥80% of sample |
 | 4 | PPML DiD + event-study + dose-response + placebos + LOO + Romano–Wolf + TOST | placebos ≈ 0; LOO-stable; else demote to exploratory |
@@ -241,6 +254,84 @@ blacklisted (69%), 71,839/111,224 commits skipped (65%). Coverage failure, not e
 - `docs/research/ai_code_detection_landscape.md` — detection-method reference.
 - `analysis/CORPUS_CRITERIA.md` (journal repo) — gates for any NEW repo admitted.
 
+## External literature & new assets (added 2026-07-11 — actionable)
+
+Full annotated survey: `docs/research/agentic_drift_literature.md` (4 parallel web sweeps,
+~50 searches, key URLs verified live 2026-07-11). READ IT FIRST. This section extracts only
+what changes the execution of THIS task.
+
+### New repo sources — mine these for additional C++ adopters (Phase 1b, cheap)
+
+Three published repo lists now exist. None has a C++ breakdown — the language join is ours
+to do. For each list: download → extract repo full names → language-filter (gh api
+`repos/{owner}/{repo}/languages`, keep C++/C majority; Haiku subagents fine for the
+mechanical loop) → dedupe against `screen_ledger.tsv` + `phase1_eligible.tsv` → apply OUR
+eligibility gates unchanged (≥50 commits & ≥12 wk pre-event, ≥12 wk post, owner-dedup, not
+a fork, CORPUS_CRITERIA.md). Record yield per source in the ledger (expect low single-digit
+% C++ — a small n gain, but these repos are externally validated agent adopters, which
+blunts the "your detector is homemade" review).
+
+1. **Zenodo 19375881** (AIware 2026 config dataset, arXiv:2605.08435): 4,741 repos with
+   agent configs (Claude Code, Gemini CLI, Codex CLI, Copilot CLI, Cursor), cut 2026-04,
+   CC-BY, 1.4 GB. `repos.csv` has full names. Config presence = adoption signal we already
+   use; here pre-harvested and fresher than our funnel.
+2. **github.com/shyamagarwal13/agentic-coding-impact** (Agarwal/He/Vasilescu, MSR 2026,
+   arXiv:2601.13597): 401 agent-first + 606 control + 117 IDE-first repo lists. Their
+   adoption dates may be reusable — VERIFY their date definition against ours on 10 repos
+   before trusting (our gate: marker lag ≤2 wk).
+3. **github.com/yueyueL/tech-debt-ai-coding** (Liu/Lo "Debt Behind the AI Boom",
+   arXiv:2603.28592): 6,299 repos, 302.6k AI-attributed commits (99% validated precision).
+   Corpus is Python/JS/TS-focused but their case list includes librealsense (C++) — scan
+   the full repo list for C++ before dismissing.
+
+### Marker-set widening (optional Phase-1 re-mine — decide by cost)
+
+Our 4 markers (CLAUDE.md / copilot-swe-agent / codex branches / Co-Authored-By) miss agents
+the census catches. Sources for additional validated regexes:
+
+- **arXiv:2606.24429** (Khosravani & Mockus, 180M-repo census): Type B message signatures
+  (`Generated by Replit`, `Replit-Commit-Author:`, `Generated by Codex`, `codex-cli`;
+  90.5% precision), Type C author-name suffix `(aider)` (86.8%), Type D config files
+  `.windsurfrules`, `copilot-instructions.md`, `.replit`, `.aider.conf.yml`, `.claudeignore`,
+  `.cursor/` (92%). Regexes are in the arXiv HTML; Zenodo replication package promised but
+  not yet posted. Killer stat for the write-up: bot-account lookup alone undercounts Claude
+  Code ~30× — cite it to justify our multi-signal design.
+- **arXiv:2601.18341 + 2601.18345** (Robbes et al., MSR 2026 Distinguished Paper): 150
+  heuristics for ~50 agents (86 file, 20 branch, 44 label). **Read the "Perils" paper
+  (2601.18345, 8 documented pitfalls) BEFORE adding any heuristic** — it is the field's
+  errata list for exactly this kind of mining.
+- Gate unchanged: every NEW marker must pass the 30-hit manual lag audit (median ≤2 wk)
+  before its adopters enter the panel; markers that fail stay in a diagnostic column.
+
+### External anchors & must-engage papers (Phase 4 interpretation + Phase 5 write-up)
+
+- **P1 volume anchors:** NBER 35275 (+36%/+109% commits); Agarwal 2601.13597 (+36% commits,
+  +77% lines). Their headline "+35% cognitive complexity" is UN-normalized repo-month totals
+  on +77% lines — i.e. our volume channel presented without decomposition; their only
+  normalized quality metric (duplication density) is +7.9% n.s. = our per-commit clone null;
+  their complexity pre-trends are non-flat and acknowledged. Use as external replication of
+  the volume story, per framing rule #2 (report numerator AND denominator, headline = per-week).
+- **P4 stock anchors:** GitClear×GitKraken 2026 (623M lines: duplication +81%, moved lines
+  −70%, functional connectivity −35%); Horikawa arXiv:2511.04824 (agent refactoring = renames,
+  rarely duplication/dependency work — the mechanism behind stock growth); HackerNoon 49
+  vibe-coded repos (jscpd 7.98% avg vs 3–5% benchmark, raw data published).
+- **Must engage honestly (they cut against us):** Borg et al. arXiv:2507.00788 (EMSE 2026,
+  controlled 151-dev experiment, NO downstream maintainability penalty — the strongest null);
+  Mao arXiv:2603.27130 (AI code has LOWER cross-file duplication 17.2% vs 24.5%; only paper
+  with C++ content, 7.8% of files). Both agree with our own per-commit nulls — position them
+  as consistent with, not contradicting, the volume+stock+pre-gate story (P1/P4/P5), which
+  none of them measures.
+- **SmellBench arXiv:2605.07001:** 63.1% of architecture-smell detector output is FP — use
+  when contrasting archcheck's `file:line` evidence-based checks with ARCAN-style detectors.
+
+### Confirmed-empty niches (the moat — claim explicitly in the write-up)
+
+Verified empty across academic + grey sweeps (2026-07-11): (1) C++ × agents × architecture —
+nothing; no study touches include graphs, physical design, levelization, cycles; (2)
+boolean-flag / flag-argument proliferation — unmeasured anywhere; P3 is a novel claim, cite
+the emptiness; (3) dependency cycles in AI-adoption designs — nobody measures them. Closest
+competitor remains Larsen & Moghaddam (Java/ARCAN, 0 citations yet).
+
 ## Top publishability risks (pre-empted in-design)
 
 1. "Your treatment isn't treatment" (dilution + fuzzy dating) → dose-response co-primary,
@@ -255,7 +346,40 @@ blacklisted (69%), 71,839/111,224 commits skipped (65%). Coverage failure, not e
 
 ## Current status (2026-07-11)
 
-**DONE**
+**LATEST — Phase-1 mining DONE + archcheck cost-wall fixed.**
+- After the expansion cost wall (below), the author chose "fix archcheck first" → **`#181`
+  shipped** (`fe3cdb4`): `--diff` clone scan focuses on changed files + dedupes the parent scan,
+  CUBRID 84 s→~42 s (2×), identical clone set, all gates green. (See `backlog/wip/181`.)
+- Then the author chose "майнинг" → **Phase-1 adoption mining executed**:
+  - **376 owner-deduped eligible adopters** (403 pre-dedup) with ledgered provenance
+    (`phase1_eligible.tsv`): corpus 209 (replayed, in panel) + local-agentic 62 + newly-mined 105.
+    **Phase-1 gate ≥250 exceeded; ≈ the n≈400 full-study target.** Span 2025-02..2026-05,
+    median 2025-12, clean (no pre-2025 outliers).
+  - Method: eligibility (marker + **≥50 TOTAL pre-commits** + ≥12 wk each side) is git-log-only,
+    so new repos are **bare `--filter=blob:none`** clones (MB not GB), mined, then **deleted**
+    (`clone_and_mine.py`, delete-after → disk stays flat; eligible repos get full-cloned in
+    Phase 3). Yield **12.7%** eligible/processed on a 1,000-repo batch of the 6,368 uncloned
+    agentic repos; ~5,368 remain if more power is wanted.
+  - **Two correctness fixes caught by self-check mid-run** (both re-run clean): (1) eligibility
+    used a 12-week *window* pre-commit count, not TOTAL pre-history — caught by re-cloning
+    `mcci-catena/bootloader` (261 commits, dormant right before adoption); (2) a bare `🤖` in the
+    trailer regex faked a 2022 adoption (`microsoft/mu_plus`) — dependabot/CI emoji noise;
+    tightened to `🤖 generated` (Claude Code's real trailer still caught by "generated…claude").
+    Re-mined all sources; corpus 214→212, mined 127→126.
+  - **Disk economy (author ask):** blobless + delete-after + freed **3.37 GB** of stale build
+    dirs (kept `build/debug`, `_deps`).
+  - Dose stratum (Phase-1 gate ≥150 at ≥20% AI-share): corpus has **57 ≥0.20** (of 191
+    computable; median 0.06, p75 0.27). Local+mined dose not yet computed (they're from the
+    agentic pool → likely higher) — **follow-up** (needs authorship on those repos).
+
+**NEXT:** (a) compute dose for local+mined → confirm ≥150-dose stratum; (b) Phase-3 full-clone +
+replay the 167 not-yet-replayed eligible (local 62 + mined 105) — now cheaper post-`#181`;
+(c) `#181` index-level focus for a further replay speedup; (d) more mining batches only if n>400
+power is wanted.
+
+---
+
+**DONE (earlier)**
 - Phase 0 fully executed and **committed+pushed** (`06dfc25`): pre-registration doc
   (`docs/research/adoption_event_study_prereg.md`, 5 endpoints P1–P5 + S1 stratum, synced with
   the author revision) + pilot validation (212 adopters, 260 placebo controls). Gate satisfied:
@@ -383,7 +507,9 @@ Phase 3. Expansion target after merge: 212 → ~300 eligible adopters, still zer
       *(drafted + SYNCED with the 2026-07-10 endpoint revision, P1–P5 + S1 registered;
       `docs/research/adoption_event_study_prereg.md` — awaiting commit command)*
 - [x] Phase-0 pilot report: pre-trend, σ (half-split 1.18/1.47), pseudo-adoption placebo (≈1).
-- [ ] ≥250 dated adoption events with ledgered provenance; 30-repo manual lag audit.
+- [x] ≥250 dated adoption events with ledgered provenance — **376 owner-deduped**
+      (`experiments/adoption_event/phase1_eligible.tsv`); marker↔hand-date |lag| median 1 day
+      (30-repo audit on corpus). Dose stratum ≥150 still to confirm (local+mined dose pending).
 - [ ] Confirmatory estimates for P1/P2/P3/P4/P5 with LOO, both control alignments, both
   placebos.
 - [ ] S1 descriptive table: pure-agent stratum drift profile, ≥90% per-repo commit coverage

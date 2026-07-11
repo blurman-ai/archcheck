@@ -174,3 +174,20 @@ LOO-robust but flagged. KLOC channel is noisier than commits (bulk_skip zeros, s
 ## Amendments
 
 _(log design deviations here with dates)_
+
+**2026-07-11 (before Phase 3) — reporting hierarchy for exposure channels.** The harm claim
+of this study is the ABSOLUTE per-week accumulation of drift events (P1–P3 primary exposure
+stays weeks, unchanged). Per-commit / per-KLOC rates are reclassified from "the honest
+per-unit test" to **mechanism attribution**: they show through which channel the accumulation
+flows (volume), and are reported alongside the per-week rate but never as a mitigation of it.
+Rationale (author's rule, mirroring the P4 cleanup rule): maintainer and reviewer capacity is
+measured in person-weeks, not KLOC — dividing complexity by code volume does not reduce the
+burden the team carries, it answers a different question ("is agent code worse line-by-line?")
+which this study does not claim. Volume denominators can hide degradation: Larsen & Moghaddam's
+headline −6.7% smell *density* decomposes into flat raw counts over +12.8% LOC; conversely
+Agarwal/He/Vasilescu (arXiv:2601.13597) headline an un-normalized +35% total cognitive
+complexity on +77% lines — the same volume channel our P1 measures, presented without the
+decomposition. We report both numerator and denominator explicitly, always. Consequence: the
+per-KLOC puzzle from the pilot (1.44–1.92 vs per-commit ≈1.0) is demoted from a citation
+blocker to a Phase-4 diagnostic; no per-KLOC result gates the per-week headline. Endpoint
+definitions, exposures, and TOST bounds in the frozen table are unchanged.
