@@ -253,6 +253,53 @@ blacklisted (69%), 71,839/111,224 commits skipped (65%). Coverage failure, not e
    bounds declared in advance, Romano–Wolf for all secondaries, pilot pre-framed as
    validation.
 
+## Current status (2026-07-11)
+
+**DONE**
+- Phase 0 fully executed and **committed+pushed** (`06dfc25`): pre-registration doc
+  (`docs/research/adoption_event_study_prereg.md`, 5 endpoints P1–P5 + S1 stratum, synced with
+  the author revision) + pilot validation (212 adopters, 260 placebo controls). Gate satisfied:
+  pre-trends checked, placebo ≈1, σ half-split 1.18/1.47, volume channel reproduced.
+- Pilot verdict: P1 volume ×1.34/wk at ×0.99 per-commit; P3 flag ×1.50/wk (clean pre-trend,
+  best causal candidate); P2 complexity biggest raw jump but pre-trend NOT flat → descriptive;
+  P4-intro flat per commit (×0.97). Details: prereg §Phase-0 pilot.
+- Phase-1 expansion prep: inventoried the 7,510-repo agentic pool → found **408 agentic repos
+  already cloned but not replayed**; marker-mined them → **138 eligible-if-replayed**; built
+  windowed worklist (106 repos ≤1200 win-commits, 57,281 commits, window [event−16wk,+12wk]);
+  generalized panel+cohort scripts to two data sources. All scripts in
+  `experiments/adoption_event/` (gitignored per project convention).
+
+**STOPPED — expansion hit a real COST WALL (honest null on the shortcut).** The 106-repo
+replay-only expansion was meant to grow 212→~300 cheaply. It doesn't: the expansion repos are
+large C++ projects (median 3,581 tracked files) whose per-commit `--diff` replay costs 15–85 s
+(clone/duplication scan on <40 MB trees; include-graph rebuild on >10 k-file trees) — the full
+57 k-commit run projected to ~20 h. Two mitigation attempts failed cleanly:
+- timeout 180→60 s: rate stayed ~0.65/s (medium repos scan 30–60 s without timing out).
+- disable clone scan via a parent `~/oss/.archcheck.yml`: **the strict config validator
+  (`version`+non-empty `modules`+`rules` required) rejected every minimal config → exit 2**, and
+  I initially MISREAD the exit-2 fast-exit ("0.00 s") as a real 84 s→0 s speedup. Caught on the
+  honest re-check (exit code, not just wall-time). Config route abandoned (also biases n_newclone).
+- Partial results merged: only **+2 eligible adopters landed (214 total)** — CUBRID (84 s/commit),
+  lightning, Alchemy, Antares burned run-time and failed windowed eligibility. Orphaned archcheck
+  process groups from the killed runs were cleaned (killpg), baloo resumed.
+
+**Conclusion:** growing n is NOT cheap from already-cloned repos — per-commit clone-scan replay of
+large C++ repos is the bottleneck. Phase 0 stands validated at n≈212. This is a resource/scope
+decision for the author, not an autonomous grind.
+
+**FORK (needs author steer)**
+1. **Full Phase-1 mine** — clone + windowed-replay the 6,369 not-yet-cloned agentic repos toward
+   n≈400. Cost: 40–60 GB disk (only 79 GB free — cleanup first), ~1.5–2.5 days on 8 workers.
+   Same clone-scan cost wall applies → likely need a per-commit clone-scan cap or a smaller
+   fast-repo stratum. Big, deliberate run.
+2. **Skip the n-growth**, treat Phase 0 (n≈212) as the validated pilot, and move to the Phase-3
+   NEW-endpoint runs that are the actual scientific contribution: P4 duplication-stock snapshots,
+   P5 as-submitted PR replay (`pull/N/head`), S1 pure-agent stratum. These also need runs but are
+   where the novel signal is.
+3. **Product angle:** the cost wall itself is a finding — per-commit whole-repo clone scan is too
+   slow for large C++ repos at corpus scale; relevant to archcheck's own `--diff` performance on
+   big repos (a real user would hit the same 84 s). Worth a DEBT note.
+
 ## Progress log
 
 **2026-07-10 — Phase 0 executed on existing data (zero new clones).** Assets in
@@ -312,6 +359,23 @@ network `pull/N/head` fetches = Phase 3, no Phase-0 slice. S1 asset `agent_autho
 present. Prereg is ready to commit; nothing else in Phase 0 is computable from existing data
 (P4 stock, P5 pre-gate, S1 remeasure are all new-run items). **Doc still awaits the commit
 command — must land BEFORE any Phase-1 mining.**
+
+**2026-07-10 (cont.) — Phase-1 expansion IN FLIGHT (no new clones).** Inventory of the 7,510
+agentic=1 pool: 1,141 already cloned in `~/oss`, of which 733 are in the panel and **408 are
+cloned-but-unreplayed**. Marker-mined those 408 (`mine_local_agentic.py` →
+`local_agentic_markers.tsv`): 241 have a marker, **138 eligible-if-replayed** (≥50 pre-commits,
+≥12wk each side on full history). Capped at ≤1,200 windowed commits (drop 32 mega-repos —
+#149 domination trap, logged) → **106 repos, 57,281 commits** windowed to [event−16wk,+12wk]
+(`build_worklist_expansion.py` → `worklist_expansion.tsv`; window = `git log HEAD`, matching
+the original all-commits-on-branch traversal, verified rf⊆HEAD not first-parent). Replaying via
+the load-bearing `run_worklist.py` → `results_expansion.jsonl` (8 workers, baloo suspended,
+`n_bool_field` inline post-#090). Downstream generalized to 2 sources: `build_panel.py`
+(reads `results_expansion.jsonl` + `dates_expansion.tsv`), `build_cohorts.py` (merges
+`local_agentic_markers.tsv`). **Caveat found mid-run:** a few large-TREE C++ repos (Alchemy,
+Antares, 3drepobouncer) hit the 180s duplication-scan timeout → blacklisted → their commits
+lost; the cap was on commit-count, the timeout is LOC-bound. Acceptable (gate has margin:
+even −20 repos → ~297 ≥ 250); dropped repos will be logged, timeout handling revisited in
+Phase 3. Expansion target after merge: 212 → ~300 eligible adopters, still zero new clones.
 
 ## Acceptance criteria
 
