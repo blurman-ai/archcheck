@@ -26,7 +26,14 @@ Entry format:
 
 ## Open
 
-_(none)_
+- **[2026-07-11] archcheck does not check itself with `.archcheck.yml` layer rules** —
+  the agent-operable-cells passports (#183) reference "forbidden paths" as a manually
+  maintained table in `docs/dev/agent_cells.md`, not a machine-enforced config; `.archcheck.yml`
+  module/layer rules are parsed and validated (config format v1) but enforcement is v0.2 work
+  (see `docs/decisions/`). *Consequence:* a cell's "forbidden" column is currently advice, not
+  a gate — an agent could touch a forbidden path and no tool would catch it, only manual review.
+  How to fix: once v0.2 config enforcement lands, add a self-`.archcheck.yml` encoding the same
+  boundaries as the cell passports, gated in CI. (related #183). Status: open, blocked on v0.2.
 
 ## Closed
 
