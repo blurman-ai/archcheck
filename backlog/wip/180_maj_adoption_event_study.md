@@ -503,23 +503,24 @@ Phase 3. Expansion target after merge: 212 → ~300 eligible adopters, still zer
 
 ## Acceptance criteria
 
-- [ ] Pre-registration doc committed before Phase 1 mining starts.
-      *(drafted + SYNCED with the 2026-07-10 endpoint revision, P1–P5 + S1 registered;
-      `docs/research/adoption_event_study_prereg.md` — awaiting commit command)*
+- [x] Pre-registration doc committed before Phase 1 mining (`06dfc25`, P1–P5 + S1 registered).
 - [x] Phase-0 pilot report: pre-trend, σ (half-split 1.18/1.47), pseudo-adoption placebo (≈1).
 - [x] ≥250 dated adoption events with ledgered provenance — **376 owner-deduped**
       (`experiments/adoption_event/phase1_eligible.tsv`); marker↔hand-date |lag| median 1 day
       (30-repo audit on corpus). Dose stratum ≥150 still to confirm (local+mined dose pending).
-- [ ] Confirmatory estimates for P1/P2/P3/P4/P5 with LOO, both control alignments, both
-  placebos.
+- [~] Confirmatory estimates **P1/P2/P3/P4 DONE on the expanded panel (n=361/265), LOO +
+  placebo + donut + pre-trend** — write-up `docs/research/adoption_event_study.md` (2026-07-12).
+  **P5 NOT run** (needs `pull/N/head` fetches, Phase 3). P3 per-struct re-run on cohorts also
+  outstanding.
 - [ ] S1 descriptive table: pure-agent stratum drift profile, ≥90% per-repo commit coverage
   (redoing the #149-crippled ai-377 run), matched young-greenfield context column, caveats
-  in caption, kept out of all pooled estimates.
-- [ ] The headline sentence is supportable verbatim: "after agent adoption, repos accumulate
-  architectural drift events ×K faster (K with CI); flag-programming accretion rises ×M even
-  per unit of code; clone stock grows ×S faster; agent PRs as submitted carry ×G more drift
-  than matched human PRs" — or the honest negative is recorded in JOURNEY and the task
-  closes as refuted (author decides framing; per project rules, blocked/refuted ≠ completed).
+  in caption, kept out of all pooled estimates. **NOT run.**
+- [x] Headline settled as the **honest volume-channel** version: "after agent adoption, repos
+  accumulate architectural drift events ×1.32/wk [1.08,1.61], driven by volume (per-commit ≈1);
+  per-unit quality flat-to-contested (P2 per-KLOC contested; P3 flag CI crosses 1; P4 clone
+  **stock** null in the Agarwal replication)." The per-unit "agents worse" claims did NOT
+  survive expansion/replication — recorded in JOURNEY + write-up. Volume claim supports the
+  archcheck pitch; per-unit claims are honest negatives, consistent with prior nulls.
 - [ ] Case-study candidates for Phase 5 include the author's own near-100%-agentic project
   ("leadline", the 19-clones observation) as the limiting-case before/after example —
   confirm with the author before publishing anything from it.
