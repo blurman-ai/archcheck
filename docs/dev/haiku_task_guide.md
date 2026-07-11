@@ -134,4 +134,29 @@ prohibitions work.
    ("tests: 412/412", "13/13 synthetic", "lizard: 0 warnings").
 3. The task's control cases: expectation vs fact, as a table.
 4. What was NOT done and why (if anything) — as a separate list, not mixed with what's done.
-5. Wait for the command to commit.
+5. Closure verdict — one of the five states below, citing the evidence lines that justify it (§2.5).
+6. Wait for the command to commit.
+
+### 2.5. Closure verdict (applies to every executor model, not only Haiku)
+
+A task or cell run ends with exactly one verdict. A verdict without cited evidence lines is
+not a verdict — it's the "tests are green → glanced at the diff → looks fine" pattern this
+protocol exists to replace.
+
+- **`ACCEPT`** — the target scenario is fixed, all laws are green, evidence is attached,
+  the `Unverified` section is listed.
+- **`REJECT`** — the change did not fix the target scenario or broke an invariant; it was
+  rolled back, and the reason is recorded.
+- **`MIXED`** — the change improves one case and measurably degrades another. This needs
+  the author's scope call — do not silently pick a side.
+- **`INSUFFICIENT_EVIDENCE`** — the same state as the root `CLAUDE.md` rule "doubts
+  remain → the task stays open, and the doubts go to the user" (Self-checking conclusions).
+- **`ESCALATE`** — the same state as §2.2 "Statuses honestly" (blocked → `backlog/wip/`,
+  never `completed`) and the root `CLAUDE.md` rule "gap in the product → surface it, don't
+  work around it".
+
+For work inside a named cell (`new-default-rule`, `test-fixture-only`, `reporter-change`,
+`research-script`), the evidence a verdict cites comes from that cell's eye command — see
+[docs/dev/agent_cells.md](agent_cells.md), including the Goodhart law on what a verdict may
+never do to reach `ACCEPT` (weaken a fixture, relax an assertion, regenerate a baseline,
+lower a threshold, or cite a fast-mode-only block).
