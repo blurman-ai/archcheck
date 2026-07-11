@@ -1,11 +1,37 @@
 # 183 maj — Agent-operable cells: pilot on archcheck's own dev workflow
 
-Status: wip
-Created: 2026-07-11
-Start date: 2026-07-11
+**Status:** completed
+**Created:** 2026-07-11
+**Start date:** 2026-07-11
 Executor: **Sonnet** (design + implementation). Escalate to the author per the closure
 protocol this task itself introduces (section D below) — that is not circular: until D lands,
 escalate = stop and ask in chat.
+
+## Outcome (2026-07-11)
+
+All 5 deliverables shipped, 6/6 acceptance criteria met (see the checklist and the full
+Progress log below). 5 commits on `master`: `5da7ee7` (D1 script), `51f973b` (D2 passports),
+`92be533` (D3 closure protocol), `8a954b6` (D4 pilot: fixtures + test), `3ae4338` (task
+bookkeeping + DEBT.md).
+
+**How it works:** `scripts/agent_evidence.sh [label]` runs the existing gate chain
+(format/cppcheck/lizard/build/tests/self-check/coverage/smoke) and prints one compact
+before/after-comparable block, non-zero exit on any failure; `EVIDENCE_FAST=1` skips
+coverage for the inner loop and is never ACCEPT-eligible. `docs/dev/agent_cells.md` names
+4 cells (new-default-rule / test-fixture-only / reporter-change / research-script), each with
+an allowed/forbidden path table and its eye command, plus the Goodhart law. Closure verdicts
+(ACCEPT/REJECT/MIXED/INSUFFICIENT_EVIDENCE/ESCALATE) live in `docs/dev/haiku_task_guide.md`
+§2.5, cross-linked both ways.
+
+**What it relates to:** the D4 pilot closed **#153 item 1** (the mandatory
+`fixtures/vendor_exclusion/*` fixtures) as a side effect — #153's own checklist/file was not
+updated by this task (out of #183's scope); the other two items of #153 (residual tails,
+the #129 path-trio gap) remain open there. The pilot also surfaced that `backlog/new/144_*`
+was stale (already shipped in `e147132`, 2026-06-27) — that file was left as-is, not this
+task's scope to fix.
+
+**Diagnostics:** re-run `scripts/agent_evidence.sh` any time to get a fresh evidence block;
+`bash -n scripts/agent_evidence.sh` for a syntax-only check without running the gates.
 
 ## Background (read first)
 
