@@ -6,8 +6,10 @@ pseudo-adoption placebo controls). Pre-registration: `adoption_event_study_prere
 **Bottom line up front:** the defensible, multiply-anchored finding is the **volume channel** —
 after agent adoption a repository accumulates architectural-drift events per week ~1.3–1.7×
 faster, while per unit of code quality is flat-to-contested. The per-unit "agents are worse"
-claims (P3 flag programming; P2 complexity per KLOC) **do not hold up**. Two registered
-endpoints (S1 pure-agent stratum, P5 as-submitted PR drift) are **not yet run**.
+claims (P3 flag programming; P2 complexity per KLOC) **do not hold up**. P5 (as-submitted PR
+drift) is now run (`p5_as_submitted_drift.md`): within-repo, agent PRs are **not** dirtier as
+submitted than human PRs — H-P5 not supported, consistent with the central null. One registered
+endpoint (S1 pure-agent stratum) remains **not yet run**.
 
 ## Design (as pre-registered)
 
@@ -83,11 +85,17 @@ the general-adopter pattern — which is exactly why P4/P5 were framed around *s
 
 - **S1 — pure-agent descriptive stratum.** Full drift profile per commit & per KLOC on ≥90%
   coverage, redoing the #149-crippled ai-377 run. Not run.
-- **P5 — as-submitted PR drift.** Agent PRs as submitted (`git fetch origin pull/N/head`) vs
-  matched human PRs in the same repos. Assets exist (`experiments/agentic_weak_review/`) but
-  carry `pr_url`/author, not base/head SHAs → needs network head-ref fetches (Phase-3 run).
-  Not run.
 - **P3 per-struct re-run** on adoption cohorts (see above) — the real test of the flag claim.
+
+**P5 — as-submitted PR drift — DONE (2026-07-12), `p5_as_submitted_drift.md`.** 291 agent + 260
+human eligible PRs across 18 both-arm repos; G1 head-ref fetch 99.8% (PASS). Within-repo median
+contrast (agent − human) fraction-with-any-drift **−0.21 [−0.365, +0.000]**, LOO [−0.235, −0.185]:
+H-P5 (agent dirtier as submitted) **not supported**; the raw pooled agent-excess is repo
+composition (Simpson, same as #115 under repo FE), and the sign is not robust to size control, so
+"agents cleaner" is not claimed either — no robust difference, the central null holding pre-merge.
+The registered review-filter gap is **null by construction** (`pull/N/head` = final head ≈ merged
+content; the first-push-vs-merged test is unrun). Two giant monorepos (tt-metal, onnx-light)
+dropped to per-PR scan timeout.
 
 ## Honest headline
 
@@ -95,10 +103,12 @@ Of the four endpoints computable from the panel, the **volume channel (P1)** is 
 externally corroborated; **P2 per-week** rises but its per-unit reading is contested; **P3 flag**
 and **P4 clone stock** do **not** show a per-unit "agents worse" effect. This is the
 volume-channel story the project has consistently measured — agents don't write worse code per
-unit, they generate more of it faster than review scales. The registered-but-unrun S1/P5 and the
-P3 per-struct re-run are where any remaining per-unit signal would have to come from; until then
-the claim stops at "more drift per week, per-unit flat," which is the defensible pitch and is
-consistent with every prior null in this project.
+unit, they generate more of it faster than review scales. P5 now extends this to the pre-merge
+state: as submitted, agent PRs are not architecturally dirtier than human PRs in the same repo
+(H-P5 not supported). The registered-but-unrun S1 and the P3 per-struct re-run are where any
+remaining per-unit signal would have to come from; until then the claim stops at "more drift per
+week, per-unit flat, and no as-submitted excess within repo," consistent with every prior null in
+this project.
 
 ## Assets
 

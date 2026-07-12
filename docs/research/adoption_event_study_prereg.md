@@ -191,3 +191,21 @@ decomposition. We report both numerator and denominator explicitly, always. Cons
 per-KLOC puzzle from the pilot (1.44–1.92 vs per-commit ≈1.0) is demoted from a citation
 blocker to a Phase-4 diagnostic; no per-KLOC result gates the per-week headline. Endpoint
 definitions, exposures, and TOST bounds in the frozen table are unchanged.
+
+**2026-07-12 (P5 run) — P5 operational choices (prereg named no drift columns / matching for P5).**
+(A1) Outcome = the P1 drift union computed by `archcheck --diff --format=json` via the panel's own
+`run_worklist.categorize()`, so P5 is comparable to P1–P4. (A2) As-submitted base = `merge-base(base,
+head)`; diff `mb..head` two-dot (archcheck rejects three-dot). (A3) Human arm freshly enumerated per
+agent-repo from GitHub (merged, non-bot, C++-touching, capped ≤3×/40) — only 10 agent-repos had a
+harvested human C++ PR, so within-repo matching required live enumeration; per-PR is the finding,
+per-KLOC mechanism. (A4) Load-bearing estimator = within-repo median of per-repo (agent − human)
+contrasts, owner-clustered bootstrap + LOO; pooled shown only for composition. (A5) Review-filter
+gap = submitted − merged. **Correction recorded honestly:** the gap came out null *by construction*
+— `pull/N/head` is the PR's final head and the merge lands it unchanged, so `merge^1..merge` ≈
+`mb..head` (0 for 284/286 PRs, 155/157 nonzero-drift ones). It measures "did merge alter the final
+head" (≈never), NOT "did review change the agent's original submission." The intended
+first-pushed-head-vs-merged test needs PR push-event history and is **not run**. Result:
+`p5_as_submitted_drift.md` — H-P5 (agent dirtier as submitted) **not supported** (within-repo
+median −0.21, CI to 0); raw pooled agent-excess is repo composition; sign not robust to size, so no
+robust difference either way. G1 head-ref fetch 99.8% (PASS). Two giant monorepos (tt-metal,
+onnx-light) dropped to per-PR scan timeout.

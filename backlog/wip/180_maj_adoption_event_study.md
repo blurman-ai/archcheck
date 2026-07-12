@@ -510,8 +510,15 @@ Phase 3. Expansion target after merge: 212 → ~300 eligible adopters, still zer
       (30-repo audit on corpus). Dose stratum ≥150 still to confirm (local+mined dose pending).
 - [~] Confirmatory estimates **P1/P2/P3/P4 DONE on the expanded panel (n=361/265), LOO +
   placebo + donut + pre-trend** — write-up `docs/research/adoption_event_study.md` (2026-07-12).
-  **P5 NOT run** (needs `pull/N/head` fetches, Phase 3). P3 per-struct re-run on cohorts also
-  outstanding.
+  P3 per-struct re-run on cohorts still outstanding.
+- [x] **P5 as-submitted PR drift DONE (2026-07-12)** — `docs/research/p5_as_submitted_drift.md`.
+  291 agent + 260 human eligible PRs across 18 both-arm repos; G1 head-ref fetch 99.8% (PASS,
+  ≥80%). Within-repo median contrast (agent − human) fraction-with-any-drift **−0.21
+  [−0.365, +0.000]**, LOO [−0.235, −0.185]: **H-P5 not supported** — agent PRs not architecturally
+  dirtier as submitted than human PRs in the same repo; raw pooled agent-excess is repo
+  composition (Simpson, as #115 under repo FE), sign not robust to size → no robust difference.
+  **Review-filter gap null by construction** (`pull/N/head` = final head ≈ merged; first-push-vs-
+  merged test unrun). Giant monorepos tt-metal/onnx-light dropped to per-PR scan timeout.
 - [ ] S1 descriptive table: pure-agent stratum drift profile, ≥90% per-repo commit coverage
   (redoing the #149-crippled ai-377 run), matched young-greenfield context column, caveats
   in caption, kept out of all pooled estimates. **NOT run.**
