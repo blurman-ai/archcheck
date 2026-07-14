@@ -12,6 +12,7 @@ add_library(archcheck_core STATIC
    scan/function_body_scan.cpp
    scan/local_complexity_metrics.cpp
    scan/local_complexity_drift.cpp
+   scan/local_complexity_absolute.cpp
    scan/new_clone_drift.cpp
    scan/flag_argument_scan.cpp
    scan/bool_field_drift.cpp
