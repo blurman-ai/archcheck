@@ -39,10 +39,14 @@ Usage:
                   (PR diff; gates new/grown cycles and new god-headers, reports advisories)
 
 Default rules (no config required): SF.9, CASE_MISMATCH_INCLUDE [gating];
-                                    SF.7, SF.8, Lakos.GodHeader, Lakos.ChainLength, UNRESOLVED_LOCAL_INCLUDE [advisory]
-Default thresholds: chain_length=10, god_header_fan_in=50 (override via thresholds: in .archcheck.yml)
+                                    SF.7, SF.8, Lakos.GodHeader, Lakos.ChainLength, UNRESOLVED_LOCAL_INCLUDE,
+                                    FUNC.COGNITIVE_COMPLEXITY [advisory]
+Default thresholds: chain_length=10, god_header_fan_in=50, function_cognitive_complexity=40
+                    (override via thresholds: in .archcheck.yml)
 Drift rules (require --drift-baseline):        DRIFT.1, DRIFT.2, DRIFT.4.CYCLE [gating];
                                                 DRIFT.3, DRIFT.4.NEW, DRIFT.4.SDP [advisory]
+--diff advisories (report-only): DRIFT.LOCAL_COMPLEXITY, DRIFT.NEW_CLONE, DRIFT.BOOL_FIELD_ACCRETION,
+                                 SATD.*, TEST.1, ARG.*
 )";
 
 void print_help() { std::cout << kHelpText; }

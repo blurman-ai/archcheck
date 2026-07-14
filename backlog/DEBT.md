@@ -10,6 +10,14 @@ Entry format:
 
 ---
 
+- **[2026-07-14] `--config` and `--format json` cannot be combined** — `dispatch_config`
+  (src/main.cpp) hardcodes `OutputFormat::Text` and treats the arg after the config path as
+  the check-path, so `--config F --format json P` (either order) scans a bogus path (`"--format"`
+  / `"--config"`) and silently returns 0 violations, gate ok. *Consequence:* no way to get
+  machine-readable output while overriding thresholds; bit the FUNC.COGNITIVE_COMPLEXITY corpus
+  forecast (worked around via text parsing). How to fix: let `dispatch_config` accept/forward
+  `--format`, or parse flags order-independently before dispatch. (found this session).
+
 - **[2026-07-11] `--diff` clone scan is slow on large C++ repos** — `archcheck --diff
   --diff-mode=memory` on CUBRID (2,354 tracked files, tree <40 MB) takes **~84 s per commit**,
   dominated by the new-clone/duplication scan; on Alchemy (10,781 files, 43 MB tree, clone scan

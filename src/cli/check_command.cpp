@@ -20,6 +20,7 @@
 #include "archcheck/rules/rule_set.h"
 #include "archcheck/scan/disk_file_source.h"
 #include "archcheck/scan/file_classification.h"
+#include "archcheck/scan/local_complexity_absolute.h"
 #include "archcheck/scan/local_include_scan.h"
 #include "archcheck/scan/source_snapshot.h"
 
@@ -226,7 +227,8 @@ void applyClassificationConfig(const config::Config &cfg)
 // one snapshot instead of re-reading every header from disk (was up to 3x: graph
 // build + SF.7 + SF.8). readFile serves from the in-memory snapshot.
 archcheck::rules::ViolationList checkViolations(const std::filesystem::path &root,
-                                                const std::vector<std::unique_ptr<archcheck::rules::IRule>> &rules)
+                                                const std::vector<std::unique_ptr<archcheck::rules::IRule>> &rules,
+                                                std::size_t complexityThreshold)
 {
   archcheck::scan::DiskFileSource src(root);
   const auto snapshot = archcheck::scan::SourceSnapshot::read(src);
@@ -245,6 +247,8 @@ archcheck::rules::ViolationList checkViolations(const std::filesystem::path &roo
   const auto universe = repoUniverseFor(root);
   for (const auto &issue : archcheck::scan::scanLocalIncludeIssues(snapshot, universe ? &*universe : nullptr))
     all.push_back(toViolation(issue));
+  for (auto &v : archcheck::scan::detectAbsoluteComplexity(snapshot, complexityThreshold))
+    all.push_back(std::move(v));
   return all;
 }
 
@@ -268,7 +272,8 @@ int runCheck(const std::filesystem::path &root, OutputFormat fmt, BaselineOpts b
   const int driftRc = baseline.driftFile ? applyDriftFile(*baseline.driftFile, rules) : 0;
   if (driftRc != 0)
     return driftRc;
-  return applyBaselineAndReport(checkViolations(root, rules), fmt, baseline, failOnUnresolvedLocal);
+  return applyBaselineAndReport(checkViolations(root, rules, config->thresholds.functionComplexity), fmt, baseline,
+                                failOnUnresolvedLocal);
 }
 
 int runSaveGraphBaseline(const std::filesystem::path &root, const std::filesystem::path &file)
