@@ -59,6 +59,7 @@ TEST_CASE("config loader: thresholds — overrides chain_length and god_header_f
   const auto cfg = archcheck::config::load(fixture("pass", "thresholds"));
   REQUIRE(cfg.thresholds.chainLength == 7);
   REQUIRE(cfg.thresholds.godHeaderFanIn == 25);
+  REQUIRE(cfg.thresholds.functionComplexity == 15);
   REQUIRE(cfg.thresholds.diffMaxAddedLines == 500);
 }
 
@@ -67,6 +68,7 @@ TEST_CASE("config loader: thresholds — keep embedded defaults when block absen
   const auto cfg = archcheck::config::load(fixture("pass", "tiny"));
   REQUIRE(cfg.thresholds.chainLength == 10);
   REQUIRE(cfg.thresholds.godHeaderFanIn == 50);
+  REQUIRE(cfg.thresholds.functionComplexity == 40);
   REQUIRE(cfg.thresholds.diffMaxAddedLines == 10000);
 }
 

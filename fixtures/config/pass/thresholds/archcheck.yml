@@ -9,4 +9,5 @@ rules: []
 thresholds:
   chain_length: 7
   god_header_fan_in: 25
+  function_cognitive_complexity: 15
   diff_max_added_lines: 500

@@ -307,6 +307,24 @@ std::size_t parse_positive_int(const ryml::ConstNodeRef &node, const std::string
   return static_cast<std::size_t>(value);
 }
 
+// The tunable threshold keys, single source of truth for both parsing and the
+// "unknown key" error text (kept in sync automatically).
+constexpr std::array<std::pair<std::string_view, std::size_t Thresholds::*>, 5> kThresholdKeys = {{
+    {"chain_length", &Thresholds::chainLength},
+    {"god_header_fan_in", &Thresholds::godHeaderFanIn},
+    {"function_cognitive_complexity", &Thresholds::functionComplexity},
+    {"diff_max_added_lines", &Thresholds::diffMaxAddedLines},
+    {"diff_max_clone_scan_bytes", &Thresholds::diffMaxCloneScanBytes},
+}};
+
+std::string thresholdKeyList()
+{
+  std::string out;
+  for (const auto &entry : kThresholdKeys)
+    out += (out.empty() ? "" : ", ") + std::string(entry.first);
+  return out;
+}
+
 // Optional phase-2 block; absent keys keep the embedded defaults in config.thresholds.
 void parse_thresholds(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Config &config)
 {
@@ -319,21 +337,14 @@ void parse_thresholds(const ryml::ConstNodeRef &root, const LoaderCtx &ctx, Conf
   {
     throw_at(ctx, node, "'thresholds' must be a map");
   }
-  static constexpr std::array<std::pair<std::string_view, std::size_t Thresholds::*>, 4> kKeys = {{
-      {"chain_length", &Thresholds::chainLength},
-      {"god_header_fan_in", &Thresholds::godHeaderFanIn},
-      {"diff_max_added_lines", &Thresholds::diffMaxAddedLines},
-      {"diff_max_clone_scan_bytes", &Thresholds::diffMaxCloneScanBytes},
-  }};
   for (const auto &child : node.children())
   {
     const std::string key = to_string(child.key());
-    const auto it = std::find_if(kKeys.begin(), kKeys.end(), [&key](const auto &entry) { return entry.first == key; });
-    if (it == kKeys.end())
+    const auto it = std::find_if(kThresholdKeys.begin(), kThresholdKeys.end(),
+                                 [&key](const auto &entry) { return entry.first == key; });
+    if (it == kThresholdKeys.end())
     {
-      throw_at(ctx, child,
-               "unknown threshold key '" + key +
-                   "' (expected: chain_length, god_header_fan_in, diff_max_added_lines, diff_max_clone_scan_bytes)");
+      throw_at(ctx, child, "unknown threshold key '" + key + "' (expected: " + thresholdKeyList() + ")");
     }
     config.thresholds.*(it->second) = parse_positive_int(child, key, ctx);
   }

@@ -41,6 +41,13 @@ struct Thresholds
 {
   std::size_t chainLength = 10;    // Lakos.ChainLength: include chain depth
   std::size_t godHeaderFanIn = 50; // Lakos.GodHeader: header fan-in
+  // FUNC.COGNITIVE_COMPLEXITY: absolute per-function Sonar Cognitive Complexity
+  // ceiling (advisory). 40 is corpus-calibrated to keep this always-on, whole-repo
+  // advisory focused on the ~top 3% of functions; the scorer follows Campbell 2018.
+  // Authorities set the per-function line lower (clang-tidy 25, SonarQube S3776 15)
+  // but those are gates / IDE rules, not a zero-config bulk advisory. Override via
+  // thresholds: in .archcheck.yml.
+  std::size_t functionComplexity = 40;
   // --diff: skip the local-complexity advisory when the diff adds more lines
   // (bulk source imports are not authored evolution; #109 corpus calibration —
   // genuine large features stay below ~6k, bulk drops start at ~20k).
