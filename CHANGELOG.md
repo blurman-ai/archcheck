@@ -12,6 +12,10 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+## [0.1.7] - 2026-07-15
+
+### Fixed
+
 - **`--format=md` icons render everywhere** — the markdown reporter emitted GitHub
   emoji shortcodes, and `:large_yellow_circle:` is not a real alias (GitHub spells it
   `:yellow_circle:`), so the advisory icon reached PR comments as literal text. All
@@ -376,5 +380,6 @@ via GitHub Releases for pinned, checksummed CI install. (#142)
 - **Relative include paths with `../` not resolved** — scanner now normalises `..`/`.` segments so relative includes resolve to the correct target instead of being dropped.
 - **Duplication scanner over-excluded files** — the test/vendor exclusion no longer removes legitimate files from the duplication scan. (#081)
 
-[Unreleased]: https://github.com/blurman-ai/archcheck/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/blurman-ai/archcheck/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/blurman-ai/archcheck/compare/v0.1.6...v0.1.7
 [0.1.0]: https://github.com/blurman-ai/archcheck/releases/tag/v0.1.0
