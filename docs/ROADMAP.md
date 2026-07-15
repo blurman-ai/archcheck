@@ -1,6 +1,6 @@
 # archcheck — ROADMAP
 
-_2026-07-03 · phase: **v0.1.6 — public-launch prep (#163); v0.2 (dependency policy rules) after the announcement**_
+_2026-07-15 · phase: **v0.1.7 — public-launch prep (#163); v0.2 (dependency policy rules) after the announcement**_
 
 ## Product framing
 
@@ -36,10 +36,16 @@ The product frame in more detail — [product_vision.md](product_vision.md).
 
 ## Current focus
 
-**v0.1.6 released** (2026-07-03; v0.1.0 shipped 2026-06-25): the trusted graph/drift/diff
+**v0.1.7 released** (2026-07-15; v0.1.0 shipped 2026-06-25): the trusted graph/drift/diff
 core has shipped, a prebuilt Linux binary lives in GitHub Releases for pinned CI install,
 and a live demo repo is linked from the README. The phase has shifted from "finish the
 core" to **public-launch preparation** (task #163 — packaging, evidence, announcement).
+
+v0.1.7 is launch-blocking hygiene found by auditing the demo showcase the announcement
+links as receipts (#188): the markdown reporter emitted a GitHub emoji shortcode that is
+not a real alias, so every advisory comment carried literal `:large_yellow_circle:` text;
+and `TEST.1` fired on the whitespace-only demo case that exists to prove the detector
+stays quiet. The demo workflow pins `v0.1.7` as its floor.
 
 **Platforms:** prebuilt binaries are Linux x86_64 (dynamic + static) today. **Windows x64
 (#165) and macOS arm64 (#166) are planned for the next phase, after the public
