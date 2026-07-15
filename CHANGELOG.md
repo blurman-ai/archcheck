@@ -12,6 +12,17 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- **`--format=md` icons render everywhere** — the markdown reporter emitted GitHub
+  emoji shortcodes, and `:large_yellow_circle:` is not a real alias (GitHub spells it
+  `:yellow_circle:`), so the advisory icon reached PR comments as literal text. All
+  three icons are now literal Unicode (🟡 / ✅ / ❌), which also fixes the report when
+  written to a file or read in a terminal, where no shortcode would have resolved. (#188)
+- **`TEST.1.prod_changed_tests_silent` no longer fires on reformats** — production churn
+  is now measured whitespace-insensitively (`git diff -w`), so a re-indent or tab→space
+  pass no longer reads as changed production code demanding a test update. A tab→space
+  reformat of a single file previously reported "prod +105/-105, tests +0/-0". The #117
+  bulk-import gate deliberately keeps counting whitespace — a mass reformat is exactly the
+  volume it exists to suppress. (#188)
 - **Generated SWIG amalgamations are excluded by content banner** — ordinary-name
   SWIG outputs such as `ezsnmp_netsnmp.cpp` / `ezsnmp_sessionbase.cpp` now hit
   the shared generated-file classifier even when they do not use the `*_wrap.*`

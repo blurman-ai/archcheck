@@ -36,15 +36,23 @@ std::string linkify(const std::string &text, const std::string &linkBase)
   return out;
 }
 
+// Literal Unicode, not GitHub `:shortcode:` aliases: shortcodes only resolve inside
+// GitHub's own markdown renderer, so the same report written to a file or read in a
+// terminal would show raw `:name:` text. (`:large_yellow_circle:` was additionally not
+// a real alias — GitHub spells it `:yellow_circle:` — and never rendered anywhere.)
+constexpr const char *kIconFail = "❌";
+constexpr const char *kIconWarn = "🟡";
+constexpr const char *kIconOk = "✅";
+
 // The gate summary line. Advisory findings lead (that is what a reviewer cares about
 // on a PR); the structural gate state is appended so a red gate is never hidden.
 void writeSummary(const RegressionReport &r, const rules::ViolationList &advisories, std::ostream &out)
 {
-  const char *icon =
-      r.gates() ? ":x:" : (r.hasRegression() || !advisories.empty() ? ":large_yellow_circle:" : ":white_check_mark:");
+  const char *icon = r.gates() ? kIconFail : (r.hasRegression() || !advisories.empty() ? kIconWarn : kIconOk);
   out << "**Gate:** " << icon << " ";
   if (!advisories.empty())
-    out << advisories.size() << " advisory finding(s) · gate " << (r.gates() ? ":x: fail" : ":white_check_mark: ok");
+    out << advisories.size() << " advisory finding(s) · gate "
+        << (r.gates() ? std::string(kIconFail) + " fail" : std::string(kIconOk) + " ok");
   else if (!r.grownCycles.empty())
     out << r.grownCycles.size() << " grown cycle(s)";
   else if (!r.newGodHeaders.empty())

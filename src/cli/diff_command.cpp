@@ -241,7 +241,12 @@ DiffAdvisories collectDiffAdvisories(const std::filesystem::path &repoRoot, cons
   const auto addedLines = archcheck::git::collectAddedLines(repoRoot, parsed.baseline, parsed.current);
   const auto deletedLines = archcheck::git::collectDeletedLines(repoRoot, parsed.baseline, parsed.current);
   const auto numstatEntries = archcheck::git::collectNumstat(repoRoot, parsed.baseline, parsed.current);
-  result.testCoEvolution = archcheck::scan::detectTestCoEvolution(numstatEntries);
+  // TEST.1 asks whether production code changed *noticeably* while tests stood still, so it
+  // reads whitespace-insensitive churn: a reformat moves no logic and must not demand a test
+  // update. The #117 gate below keeps counting whitespace — there a mass reformat IS the
+  // volume the gate exists to suppress.
+  result.testCoEvolution = archcheck::scan::detectTestCoEvolution(
+      archcheck::git::collectNumstat(repoRoot, parsed.baseline, parsed.current, archcheck::git::Whitespace::Ignore));
   // Bulk source imports are not authored evolution — their per-function
   // complexity findings are mechanically true but pure volume noise (#117).
   const std::size_t totalAdded = archcheck::git::totalAddedLines(numstatEntries);

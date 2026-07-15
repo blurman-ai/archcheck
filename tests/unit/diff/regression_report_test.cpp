@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
+#include <regex>
 #include <sstream>
 
 #include "archcheck/diff/md_report.h"
@@ -361,7 +362,7 @@ TEST_CASE("writeMdReport: clean report → ok icon, no violations, code-fenced",
   writeMdReport(r, out);
   const auto s = out.str();
   REQUIRE(s.find("## archcheck `--diff`") != std::string::npos);
-  REQUIRE(s.find(":white_check_mark:") != std::string::npos);
+  REQUIRE(s.find("✅") != std::string::npos);
   REQUIRE(s.find("no violations") != std::string::npos);
   REQUIRE(s.find("```\n") != std::string::npos);
   REQUIRE(s.find("gate: ok") != std::string::npos);
@@ -377,7 +378,7 @@ TEST_CASE("writeMdReport: added edge → advisory icon", "[diff][md_report]")
   std::ostringstream out;
   writeMdReport(r, out);
   const auto s = out.str();
-  REQUIRE(s.find(":large_yellow_circle:") != std::string::npos);
+  REQUIRE(s.find("🟡") != std::string::npos);
   REQUIRE(s.find("added edge(s)") != std::string::npos);
 }
 
@@ -391,7 +392,7 @@ TEST_CASE("writeMdReport: grown cycle → fail icon", "[diff][md_report]")
   std::ostringstream out;
   writeMdReport(r, out);
   const auto s = out.str();
-  REQUIRE(s.find(":x:") != std::string::npos);
+  REQUIRE(s.find("❌") != std::string::npos);
   REQUIRE(s.find("grown cycle(s)") != std::string::npos);
   REQUIRE(s.find("gate: fail") != std::string::npos);
 }
@@ -427,4 +428,37 @@ TEST_CASE("writeMdReport: without linkBase findings are plain, no links", "[diff
   REQUIRE(s.find("a.c:9") != std::string::npos);
   REQUIRE(s.find("clone of b.c:1-3") != std::string::npos);
   REQUIRE(s.find("](") == std::string::npos); // no markdown link off-CI
+}
+
+// Icons must be literal Unicode, never GitHub `:shortcode:` aliases. A shortcode renders
+// only inside GitHub's markdown, and a misspelled one (`:large_yellow_circle:`, which is
+// not a real alias) renders nowhere at all — it reached the demo PRs as raw text.
+TEST_CASE("writeMdReport: no emoji shortcodes in any gate state", "[diff][md_report]")
+{
+  const auto clean = buildRegressionReport(chain_abc(), chain_abc());
+
+  DependencyGraph edged = chain_abc();
+  edged.addEdge(NodeId{0}, NodeId{2});
+  const auto advisory = buildRegressionReport(chain_abc(), edged);
+
+  DependencyGraph cycled = chain_abc();
+  cycled.addEdge(NodeId{2}, NodeId{0});
+  const auto failing = buildRegressionReport(chain_abc(), cycled);
+
+  archcheck::rules::ViolationList advisories;
+  advisories.push_back({"DRIFT.NEW_CLONE", "a.c", 9, "clone of b.c:1-3"});
+
+  // `:name:` — a lowercase leading char keeps `a.c:9` and `net.c:1-6` out of the match.
+  static const std::regex shortcode(R"(:[a-z][a-z0-9_+-]*:)");
+  for (const auto &r : {clean, advisory, failing})
+  {
+    for (const auto &vs : {archcheck::rules::ViolationList{}, advisories})
+    {
+      std::ostringstream out;
+      writeMdReport(r, vs, "https://github.com/o/r/blob/abc123/", out);
+      const auto s = out.str();
+      INFO("md output:\n" << s);
+      REQUIRE_FALSE(std::regex_search(s, shortcode));
+    }
+  }
 }

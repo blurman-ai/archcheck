@@ -267,9 +267,11 @@ std::vector<NumStat> parseNumstatOutput(std::string_view output)
 }
 
 std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const std::string &baselineRef,
-                                    const std::string &currentRef)
+                                    const std::string &currentRef, Whitespace ws)
 {
   std::vector<std::string> args{"diff", "--no-ext-diff", "--numstat"};
+  if (ws == Whitespace::Ignore)
+    args.emplace_back("-w");
   if (currentRef == kWorktreeRef)
     args.push_back(baselineRef);
   else

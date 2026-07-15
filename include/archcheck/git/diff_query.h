@@ -43,10 +43,17 @@ struct NumStat
   int removed = 0;  // number of removed lines
 };
 
+// How a numstat query treats lines that differ only in whitespace.
+enum class Whitespace
+{
+  Count,  // count them — a reformat is churn (the #117 bulk-import gate)
+  Ignore, // `git diff -w` — a reformat is not a change (the TEST.1 signal)
+};
+
 // Parse git diff --numstat output between two refs.
 // Returns empty vector if diff is empty or on git failure.
 [[nodiscard]] std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const std::string &baselineRef,
-                                                  const std::string &currentRef);
+                                                  const std::string &currentRef, Whitespace ws = Whitespace::Count);
 
 // New-side paths of files git detects as renamed between the two refs (-M rename
 // detection). A mass include move re-paths pre-existing cycles, which the diff

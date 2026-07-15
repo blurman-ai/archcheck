@@ -617,6 +617,46 @@ TEST_CASE("test_co_evolution: production change without test update triggers det
   REQUIRE(violations[0].ruleId == "TEST.1.prod_changed_tests_silent");
 }
 
+// A reformat moves no logic, so it cannot owe a test update — TEST.1 reads whitespace-
+// insensitive churn. Caught on the archcheck-demo showcase, where a tab→space reformat of
+// util.c reported "prod +105/-105, tests +0/-0" on a PR whose whole point was staying silent.
+TEST_CASE("test_co_evolution: whitespace-only reformat does not trigger detection",
+          "[test_co_evolution][git][integration]")
+{
+  TempDir repo;
+  initRepo(repo.path);
+  fs::create_directories(repo.path / "src");
+  fs::create_directories(repo.path / "tests");
+
+  std::string body;
+  for (int i = 0; i < 85; ++i)
+    body += "x = " + std::to_string(i) + ";\n";
+  writeFile(repo.path / "src" / "main.cpp", body);
+  writeFile(repo.path / "tests" / "test_main.cpp", "void test_main() { }\n");
+  commitAll(repo.path, "baseline");
+
+  // Re-indent every line: whitespace-only, but 170 lines of raw churn — well over the
+  // rule's 80-line threshold, so the Count reading below must still fire.
+  std::string reindented;
+  for (int i = 0; i < 85; ++i)
+    reindented += "    x = " + std::to_string(i) + ";\n";
+  writeFile(repo.path / "src" / "main.cpp", reindented);
+  commitAll(repo.path, "reformat only, no test update");
+
+  using archcheck::git::collectNumstat;
+  using archcheck::git::Whitespace;
+  const auto counted = collectNumstat(repo.path, "HEAD~1", "HEAD", Whitespace::Count);
+  const auto ignored = collectNumstat(repo.path, "HEAD~1", "HEAD", Whitespace::Ignore);
+
+  // Guard the premise: without -w this reformat is churn, and the rule would fire.
+  REQUIRE(archcheck::git::totalAddedLines(counted) == 85);
+  REQUIRE(archcheck::scan::detectTestCoEvolution(counted).size() == 1);
+
+  // With -w git reports no changed lines at all, so the rule stays silent.
+  REQUIRE(ignored.empty());
+  REQUIRE(archcheck::scan::detectTestCoEvolution(ignored).empty());
+}
+
 TEST_CASE("history_query: end-to-end with synthesized git history", "[git][history]")
 {
   // Instead of querying a real git repo (which requires git to output the exact format),
