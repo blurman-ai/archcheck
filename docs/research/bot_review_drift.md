@@ -86,6 +86,8 @@ The agentic stratum (ai-377) adds **10 PR-gated gate-drift commits** to the deno
 
 ## 5. The skeptic pass: keyword screen 15 → manual reading 2
 
+**All 38 PRs, with links and the bot's own words:** [`bot_review_drift_receipts.md`](bot_review_drift_receipts.md).
+
 You cannot claim "the bot missed it" without reading what the bot said. A raw keyword screen
 (`circular|cycle|coupling|architecture|dependency|#include|...`) over each PR's bot review bodies +
 inline comments + PR issue-comments (all three endpoints — CodeRabbit posts its walkthrough as an
