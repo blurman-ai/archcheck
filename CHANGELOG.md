@@ -12,6 +12,18 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+## [0.1.8] - 2026-07-15
+
+### Changed
+
+- **Reports are pure ASCII** — the gate line now reads `PASS` / `ADVISORY` / `FAIL` as a
+  word instead of an icon, and the `—` / `·` / `→` separators are plain ASCII. GitHub
+  resolves an emoji shortcode to the same codepoint an emoji literal would be, not to an
+  image, so on a system without an emoji font the status rendered as a tofu box (`gate □
+  ok`) in the browser — unreadable in exactly the place the report exists to be read. A
+  word has no font dependency, on GitHub or in a terminal. This supersedes the 0.1.7 icon
+  change, which swapped one unrenderable spelling for another. (#188)
+
 ## [0.1.7] - 2026-07-15
 
 ### Fixed
@@ -380,6 +392,7 @@ via GitHub Releases for pinned, checksummed CI install. (#142)
 - **Relative include paths with `../` not resolved** — scanner now normalises `..`/`.` segments so relative includes resolve to the correct target instead of being dropped.
 - **Duplication scanner over-excluded files** — the test/vendor exclusion no longer removes legitimate files from the duplication scan. (#081)
 
-[Unreleased]: https://github.com/blurman-ai/archcheck/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/blurman-ai/archcheck/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/blurman-ai/archcheck/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/blurman-ai/archcheck/compare/v0.1.6...v0.1.7
 [0.1.0]: https://github.com/blurman-ai/archcheck/releases/tag/v0.1.0

@@ -36,23 +36,22 @@ std::string linkify(const std::string &text, const std::string &linkBase)
   return out;
 }
 
-// Literal Unicode, not GitHub `:shortcode:` aliases: shortcodes only resolve inside
-// GitHub's own markdown renderer, so the same report written to a file or read in a
-// terminal would show raw `:name:` text. (`:large_yellow_circle:` was additionally not
-// a real alias — GitHub spells it `:yellow_circle:` — and never rendered anywhere.)
-constexpr const char *kIconFail = "❌";
-constexpr const char *kIconWarn = "🟡";
-constexpr const char *kIconOk = "✅";
+// ASCII words, not icons. GitHub resolves a `:shortcode:` to the same Unicode codepoint an
+// emoji literal would be — not to an image — so both spellings render as tofu boxes for a
+// reader whose system has no emoji font, and the status is then unreadable. A word carries
+// the state with no font dependency, on GitHub and in a terminal alike.
+constexpr const char *kStatusFail = "FAIL";
+constexpr const char *kStatusWarn = "ADVISORY";
+constexpr const char *kStatusOk = "PASS";
 
 // The gate summary line. Advisory findings lead (that is what a reviewer cares about
 // on a PR); the structural gate state is appended so a red gate is never hidden.
 void writeSummary(const RegressionReport &r, const rules::ViolationList &advisories, std::ostream &out)
 {
-  const char *icon = r.gates() ? kIconFail : (r.hasRegression() || !advisories.empty() ? kIconWarn : kIconOk);
-  out << "**Gate:** " << icon << " ";
+  const char *status = r.gates() ? kStatusFail : (r.hasRegression() || !advisories.empty() ? kStatusWarn : kStatusOk);
+  out << "**Gate:** " << status << " - ";
   if (!advisories.empty())
-    out << advisories.size() << " advisory finding(s) · gate "
-        << (r.gates() ? std::string(kIconFail) + " fail" : std::string(kIconOk) + " ok");
+    out << advisories.size() << " advisory finding(s), gate " << (r.gates() ? "fail" : "ok");
   else if (!r.grownCycles.empty())
     out << r.grownCycles.size() << " grown cycle(s)";
   else if (!r.newGodHeaders.empty())
@@ -80,7 +79,7 @@ void writeMdReport(const RegressionReport &r, const rules::ViolationList &adviso
     for (const auto &v : advisories)
     {
       const std::string anchor = v.file + ":" + std::to_string(v.line);
-      out << "- " << linkify(anchor, linkBase) << " — " << v.ruleId << " — " << linkify(v.message, linkBase) << "\n";
+      out << "- " << linkify(anchor, linkBase) << " - " << v.ruleId << " - " << linkify(v.message, linkBase) << "\n";
     }
   }
 

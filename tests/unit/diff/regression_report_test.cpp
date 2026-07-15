@@ -362,7 +362,7 @@ TEST_CASE("writeMdReport: clean report → ok icon, no violations, code-fenced",
   writeMdReport(r, out);
   const auto s = out.str();
   REQUIRE(s.find("## archcheck `--diff`") != std::string::npos);
-  REQUIRE(s.find("✅") != std::string::npos);
+  REQUIRE(s.find("PASS") != std::string::npos);
   REQUIRE(s.find("no violations") != std::string::npos);
   REQUIRE(s.find("```\n") != std::string::npos);
   REQUIRE(s.find("gate: ok") != std::string::npos);
@@ -378,7 +378,7 @@ TEST_CASE("writeMdReport: added edge → advisory icon", "[diff][md_report]")
   std::ostringstream out;
   writeMdReport(r, out);
   const auto s = out.str();
-  REQUIRE(s.find("🟡") != std::string::npos);
+  REQUIRE(s.find("ADVISORY") != std::string::npos);
   REQUIRE(s.find("added edge(s)") != std::string::npos);
 }
 
@@ -392,7 +392,7 @@ TEST_CASE("writeMdReport: grown cycle → fail icon", "[diff][md_report]")
   std::ostringstream out;
   writeMdReport(r, out);
   const auto s = out.str();
-  REQUIRE(s.find("❌") != std::string::npos);
+  REQUIRE(s.find("FAIL") != std::string::npos);
   REQUIRE(s.find("grown cycle(s)") != std::string::npos);
   REQUIRE(s.find("gate: fail") != std::string::npos);
 }
@@ -430,10 +430,13 @@ TEST_CASE("writeMdReport: without linkBase findings are plain, no links", "[diff
   REQUIRE(s.find("](") == std::string::npos); // no markdown link off-CI
 }
 
-// Icons must be literal Unicode, never GitHub `:shortcode:` aliases. A shortcode renders
-// only inside GitHub's markdown, and a misspelled one (`:large_yellow_circle:`, which is
-// not a real alias) renders nowhere at all — it reached the demo PRs as raw text.
-TEST_CASE("writeMdReport: no emoji shortcodes in any gate state", "[diff][md_report]")
+// The md report must be pure ASCII, and must never use a GitHub `:shortcode:`.
+//
+// Both spellings of an icon fail the same way: GitHub resolves `:white_check_mark:` to the
+// U+2705 codepoint rather than to an image, so a reader without an emoji font sees a tofu
+// box either way and cannot read the gate state. A misspelled alias is worse still —
+// `:large_yellow_circle:` is not real, and reached the demo PRs as raw text.
+TEST_CASE("writeMdReport: output is pure ASCII with no emoji shortcodes", "[diff][md_report]")
 {
   const auto clean = buildRegressionReport(chain_abc(), chain_abc());
 
@@ -448,7 +451,7 @@ TEST_CASE("writeMdReport: no emoji shortcodes in any gate state", "[diff][md_rep
   archcheck::rules::ViolationList advisories;
   advisories.push_back({"DRIFT.NEW_CLONE", "a.c", 9, "clone of b.c:1-3"});
 
-  // `:name:` — a lowercase leading char keeps `a.c:9` and `net.c:1-6` out of the match.
+  // `:name:` - a lowercase leading char keeps `a.c:9` and `net.c:1-6` out of the match.
   static const std::regex shortcode(R"(:[a-z][a-z0-9_+-]*:)");
   for (const auto &r : {clean, advisory, failing})
   {
@@ -459,6 +462,8 @@ TEST_CASE("writeMdReport: no emoji shortcodes in any gate state", "[diff][md_rep
       const auto s = out.str();
       INFO("md output:\n" << s);
       REQUIRE_FALSE(std::regex_search(s, shortcode));
+      for (const unsigned char ch : s)
+        REQUIRE(ch < 0x80);
     }
   }
 }

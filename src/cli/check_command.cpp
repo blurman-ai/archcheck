@@ -42,7 +42,7 @@ int trySaveBaseline(const archcheck::rules::ViolationList &all, const std::files
     std::cerr << "archcheck: " << e.what() << '\n';
     return 2;
   }
-  std::cout << "baseline saved: " << all.size() << " violation(s) → " << file.string() << '\n';
+  std::cout << "baseline saved: " << all.size() << " violation(s) -> " << file.string() << '\n';
   return 0;
 }
 

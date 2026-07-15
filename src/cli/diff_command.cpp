@@ -90,7 +90,7 @@ void printComplexityResult(const archcheck::scan::ComplexityDriftResult &drift)
     return;
   std::cout << "\nlocal complexity drift (advisory):\n";
   for (const auto &v : drift.violations)
-    std::cout << "  " << v.file << ":" << v.line << ": " << v.ruleId << " — " << v.message << '\n';
+    std::cout << "  " << v.file << ":" << v.line << ": " << v.ruleId << " - " << v.message << '\n';
   std::cout << "  net complexity delta: +" << drift.positiveDelta;
   if (drift.negativeDelta < 0)
     std::cout << " (improvements: " << drift.negativeDelta << ")";
@@ -269,7 +269,7 @@ void printViolationList(const char *header, const archcheck::rules::ViolationLis
     return;
   std::cout << '\n' << header << ":\n";
   for (const auto &v : vs)
-    std::cout << "  " << v.file << ":" << v.line << ": " << v.ruleId << " — " << v.message << '\n';
+    std::cout << "  " << v.file << ":" << v.line << ": " << v.ruleId << " - " << v.message << '\n';
 }
 
 void printDiffAdvisories(const DiffAdvisories &a)
@@ -283,13 +283,13 @@ void printDiffAdvisories(const DiffAdvisories &a)
   }
   if (a.complexitySkippedAddedLines > 0)
   {
-    std::cout << "\nlocal complexity drift (advisory): skipped — diff adds " << a.complexitySkippedAddedLines
+    std::cout << "\nlocal complexity drift (advisory): skipped - diff adds " << a.complexitySkippedAddedLines
               << " lines (bulk import; thresholds.diff_max_added_lines)\n";
     return;
   }
   printComplexityResult(a.complexity);
   if (a.newClones.skippedLargeTree)
-    std::cout << "\nnew-clone drift (advisory): skipped — authored tree exceeds "
+    std::cout << "\nnew-clone drift (advisory): skipped - authored tree exceeds "
                  "thresholds.diff_max_clone_scan_bytes (#149)\n";
   printViolationList("new-clone drift (advisory)", a.newClones.violations);
   printViolationList("flag-argument drift (advisory)", a.flagArguments);
@@ -445,7 +445,7 @@ void printDiffText(const archcheck::git::Revspec &parsed, DiffMode mode, bool bu
             << "current_ref:    " << parsed.current << '\n'
             << "diff_mode:      " << (mode == DiffMode::Memory ? "memory" : "disk") << '\n';
   if (bulk)
-    std::cout << "graph checks:   skipped — diff adds " << advisories.complexitySkippedAddedLines
+    std::cout << "graph checks:   skipped - diff adds " << advisories.complexitySkippedAddedLines
               << " lines (bulk import; thresholds.diff_max_added_lines)\n";
   else
     std::cout << "baseline_nodes: " << graph.baselineNodes << '\n' << "current_nodes:  " << graph.currentNodes << '\n';

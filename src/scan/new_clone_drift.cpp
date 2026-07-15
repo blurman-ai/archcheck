@@ -108,7 +108,7 @@ rules::Violation makeViolation(const duplication::Fragment &introduced, const du
   // Show BOTH spans so the introduced block and its source line up — a single
   // introduced line next to a source range reads as a mismatch (it isn't).
   v.message = "copy-paste introduced (" + p.type + "): lines " + std::to_string(introduced.startLine) + "-" +
-              std::to_string(introduced.endLine) + " — clone of " + source.file + ":" +
+              std::to_string(introduced.endLine) + " - clone of " + source.file + ":" +
               std::to_string(source.startLine) + "-" + std::to_string(source.endLine);
   return v;
 }

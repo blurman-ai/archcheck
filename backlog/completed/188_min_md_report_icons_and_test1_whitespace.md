@@ -25,8 +25,26 @@ report when written to a file or read in a terminal. All three icons are now lit
 Unicode (🟡 / ✅ / ❌).
 
 A second reported symptom — a "broken character" in the gate line (`gate □ ok`) — was
-**not real**. The only non-ASCII there is `·` and `—`, both of which render correctly;
-the box was the ✅ emoji falling back to tofu in a terminal font.
+dismissed as a terminal-font artifact. **That was wrong**, and the author's screenshot of
+the GitHub web UI disproved it: the box was in the *browser*.
+
+The cause is that GitHub resolves `:white_check_mark:` to the **U+2705 codepoint**, not to
+an `<img>`. Verified against the `/markdown` API: `:white_check_mark: :yellow_circle:` and
+the literal `✅ 🟡` both render to the same two characters. So shortcode and emoji literal
+fail identically for a reader whose system has no emoji font — the 0.1.7 icon change
+swapped one unrenderable spelling for another and fixed nothing for the person who
+reported it.
+
+The gate status is the one thing the comment exists to convey, so it cannot depend on a
+font. 0.1.8 makes the whole md report **pure ASCII**: `PASS` / `ADVISORY` / `FAIL` as
+words, and `-` in place of `—` / `·` / `→` (the last also removed from `DRIFT.NEW_CLONE`
+messages and the console reporters).
+
+**Lesson.** The author's original spec said "text (PASS/FAIL/ADVISORY) or a direct Unicode
+symbol" *and* "regression test: no shortcode, no non-ascii". That looked self-contradictory,
+so the non-ascii half was argued away as impossible. It was not a contradiction — it was
+the author telling us his environment renders no emoji. The reported symptom was evidence
+about the reader, and it was explained away instead of believed.
 
 **2. `TEST.1.prod_changed_tests_silent` fires on reformats.** `collectNumstat` did not
 pass `-w`, so a whitespace-only change counted as production churn. On the demo's
