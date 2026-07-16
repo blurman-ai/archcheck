@@ -134,6 +134,15 @@ TEST_CASE("resolve_include quote: dir-relative wins over suffix collision", "[sc
   REQUIRE(r.target == NodeId{1});
 }
 
+TEST_CASE("resolve_include quote: dir-relative '..' segments collapse -> Project", "[scan][resolver][quote]")
+{
+  const auto files = files_of({"src/foo/a.cpp", "src/common/util.h"});
+  const ProjectIndex index = buildProjectIndex(files);
+  const ResolvedInclude r = resolveInclude(quote("../common/util.h"), "src/foo/a.cpp", files, index);
+  REQUIRE(r.resolution == Resolution::Project);
+  REQUIRE(r.target == NodeId{1});
+}
+
 TEST_CASE("resolve_include quote: source at repo root, dir-relative degenerate", "[scan][resolver][quote]")
 {
   const auto files = files_of({"main.cpp", "a.h"});
