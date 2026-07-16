@@ -91,3 +91,9 @@ experiments/
 # Python bytecode cache (analysis/ scripts)
 __pycache__/
 *.pyc
+
+# Raw tool-run logs behind reports/ — the conclusions are committed, the logs are local
+reports/raw/
+
+# Local VSCode multi-root workspace (points at the private companion repo by relative path)
+*.code-workspace
