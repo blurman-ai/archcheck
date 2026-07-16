@@ -5,7 +5,7 @@
 deferred to #166), Phase 2 evidence done (findings + post drafted). Remaining = Phase 3
 announcement, which is the user's to execute. **r/cpp dropped from the launch (2026-07-04);
 Show HN deferred on launch day (2026-07-07) by HN's temporary Show HN restriction for
-new/not-yet-established accounts. Active sequence = isocpp + Meeting C++ → Discord/LinkedIn;
+new/not-yet-established accounts. Active sequence = Meeting C++ → Discord/LinkedIn (isocpp submitted 2026-07-14, closed as fire-and-forget);
 HN becomes a second-chance channel after account warm-up or a later resubmission window.**
 Per-venue sign-up guide in companion `launch_drafts/signup_guide.md`. **User registered on
 all venues (2026-07-04); launch day set: Tuesday 2026-07-07.** Agent re-verified all kit
@@ -110,12 +110,37 @@ Meeting C++, Discord invite, and HN guideline pages all returned HTTP 200. Check
   and Ox (`item?id=48746066`, AI tech-debt review; angle: when to clean up touched messy
   code vs keep a PR narrow). This is account warm-up for a later Show HN second chance,
   not a substitute launch channel.
+- **HN warm-up day 2 (2026-07-08)** — user commented three more relevant threads, again
+  without mentioning archcheck: CodeRadius (`item?id=48830828`, multi-repo architecture
+  graph; angle: sources of truth for API/generated-client/database/broker/config edges),
+  Making AI Code Review Measurable (`item?id=48829851`, historical-PR eval harness;
+  angle: whether deterministic tool output is used as reviewer context/scoring signal),
+  and Subweave (`item?id=48830717`, semantic maps for large/AI PRs; angle: provenance
+  from semantic-map nodes back to exact files/lines/tests). Continue tomorrow at the same
+  pace only if there are genuinely relevant threads.
+- **HN strategy pivot (2026-07-14)** — user correctly challenged the bare repo / Show HN link
+  plan as weak in the saturated 2026 AI-devtool feed. Decision: prepare an essay first, with
+  archcheck as the reproducible instrument rather than the headline object. Draft moved to the
+  private companion at `launch_drafts/architecture-drift-between-files.md`; do not publish it
+  from the main repo until the user approves.
+- **isocpp — SUBMITTED, channel closed as fire-and-forget (2026-07-14). DO NOT re-propose
+  or resubmit.** The Suggest-an-Article draft (drift-first lead, category Product News,
+  link → `docs/findings`) was submitted — the "Your suggestion has been submitted. Thanks!"
+  banner confirmed it. Its entry in "Your Suggestions" stays labelled `draft` and never
+  changes: isocpp exposes no received/pending/rejected state and gives no feedback (the
+  `draft` label reads the same for "queued at the editors" and "stuck"), so from our side the
+  true state is unknowable. Matches the public "the isocpp process is broken" complaint
+  (Giovanni Dicanio, 2025-11). Submitted at least once (possibly twice after a 2026-07-14
+  re-submit) — that is the whole ask of this channel: one submission, then nothing more to do
+  and no lever to pull. Distribution weight moves to channels with an immediate, observable
+  outcome: HN link-post, lobste.rs, own network.
 
 ### Remaining (Phase 3 — the user posts; announcements are outward-facing)
 
-isocpp.org + Meeting C++ news → Discord / LinkedIn tail. **Show HN is deferred, not
-cancelled**: return after account warm-up or a later second-chance window. Phase 4 (respond
-fast, serial findings posts, CppCast, homebrew-core at stars threshold) follows.
+**isocpp — DONE, do not re-propose** (submitted 2026-07-14, closed as fire-and-forget; see
+the dated note above). Remaining: Meeting C++ news → Discord / LinkedIn tail. **Show HN is
+deferred, not cancelled**: return after account warm-up or a later second-chance window.
+Phase 4 (respond fast, serial findings posts, CppCast, homebrew-core at stars threshold) follows.
 
 **⚠ r/cpp DEFERRED as a launch venue (decided 2026-07-04, rules read in browser):**
 
