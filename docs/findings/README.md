@@ -85,32 +85,40 @@ provably one forward declaration.
 ## Windows Terminal — `Utils.h` ⇄ `SettingContainer.h`
 
 `microsoft/terminal`, commit
-[`47e255f`](https://github.com/microsoft/terminal/tree/47e255f0579142a2bec6c308bf4382b3062407ff).
-A generic utility header depends on a specific UI control it never names.
+[`47e255f`](https://github.com/microsoft/terminal/tree/47e255f0579142a2bec6c308bf4382b3062407ff)
+(re-verified against main @ [`922beefb`](https://github.com/microsoft/terminal/commit/922beefb83764646331662d6d15d70107d556402), 2026-07-14).
+Both edges of the cycle are dead includes.
 
 ```
 src/cascadia/TerminalSettingsEditor/SettingContainer.h: [SF.9] cycle: …/SettingContainer.h → …/Utils.h → …/SettingContainer.h
 ```
 
 [`SettingContainer.h:21`](https://github.com/microsoft/terminal/blob/47e255f0579142a2bec6c308bf4382b3062407ff/src/cascadia/TerminalSettingsEditor/SettingContainer.h#L21)
-includes `Utils.h` for its enum-binding macros — a real dependency.
+includes `Utils.h`, but `SettingContainer.h`/`.cpp` use none of its macros or functions
+(`GetSelectedItemTag`, `LocalizedNameForEnumName`, `DismissAllPopups`, `HasScrollViewer`, or any
+`*_BINDABLE_ENUM_SETTING` macro). The macros it does use, `DEPENDENCY_PROPERTY` and
+`BASIC_FACTORY`, live in `cppwinrt_utils.h` and arrive through `pch.h`.
 [`Utils.h:6`](https://github.com/microsoft/terminal/blob/47e255f0579142a2bec6c308bf4382b3062407ff/src/cascadia/TerminalSettingsEditor/Utils.h#L6)
-includes `SettingContainer.h` back. In all 149 lines of `Utils.h`, `SettingContainer` appears
-only on that `#include` line:
+includes `SettingContainer.h` back, and that edge is dead too. In all 149 lines of `Utils.h`,
+`SettingContainer` appears only on that `#include` line:
 
 ```
 $ grep -in settingcontainer src/cascadia/TerminalSettingsEditor/Utils.h
 6:#include "SettingContainer.h"
 ```
 
-The macros in `Utils.h` are text substitution; they need no type until they expand, and by then
-the call site already has `SettingContainer.h` in scope. The include looks like a leftover from
-a refactor. Deleting it is a one-line change with no call-site impact.
+That line was added by PR [#19519 "Implement search in Settings UI"](https://github.com/microsoft/terminal/pull/19519),
+commit [`f20c549d1`](https://github.com/microsoft/terminal/commit/f20c549d1) (2026-02-20, Carlos
+Zamora, Microsoft). The same commit added `BringIntoViewWhenLoaded()` to the `HasScrollViewer<T>`
+mixin, which locates elements through `FindName(elementName)` by string, not through
+`SettingContainer`. The include line did not exist before that commit. The cycle traces to one
+recent PR, and the include it added was never used from the day it landed. Removing either edge
+breaks the cycle with no call-site impact.
 
-**Counter-argument.** This is a WinRT/XAML settings module leaning on macro boilerplate, where
-"who includes whom" is harder to track; a maintainer could reasonably point at the
-macro style rather than this one include. It is one cycle in one pair, not a claim about the
-whole ~500K-line codebase (archcheck reports 2 SF.9 cycles in that checkout).
+**Counter-argument.** This is a WinRT/XAML settings module, one cycle in one pair, not a claim
+about the whole ~500K-line codebase (archcheck reports 2 SF.9 cycles in that checkout). The value
+here is precision: the finding points at one forgotten line from one identifiable PR, not at a
+vague style complaint.
 
 ---
 
