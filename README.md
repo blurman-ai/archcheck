@@ -8,7 +8,7 @@ Architecture rules and drift checks for C++ CI.
 
 ![archcheck --diff reporting copy-paste introduced by a pull request](docs/assets/archcheck-diff-demo.gif)
 
-*A PR introduces a copied block — `archcheck --diff` names the clone and its source, `file:line` both
+*A PR copies a function — `archcheck --diff` names the clone and its source, `file:line` both
 ways. Output recorded verbatim from the [live demo repo](https://github.com/blurman-ai/archcheck-demo).*
 
 ## Why
@@ -60,11 +60,16 @@ The current signal model:
 
 See the new-clone advisory fire on real pull requests:
 **[blurman-ai/archcheck-demo](https://github.com/blurman-ai/archcheck-demo)** — 14 PRs on a real C
-codebase (monit). Five introduce copy-paste (exact, whole-file, renamed, and *partial/structural*
-near-misses) and fire `DRIFT.NEW_CLONE`; five are look-alikes that stay silent (a move, a
-below-threshold dup, a touched pre-existing clone, a formatting-only change). Each firing PR gets a
-markdown comment (`archcheck --diff --format=md`) with clickable links to the introduced block and
-its clone source.
+codebase (monit). Five introduce copy-paste (exact, whole-file, renamed, and edited near-misses —
+a copied function with a line inserted or a token changed) and fire `DRIFT.NEW_CLONE`; five are
+look-alikes that stay silent (a move, a below-threshold dup, a touched pre-existing clone, a
+formatting-only change). Each firing PR gets a markdown comment (`archcheck --diff --format=md`)
+with clickable links to the introduced code and its clone source.
+
+**Granularity:** a copied function is reported, and so is a block copied *into* an existing
+function — the scanner descends into function bodies, so nested copy-paste is compared as its own
+unit ([#190](backlog/wip/190_crit_subfunction_clone_pass.md)). The floor is `min_tokens` (30): a
+copy shorter than that is not reported at any nesting depth.
 
 ---
 

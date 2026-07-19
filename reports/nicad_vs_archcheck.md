@@ -21,6 +21,13 @@ archcheck was run on the same source tree:
 
 This is a **C** validation run. It is not a C++ NiCad run.
 
+> **Granularity caveat (added 2026-07-18, #190).** The run used NiCad's `functions`
+> granularity — the same granularity archcheck itself works at. Every number and verdict
+> below, including "0 recall bugs", is scoped to function-granularity clones and says
+> nothing about copy-paste nested *inside* a function. archcheck cannot detect that class
+> at all: `fragmenter.cpp` emits a function body whole and never descends into it.
+> The `blocks` rerun has since been done — see [§Sub-function granularity](#sub-function-granularity-blocks-rerun-190).
+
 Raw detailed report:
 [../experiments/clone_oracle_validation/NICAD_QUANT.md](../experiments/clone_oracle_validation/NICAD_QUANT.md).
 
@@ -79,13 +86,76 @@ The uncovered NiCad classes were triaged. They are not archcheck correctness bug
 
 Correctness bugs found: **0**.
 
+## Sub-function granularity: `blocks` rerun (#190)
+
+Date: 2026-07-18. Same source tree, same archcheck build:
+
+```bash
+./nicad3 blocks c examples/monit-4.2      # minsize=10, threshold=0.3, blind rename
+```
+
+NiCad extracted 1506 blocks and reported 35 clone pairs / 20 classes, against 437
+functions and 27 pairs at `functions` granularity.
+
+To isolate the sub-function class, each `blocks` class was tested against the
+`functions` classes; a `blocks` class with no function-granularity counterpart is a
+genuinely sub-function finding.
+
+| Metric | Value |
+|---|---:|
+| NiCad `blocks` classes | 35 |
+| of those, also visible at `functions` granularity | 27 |
+| **genuinely sub-function classes** | **8** |
+| archcheck finds — before #190 | 1 |
+| **archcheck finds — after #190** | **6** |
+
+The 7 pre-#190 misses, all copy-paste nested inside function bodies. The last two are
+still missed after the fix (both are low-similarity cross-file cases):
+
+| Lines | Similarity | Location | After #190 |
+|---:|---:|---|---|
+| 23 | 86 | `http/cervlet.c:521-545` ↔ `555-579` | found |
+| 19 | 94 | `http/cervlet.c:1550-1580` ↔ `1711-1741` | found |
+| 15 | 73 | `alert.c:100-127` ↔ `148-168` | found |
+| 13 | 76 | `util.c:653-671` ↔ `http/cervlet.c:1447-1465` | still missed |
+| 11 | 100 | `http/cervlet.c:1325-1341` ↔ `1412-1428` | found |
+| 10 | 100 | `http/cervlet.c:2020-2029` ↔ `2034-2043` | found |
+| 10 | 70 | `util.c:1084-1095` ↔ `1166-1177` | still missed |
+
+Two were verified by hand:
+
+- `cervlet.c:1325-1341` ↔ `1412-1428` — a byte-identical 17-line
+  `{ struct mytimestamp *t; for (...) ... }` block, copied between two *different*
+  functions (`do_service_directory` and `do_service_file`). Now reported as
+  `1328-1339 ↔ 1415-1426` (EXACT).
+- `cervlet.c:2020-2029` ↔ `2034-2043` — the same permission-check ladder twice inside
+  `get_service_status`, differing only in `S_ISREG` vs `S_ISDIR`. Now reported as
+  `2021-2028 ↔ 2035-2042` (EXACT).
+
+**Even at 6 of 8 this is a floor, not the ceiling.** NiCad ran at `minsize=10`
+pretty-printed lines, so blocks shorter than that are invisible to this oracle
+regardless of what archcheck does — including the 5-line duckdb
+`pipeline_executor.cpp` case that motivated #190 (which archcheck now reports).
+
+### Why this was not extended to C++
+
+NiCad has no C++ grammar; the standard workaround is to present C++ files to the C
+parser. On eight C++ repositories that workaround fails outright — NiCad could not
+parse 38–94% of the files (Kartend 94%, IrredenEngine 90%, BambuStudio 87%,
+LibreSprite 86%, Catch2 83%), and the `blocks` run on irrlicht aborted with `rc=99`.
+A recall comparison over the ~10% of files that parsed carries no signal, so no C++
+`blocks` number is reported here. The C run above is the usable measurement.
+
 ## What this does not prove
 
 This does **not** prove that archcheck is a better research clone detector than
 NiCad in general.
 
 This does **not** prove a C++ head-to-head against NiCad. The run was
-`functions c` on `monit-4.2`.
+`functions c` on `monit-4.2`, and the C++ workaround does not parse (see above).
+
+The sub-function numbers are a **lower bound** measured on one small C codebase at
+`minsize=10`. They do not estimate how common the class is in C++ generally.
 
 This does prove that archcheck's CI-oriented detector can catch actionable
 copy-paste that NiCad misses under the tested settings, especially small same-file

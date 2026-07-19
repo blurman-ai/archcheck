@@ -100,3 +100,21 @@ Entry format:
   bulk commits as "clean", skewing the statistics. Fix: add a field to the advisory JSON
   (`complexity_skipped_added_lines`). (related #124, #117). **→ fixed in the code
   this session 2026-06-14.**
+
+- **[2026-07-18] `--diff` cannot report a clone that was REMOVED** — the diff path emits
+  only `DRIFT.NEW_CLONE`; there is no counterpart for copy-paste deleted by the commit.
+  Found while closing #190: the acceptance criterion "`--diff e884eef8..a1b3ffc9` reports
+  the clone as removed" turned out to be unmeetable by construction, not a detector bug —
+  duckdb's `a1b3ffc9` extracted the duplicated block into
+  `InitializeLocalSinkPartitionInfo()` and archcheck stays silent on that range.
+  *Consequence:* a PR that pays down duplication gets no positive signal, so the advisory
+  reads as one-directional nagging; and drift studies over history can only count clone
+  creation, never repayment — any "duplication trend" derived from `--diff` is biased
+  upward. Fix sketch: the diff already scans both sides, so a `DRIFT.REMOVED_CLONE`
+  advisory is a reporting addition rather than new analysis. (related #190)
+  **→ reframed 2026-07-19 (author): not a product gap.** The gate exists to catch drift —
+  it speaks when a commit makes the code worse and stays silent when it does not. Silence
+  on a clone-removing commit is the correct CI signal ("checked, nothing new introduced"),
+  not "one-directional nagging". What survives of this entry is a research-methodology
+  caveat only: per-commit history runs count clone creation but never repayment, so any
+  duplication trend derived from `--diff` is an upper bound. No product change planned.

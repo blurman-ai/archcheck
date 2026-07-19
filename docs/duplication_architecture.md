@@ -88,8 +88,30 @@ often, API calls rarely).
 Function-scale fragments by the `{…}` balance heuristic: a `{` preceded by `)`
 is a function/control-block body. A block of size `[min_tokens, max_tokens]` is
 emitted as a fragment; larger — we descend inside; smaller — we discard.
+
+**Nesting (#190).** An emitted body is *also* descended into, so a block nested
+inside it becomes a fragment as well. Without this, copy-paste below function scale
+was structurally invisible: the enclosing bodies were the only unit ever compared, so
+a copied block was reported only when it dominated both of them. Nested fragments
+carry `Fragment::nested`, and that flag is load-bearing in three places, all for the
+same reason — **a nested fragment is not a separate document, its text is already
+counted in the enclosing body**:
+
+| Consumer | Why nested must be excluded |
+|---|---|
+| df / IDF (`clone_index.cpp`) | double-counting the same tokens drives IDF toward 0; an identical nested block scored ~0 and never became a candidate |
+| fingerprint frequency cap (`fpMaxPostings`) | a run is fingerprinted in both the body and the block, so ordinary runs cross the cap and get dismissed as boilerplate — this silenced duckdb's whole `duckdb_tables`/`views`/`indexes` clone family |
+| whole-file clone ratio | inflates numerator and denominator unequally, pushing sibling files over the 80% bar and suppressing their real pairs |
+
+Excluding nested fragments from all three keeps the df/IDF scale **identical** to
+pre-#190, which is what lets the guard thresholds calibrated on `fp_corpus_r2.tsv`
+stay valid. Reporting then drops a nested pair fully contained in another reported
+pair (`phaseNestedContainment`), so one copy site yields one finding, at its maximal
+span.
+
 **Limitation:** blocks > `max_tokens` (≈100 lines) are split → large duplicates
-are not reported as a single pair (a documented segmentation boundary).
+are not reported as a single pair (a documented segmentation boundary). Blocks
+< `min_tokens` are never fragments at any depth.
 
 ### 3.3. Inverted index — recall, with a RELATIVE rare-df
 
@@ -377,8 +399,34 @@ See also the rules for the config-agent (`v1_maj_agent_config_authoring_rules`).
 
 - **Type-4 / semantic clones** (`for`↔`while`, a different algorithm) — out of
   scope for the fast backend; this is AST/CFG (#052).
-- **Segmentation** — `max_tokens` splits blocks >~100 lines; a class/namespace in
-  `[min,max]` is emitted whole instead of its methods.
+- **Sub-function copy-paste — partial (#190, fixed 2026-07-18).** Until #190 a function
+  body inside `[min_tokens, max_tokens]` was emitted as one fragment and the fragmenter
+  never descended into it, so nothing nested was compared as a unit: a block copied
+  from one function into another was reported only when it made up a large share of
+  **both** containing bodies. The fragmenter now emits the body *and* descends,
+  so nested blocks become fragments in their own right — see §4.x. Measured against
+  NiCad `blocks` on `monit-4.2`: 1 of 8 sub-function clone classes before, **6 of 8**
+  after ([reports/nicad_vs_archcheck.md](../reports/nicad_vs_archcheck.md)
+  §Sub-function granularity). On **C++**, measured against Duplo (native, line-based,
+  function-boundary-agnostic) on duckdb `src/execution` (205 files): **13 of 24**
+  substantive duplicate blocks covered before, **17 of 24** after. NiCad cannot serve
+  as the C++ oracle here — it has no C++ grammar and the present-as-C workaround fails
+  to parse 38–94% of files.
+- **Copy-paste that is not a braced block — still not detected.** The fragmenter is
+  brace-based: it emits `{…}` bodies. A copied region that is a bare *run of statements*,
+  a fragment of one multi-line call's argument list, or a span covering several sibling
+  blocks plus the code between them is not a single braced unit and therefore never
+  becomes a fragment, at any nesting depth. This is the residual class, and it is what
+  a sliding-window/suffix pass would add. Witnesses: duckdb
+  `physical_limit.cpp:246 ↔ physical_streaming_limit.cpp:72` (a `ParamsToString` body —
+  several sibling `if` blocks with statements between them), monit
+  `cervlet.c:1357 ↔ 1484` (19 verbatim lines of consecutive `out_print` calls).
+- Also still bounded below by `min_tokens`: a block under 30 tokens is not a fragment
+  at any nesting depth, so the shortest copy-paste stays invisible.
+- **Segmentation** — `max_tokens` splits blocks >~100 lines. The older wording here ("a
+  class/namespace in `[min,max]` is emitted whole instead of its methods") described
+  the pre-#190 fragmenter and understated it as a container-only quirk; it applied to
+  every function. What remains is the size cap itself.
 - **Recall** — a tight rare-token gate loses strongly diverged copies; a
   fingerprint-fallback is needed.
 - **Idiom-FP floor** — cannot be reduced to zero by formal means (the overlap of
