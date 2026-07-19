@@ -199,3 +199,35 @@ int bubbleSortInts(int data[], int size) {
 
   REQUIRE(result.fragments.size() > 0);
 }
+
+// #190: a block copied from one function into another. The enclosing bodies differ,
+// so before #190 (function bodies emitted whole, never descended into) this was
+// invisible no matter how verbatim the copy was.
+TEST_CASE("#190: copy-paste nested inside a function is reported", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("subfunction_clone/fail_block_into_function");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files); // shipped defaults, no tuning
+  REQUIRE(result.pairs.size() == 1);
+
+  // Exactly the nested block, not the whole enclosing bodies.
+  const Pair &p = result.pairs.front();
+  const Fragment &fa = result.fragments[p.a];
+  const Fragment &fb = result.fragments[p.b];
+  REQUIRE(fa.file != fb.file);
+  REQUIRE(fa.nested);
+  REQUIRE(fb.nested);
+  REQUIRE(fa.endLine - fa.startLine < 20); // the block, not the function
+}
+
+// The negative side: descending into bodies must not report two unrelated functions
+// merely because each contains a guarded loop.
+TEST_CASE("#190: similarly shaped but unrelated nested blocks stay silent", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("subfunction_clone/pass");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files);
+  REQUIRE(result.pairs.empty());
+}

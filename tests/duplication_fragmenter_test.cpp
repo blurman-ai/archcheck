@@ -116,7 +116,9 @@ int dispatch(int op)
 
   const auto frags = extractSmallFragments(src);
 
-  REQUIRE(frags.size() == 1);
+  // Two fragments since #190: the function body, then the nested switch block.
+  // frags[0] is the outer body (the fragmenter emits enclosing-first).
+  REQUIRE(frags.size() == 2);
   REQUIRE(frags[0].normLines.count("switch (op)") == 0);
   REQUIRE(frags[0].normLines.count("case 1:") == 0);
   REQUIRE(frags[0].normLines.count("case 2:") == 0);
@@ -144,7 +146,8 @@ int flagsFor(int op)
 
   const auto frags = extractSmallFragments(src);
 
-  REQUIRE(frags.size() == 1);
+  // Two fragments since #190: the function body, then the nested switch block.
+  REQUIRE(frags.size() == 2);
   REQUIRE(frags[0].normLines.count("case 0: flags |= Flag0; break;") == 0);
   REQUIRE(frags[0].normLines.count("default: flags |= DefaultFlag; break;") == 0);
   REQUIRE(frags[0].normLines.count("int flags = 0;") == 1);

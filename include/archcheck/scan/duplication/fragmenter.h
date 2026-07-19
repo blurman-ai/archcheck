@@ -23,6 +23,13 @@ struct Fragment
   std::unordered_set<std::string> normLines; // line-set (Jaccard ratio)
   std::vector<std::string> normLineSeq;      // ordered substantive lines (line-LCS run)
   double diversity = 1.0;                    // distinct-trigram ratio (low = skeletal)
+  // #190: this fragment is a block nested inside another emitted fragment. Such a
+  // fragment is NOT a separate document: its tokens are already counted in the
+  // enclosing body, so including it in document frequency would count them twice and
+  // collapse IDF (an identical nested block scored ~0). Excluded from df/idf, which
+  // also keeps the IDF distribution identical to pre-#190 — the guard thresholds are
+  // calibrated against it.
+  bool nested = false;
 };
 
 struct FragmentOptions

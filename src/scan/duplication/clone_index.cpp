@@ -13,15 +13,25 @@ namespace archcheck::scan::duplication
 
 namespace
 {
-void computeDocumentFrequency(const std::vector<Fragment> &fragments, std::unordered_map<std::string, int> &df)
+// Nested fragments (#190) are excluded: their tokens are already counted in the
+// enclosing body, so counting them again double-counts the same text and drives IDF
+// toward zero. Returns the number of documents actually counted.
+std::size_t computeDocumentFrequency(const std::vector<Fragment> &fragments, std::unordered_map<std::string, int> &df)
 {
+  std::size_t documents = 0;
   for (const auto &frag : fragments)
   {
+    if (frag.nested)
+    {
+      continue;
+    }
+    ++documents;
     for (const auto &[sym, _] : frag.bag)
     {
       ++df[sym];
     }
   }
+  return documents;
 }
 
 void computeIdfWeights(const std::size_t fragmentCount, std::unordered_map<std::string, int> &df,
@@ -176,7 +186,15 @@ void addFingerprintCandidates(const std::vector<Fragment> &fragments, const Inde
   }
   for (const auto &[fp, list] : fpPostings)
   {
-    if (opts.fpMaxPostings > 0 && list.size() > opts.fpMaxPostings)
+    // Count documents, not fragments (#190): a run inside a body is fingerprinted
+    // both in that body and in the nested block, so counting raw postings
+    // double-counts the same text and pushes ordinary runs over the cap. That
+    // silenced whole families of real clones (duckdb's duckdb_tables/views/indexes)
+    // by killing their fingerprint candidacy. Nested fragments still pair up below;
+    // they just do not inflate the frequency judgement.
+    const std::size_t documents = static_cast<std::size_t>(
+        std::count_if(list.begin(), list.end(), [&](std::size_t fi) { return !fragments[fi].nested; }));
+    if (opts.fpMaxPostings > 0 && documents > opts.fpMaxPostings)
     {
       continue; // over-frequent fingerprint = boilerplate idiom, not a clone signal
     }
@@ -196,9 +214,10 @@ void addFingerprintCandidates(const std::vector<Fragment> &fragments, const Inde
 CloneIndex buildIndex(const std::vector<Fragment> &fragments, const IndexOptions &opts)
 {
   CloneIndex idx;
-  const std::size_t N = fragments.size();
 
-  computeDocumentFrequency(fragments, idx.df);
+  // N counts documents, not fragments: nested blocks (#190) share their text with the
+  // enclosing body and must not shift the df/idf scale the guards are calibrated on.
+  const std::size_t N = computeDocumentFrequency(fragments, idx.df);
   computeIdfWeights(N, idx.df, idx.idf);
   std::size_t effRareDf = getEffectiveRareDf(N, opts);
   buildRareTokenIndex(fragments, effRareDf, idx.df, idx.postings);

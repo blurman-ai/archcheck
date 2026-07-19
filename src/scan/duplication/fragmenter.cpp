@@ -195,12 +195,19 @@ Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t h
   return f;
 }
 
-using Range = std::pair<std::size_t, std::size_t>;
+struct Range
+{
+  std::size_t from = 0;
+  std::size_t to = 0;
+  bool inside = false; // already within an emitted body -> anything emitted here is nested
+};
 
 // Scan [from, to): emit fn-body fragments inline; on the first nested block to
 // descend, queue its inner range and the continuation on `work` and stop.
-void scanRange(const CollectContext &ctx, std::size_t from, std::size_t to, std::vector<Range> &work)
+void scanRange(const CollectContext &ctx, const Range &range, std::vector<Range> &work)
 {
+  const std::size_t from = range.from;
+  const std::size_t to = range.to;
   for (std::size_t i = from; i < to;)
   {
     const bool open = ctx.tokens[i].sym == "{" && ctx.match[i] >= 0 && static_cast<std::size_t>(ctx.match[i]) < to;
@@ -214,14 +221,22 @@ void scanRange(const CollectContext &ctx, std::size_t from, std::size_t to, std:
     const bool fnBody = (i > 0 && ctx.tokens[i - 1].sym == ")");
     if (fnBody && body >= ctx.opts.minTokens && body <= ctx.opts.maxTokens)
     {
-      ctx.out.push_back(makeFragment(ctx.tokens, i + 1, j, ctx.file, ctx.lines));
-      i = j + 1;
-      continue;
+      // Emit the body, then descend into it anyway (#190). Stopping here made every
+      // block nested inside an in-range body invisible, so copy-paste below function
+      // scale was never compared as a unit. Descending emits nested blocks as their
+      // own fragments; the containment filter in the scanner drops a nested pair that
+      // merely restates a reported enclosing pair.
+      Fragment f = makeFragment(ctx.tokens, i + 1, j, ctx.file, ctx.lines);
+      f.nested = range.inside;
+      ctx.out.push_back(std::move(f));
+      work.push_back({j + 1, to, range.inside});
+      work.push_back({i + 1, j, true});
+      return;
     }
     // Descend into [i+1, j), then resume at j+1. Push continuation first so the
     // inner range pops (runs) first — matching the old recursion's pre-order.
-    work.emplace_back(j + 1, to);
-    work.emplace_back(i + 1, j);
+    work.push_back({j + 1, to, range.inside});
+    work.push_back({i + 1, j, range.inside});
     return;
   }
 }
@@ -234,12 +249,12 @@ void scanRange(const CollectContext &ctx, std::size_t from, std::size_t to, std:
 void collect(const CollectContext &ctx, std::size_t lo, std::size_t hi)
 {
   std::vector<Range> work;
-  work.emplace_back(lo, hi);
+  work.push_back({lo, hi, false});
   while (!work.empty())
   {
-    const auto [from, to] = work.back();
+    const Range range = work.back();
     work.pop_back();
-    scanRange(ctx, from, to, work);
+    scanRange(ctx, range, work);
   }
 }
 

@@ -323,27 +323,44 @@ bool isWholeFileClone(int matched, int fragsX, int fragsY)
   return lo >= 2 && matched * 5 >= hi * 4; // hi coverage implies lo coverage (hi ≥ lo)
 }
 
+// Whole-body fragments per file and matched cross-file pairs between them.
+// Nested fragments (#190) are excluded from BOTH sides of the ratio: counting them
+// inflates numerator and denominator unequally — a block matching inside an already
+// matching body adds to `matched` — which pushed ordinary sibling files over the 80%
+// bar and silenced real cross-file clones (duckdb's duckdb_tables/views/indexes family
+// disappeared). The guard must judge whole-file coverage on whole bodies.
+void countWholeBodyPairs(const std::vector<Pair> &candidates, const std::vector<Fragment> &frags,
+                         std::unordered_map<std::string, int> &fragsPerFile,
+                         std::unordered_map<std::string, int> &matched)
+{
+  for (const auto &f : frags)
+  {
+    if (!f.nested)
+    {
+      ++fragsPerFile[f.file];
+    }
+  }
+  for (const auto &p : candidates)
+  {
+    if (frags[p.a].nested || frags[p.b].nested)
+    {
+      continue;
+    }
+    if (frags[p.a].file != frags[p.b].file)
+    {
+      ++matched[filePairKey(frags[p.a].file, frags[p.b].file)];
+    }
+  }
+}
+
 // Set of file-pairs that are whole-file clones: ≥80% of BOTH files' fragments
 // (smaller has ≥2) are matched across the pair → move/copy/vendored twin.
 std::unordered_set<std::string> wholeFileClonePairs(const std::vector<Pair> &candidates,
                                                     const std::vector<Fragment> &allFragments)
 {
   std::unordered_map<std::string, int> fragsPerFile;
-  for (const auto &f : allFragments)
-  {
-    ++fragsPerFile[f.file];
-  }
-
   std::unordered_map<std::string, int> matched;
-  for (const auto &p : candidates)
-  {
-    const std::string &fa = allFragments[p.a].file;
-    const std::string &fb = allFragments[p.b].file;
-    if (fa != fb)
-    {
-      ++matched[filePairKey(fa, fb)];
-    }
-  }
+  countWholeBodyPairs(candidates, allFragments, fragsPerFile, matched);
 
   std::unordered_set<std::string> result;
   for (const auto &[k, n] : matched)
@@ -402,6 +419,48 @@ void phaseClassifyCloneType(std::vector<Pair> &candidates, const std::vector<Fra
 // Ordered candidate-filtering pipeline (sort → canon → coordinate revalidation →
 // P0/P1 guards → clone-type classification), run in place. Split out of
 // scanForDuplication so each stays within the complexity budget.
+bool spanContains(const Fragment &outer, const Fragment &inner)
+{
+  return outer.file == inner.file && outer.startLine <= inner.startLine && inner.endLine <= outer.endLine;
+}
+
+// #190: since the fragmenter descends into function bodies, one copy-paste site now
+// yields both the enclosing pair and the nested pair. Keep the maximal span: drop a
+// pair whose both sides sit inside the corresponding sides of another surviving pair.
+// Equal spans on both sides are left alone — that is phase5's job, not this one.
+void phaseNestedContainment(std::vector<Pair> &candidates, const std::vector<Fragment> &frags)
+{
+  std::vector<Pair> filtered;
+
+  for (const auto &p : candidates)
+  {
+    const bool nested =
+        std::any_of(candidates.begin(), candidates.end(),
+                    [&](const Pair &q)
+                    {
+                      if (&q == &p)
+                      {
+                        return false;
+                      }
+                      const bool sameSpan =
+                          frags[q.a].startLine == frags[p.a].startLine && frags[q.a].endLine == frags[p.a].endLine &&
+                          frags[q.b].startLine == frags[p.b].startLine && frags[q.b].endLine == frags[p.b].endLine;
+                      if (sameSpan)
+                      {
+                        return false;
+                      }
+                      return (spanContains(frags[q.a], frags[p.a]) && spanContains(frags[q.b], frags[p.b])) ||
+                             (spanContains(frags[q.b], frags[p.a]) && spanContains(frags[q.a], frags[p.b]));
+                    });
+
+    if (!nested)
+    {
+      filtered.push_back(p);
+    }
+  }
+  candidates = std::move(filtered);
+}
+
 void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments, ScanResult &result,
                            const ScannerOptions &opts)
 {
@@ -429,6 +488,7 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
     phase11BoilerplateDensity(candidates, allFragments);
     phase13FileLocalIdfDownweight(candidates, allFragments);
   }
+  phaseNestedContainment(candidates, allFragments);
   phaseClassifyCloneType(candidates, allFragments);
 }
 

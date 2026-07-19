@@ -477,6 +477,10 @@ TEST_CASE("#180: focusFiles keeps only pairs incident to a focus file", "[duplic
       {"a.cpp", x}, {"b.cpp", x}, {"c.cpp", y}, {"d.cpp", y}};
   ScannerOptions opts;
   opts.fragmentOpts.minTokens = 5;
+  // a.cpp/b.cpp are byte-identical, so since #190 (nested blocks are fragments too)
+  // they clear the whole-file-clone bar and get suppressed as a group. That guard is
+  // not what this case is about — it checks focusFiles incidence.
+  opts.enableWholeFileGuard = false;
 
   const auto full = scanForDuplication(files, opts);
   auto incidentToA = [&](const Pair &p)
