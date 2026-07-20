@@ -17,6 +17,7 @@ TEST_CASE("P0.3: coordinate revalidation — valid ranges pass", "[duplication][
   ScannerOptions opts;
   opts.fragmentOpts.minTokens = 5;
   opts.simThreshold = 0.6;
+  opts.enableBoundaryRuns = false;
 
   const auto result = scanForDuplication({{"file1.cpp", file1}, {"file2.cpp", file2}}, opts);
 
@@ -95,8 +96,12 @@ TEST_CASE("P0.1: same-function filter — different files pass", "[duplication][
   // Fragments from different files (if created)
   if (result.fragments.size() >= 2)
   {
-    REQUIRE(result.fragments[0].file == "file1.cpp");
-    REQUIRE(result.fragments[1].file == "file2.cpp");
+    const auto hasFile1 = std::any_of(result.fragments.begin(), result.fragments.end(),
+                                      [](const Fragment &frag) { return frag.file == "file1.cpp"; });
+    const auto hasFile2 = std::any_of(result.fragments.begin(), result.fragments.end(),
+                                      [](const Fragment &frag) { return frag.file == "file2.cpp"; });
+    REQUIRE(hasFile1);
+    REQUIRE(hasFile2);
 
     // Cross-file pairs should pass the P0.1 filter (same-function filter only applies within-file)
     for (const auto &pair : result.pairs)
@@ -119,6 +124,7 @@ void func() {
   ScannerOptions opts;
   opts.fragmentOpts.minTokens = 1;
   opts.simThreshold = 0.5;
+  opts.enableBoundaryRuns = false;
 
   const auto result = scanForDuplication({{"same.cpp", source}}, opts);
 
@@ -164,6 +170,7 @@ void func2() {
   ScannerOptions opts;
   opts.fragmentOpts.minTokens = 1;
   opts.simThreshold = 0.5;
+  opts.enableBoundaryRuns = false;
 
   const auto result = scanForDuplication({{"file.cpp", source}}, opts);
 

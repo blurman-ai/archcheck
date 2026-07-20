@@ -109,9 +109,26 @@ stay valid. Reporting then drops a nested pair fully contained in another report
 pair (`phaseNestedContainment`), so one copy site yields one finding, at its maximal
 span.
 
+**Boundary runs (#195).** For each emitted function body the scanner also emits a
+small bounded set of synthetic prefix/suffix fragments (`Fragment::boundary`):
+`min_tokens`, `2*min_tokens`, and `4*min_tokens`, only when enough unrelated body
+remains outside the span. This covers the PMD-CPD witness class where two functions
+share a substantial prologue or epilogue but diverge enough that the whole bodies
+score below the threshold. Boundary fragments are also `nested`, so they do not
+change df/IDF, fingerprint frequency caps, or whole-file clone ratios.
+
+One extra scoring caveat is needed: a copied prologue can consist entirely of tokens
+that occur in both enclosing whole-function documents, giving it zero IDF weight.
+For boundary-vs-boundary pairs only, a zero weighted score falls back to plain
+Jaccard; the normal joint token/line floor still applies. Reporting then removes
+overlapping shifted windows after sorting, keeping the strongest span for a copy
+site. This is deliberately not the general #191 statement-run layer: arbitrary
+middle-of-function runs still need a measured sliding-window design.
+
 **Limitation:** blocks > `max_tokens` (≈100 lines) are split → large duplicates
 are not reported as a single pair (a documented segmentation boundary). Blocks
-< `min_tokens` are never fragments at any depth.
+< `min_tokens` are never fragments at any depth. Shared middle runs that are neither
+brace-delimited nor a function prefix/suffix remain out of scope (#191).
 
 ### 3.3. Inverted index — recall, with a RELATIVE rare-df
 

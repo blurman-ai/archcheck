@@ -116,7 +116,7 @@ Headers: `include/archcheck/<subsystem>/`; impl: `src/<subsystem>/`; tests:
 | **graph** | `dependency_graph`, `algorithms` (SCC, depths — `Risk: high`), `graph_builder`, `baseline`, `diff` | `unit/graph/*`, `integration/graph/*` | `graph/` | DAG, cycles, levelization, CCD/ACD/NCCD |
 | **rules** | `rules/*.cpp` + factory `rule_set.cpp` + `gate_policy.cpp` | `unit/rules/*`, `integration/rules/*` | per rule (table above) | rule classes, gate vs advisory |
 | **scan** | `include_scanner`, `include_resolver`, `local_include_scan`, `project_files` + signal scanners (table above) | `unit/scan/*`, `integration/scan/*` | `scan/` + per signal | preprocessor scan (no `compile_commands.json`) |
-| **scan/duplication** | `duplication_scanner`, `fragmenter`, `token_normalizer`, `similarity`, `clone_index`, `clone_classifier` | `duplication_*_test.cpp` (flat) | `duplication/` | token clone detector |
+| **scan/duplication** | `duplication_scanner`, `fragmenter`, `token_normalizer`, `similarity`, `clone_index`, `clone_classifier` | `duplication_*_test.cpp` (flat; #195 boundary-run fixtures in `duplication_synthetic_fp_test.cpp`) | `duplication/` | token clone detector |
 | **git** | `git_exec`, `git_state`, `diff_query`, `history_query` (newest-first — see #170) | `unit/git/*` | — | fork/exec git, blobs, revspecs |
 | **diff** | `regression_report` (incl. `--diff` gates), `diff_json_report`, `md_report` | `unit/diff/*`, `integration/diff/*` | `drift_real_world/` | `--diff` reporting |
 | **report** | `text_reporter`, `json_reporter`, `violation_baseline` | `unit/report/*` | — | output format, `--baseline` |

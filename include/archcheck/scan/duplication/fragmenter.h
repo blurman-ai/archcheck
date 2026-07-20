@@ -30,6 +30,7 @@ struct Fragment
   // also keeps the IDF distribution identical to pre-#190 — the guard thresholds are
   // calibrated against it.
   bool nested = false;
+  bool boundary = false; // #195: synthetic function prefix/suffix span
 };
 
 struct FragmentOptions
@@ -40,6 +41,9 @@ struct FragmentOptions
   // aligns. 600 keeps ~120-line functions whole, recovering function-level
   // copy-paste (LibreSprite algo_line/algo_line_float) without an FP blow-up.
   std::size_t maxTokens = 600;
+  // #195: emit bounded function prefix/suffix spans so a shared prologue or
+  // epilogue in two otherwise-different functions can be compared as a unit.
+  bool boundaryRuns = false;
 };
 
 // Extract function-scale fragments from tokenized source.

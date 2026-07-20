@@ -231,3 +231,30 @@ TEST_CASE("#190: similarly shaped but unrelated nested blocks stay silent", "[du
   const ScanResult result = scanForDuplication(files);
   REQUIRE(result.pairs.empty());
 }
+
+TEST_CASE("#195: shared prologue in otherwise different functions is reported", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("cross_function_partial_clone/fail_shared_prologue");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files);
+  REQUIRE(result.pairs.size() == 1);
+
+  const Pair &p = result.pairs.front();
+  const Fragment &fa = result.fragments[p.a];
+  const Fragment &fb = result.fragments[p.b];
+  REQUIRE(fa.file != fb.file);
+  REQUIRE(fa.nested);
+  REQUIRE(fb.nested);
+  REQUIRE(fa.endLine < 20);
+  REQUIRE(fb.endLine < 20);
+}
+
+TEST_CASE("#195: short coincidental shared prologue stays silent", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("cross_function_partial_clone/pass");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files);
+  REQUIRE(result.pairs.empty());
+}

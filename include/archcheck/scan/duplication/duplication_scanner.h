@@ -57,6 +57,7 @@ struct ScannerOptions
   bool enableP1Guards = true;              // P1: enable classifier filters (data-table, boilerplate, header-impl, IDF)
   bool enablePathGuards = true;            // P0.9: suppress generated-file pairs (.pb.cc, moc_, flex/bison)
   bool enableWholeFileGuard = true;        // P0.2: count whole-file clones separately, drop their pairs
+  bool enableBoundaryRuns = true;          // #195: scan function prefix/suffix spans for shared prologues/epilogues
   bool enableDataTableDrop = true;         // P1.1: make data-table guard a real DROP (not just down-weight)
   // --diff performance (#180): when non-empty, only score candidate pairs incident to one of
   // these files. new-clone drift needs only pairs touching the commit's changed files, so on a

@@ -1,5 +1,6 @@
 #include "archcheck/scan/duplication/fragmenter.h"
 
+#include <array>
 #include <cctype>
 #include <sstream>
 #include <string>
@@ -195,12 +196,49 @@ Fragment makeFragment(const std::vector<Token> &t, std::size_t lo, std::size_t h
   return f;
 }
 
+void pushNestedBoundary(const CollectContext &ctx, std::size_t lo, std::size_t hi)
+{
+  Fragment f = makeFragment(ctx.tokens, lo, hi, ctx.file, ctx.lines);
+  f.nested = true;
+  f.boundary = true;
+  ctx.out.push_back(std::move(f));
+}
+
+void emitBoundaryRuns(const CollectContext &ctx, std::size_t bodyLo, std::size_t bodyHi)
+{
+  if (!ctx.opts.boundaryRuns)
+  {
+    return;
+  }
+
+  const std::array<std::size_t, 3> sizes = {ctx.opts.minTokens, ctx.opts.minTokens * 2, ctx.opts.minTokens * 4};
+  for (std::size_t size : sizes)
+  {
+    if (bodyHi - bodyLo < size + ctx.opts.minTokens)
+    {
+      continue;
+    }
+    pushNestedBoundary(ctx, bodyLo, bodyLo + size);
+    pushNestedBoundary(ctx, bodyHi - size, bodyHi);
+  }
+}
+
 struct Range
 {
   std::size_t from = 0;
   std::size_t to = 0;
   bool inside = false; // already within an emitted body -> anything emitted here is nested
 };
+
+void emitBodyAndDescend(const CollectContext &ctx, const Range &body, const Range &range, std::vector<Range> &work)
+{
+  Fragment f = makeFragment(ctx.tokens, body.from + 1, body.to, ctx.file, ctx.lines);
+  f.nested = range.inside;
+  ctx.out.push_back(std::move(f));
+  emitBoundaryRuns(ctx, body.from + 1, body.to);
+  work.push_back({body.to + 1, range.to, range.inside});
+  work.push_back({body.from + 1, body.to, true});
+}
 
 // Scan [from, to): emit fn-body fragments inline; on the first nested block to
 // descend, queue its inner range and the continuation on `work` and stop.
@@ -221,16 +259,9 @@ void scanRange(const CollectContext &ctx, const Range &range, std::vector<Range>
     const bool fnBody = (i > 0 && ctx.tokens[i - 1].sym == ")");
     if (fnBody && body >= ctx.opts.minTokens && body <= ctx.opts.maxTokens)
     {
-      // Emit the body, then descend into it anyway (#190). Stopping here made every
-      // block nested inside an in-range body invisible, so copy-paste below function
-      // scale was never compared as a unit. Descending emits nested blocks as their
-      // own fragments; the containment filter in the scanner drops a nested pair that
-      // merely restates a reported enclosing pair.
-      Fragment f = makeFragment(ctx.tokens, i + 1, j, ctx.file, ctx.lines);
-      f.nested = range.inside;
-      ctx.out.push_back(std::move(f));
-      work.push_back({j + 1, to, range.inside});
-      work.push_back({i + 1, j, true});
+      // Emit the body, then descend into it anyway (#190): copied nested blocks
+      // must be compared as their own fragments.
+      emitBodyAndDescend(ctx, {i, j, false}, range, work);
       return;
     }
     // Descend into [i+1, j), then resume at j+1. Push continuation first so the

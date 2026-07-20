@@ -16,10 +16,12 @@ namespace
 void phase1TokenizeAndExtract(const std::vector<std::pair<std::string, std::string>> &files, const ScannerOptions &opts,
                               std::vector<Fragment> &allFragments, std::size_t &totalLoc)
 {
+  FragmentOptions fragmentOpts = opts.fragmentOpts;
+  fragmentOpts.boundaryRuns = opts.enableBoundaryRuns;
   for (const auto &[path, source] : files)
   {
-    const auto tokens = lex(source, opts.fragmentOpts.minTokens > 0); // #147: lex() caps oversized data files
-    const auto fragments = extractFragments(tokens, source, path, opts.fragmentOpts);
+    const auto tokens = lex(source, fragmentOpts.minTokens > 0); // #147: lex() caps oversized data files
+    const auto fragments = extractFragments(tokens, source, path, fragmentOpts);
     for (const auto &frag : fragments)
     {
       totalLoc += frag.endLine - frag.startLine + 1;
@@ -36,6 +38,31 @@ bool pairInFocus(const std::vector<Fragment> &frags, std::size_t a, std::size_t 
   return focus.empty() || focus.count(frags[a].file) != 0 || focus.count(frags[b].file) != 0;
 }
 
+double boundaryAwareWeighted(const Fragment &a, const Fragment &b, const std::unordered_map<std::string, double> &idf)
+{
+  const double weighted = weightedJaccard(a, b, idf);
+  if (a.boundary && b.boundary && weighted == 0.0)
+  {
+    return plainJaccard(a, b);
+  }
+  return weighted;
+}
+
+void fillPairMetrics(Pair &p, const std::vector<Fragment> &frags, const CloneIndex &index, const ScannerOptions &opts)
+{
+  const Fragment &a = frags[p.a];
+  const Fragment &b = frags[p.b];
+  p.plain = plainJaccard(a, b);
+  p.weighted = boundaryAwareWeighted(a, b, index.idf);
+  p.line = lineOverlap(a, b);
+  p.sharedLines = lcsLength(a.normLineSeq, b.normLineSeq);
+  p.sharedRare = sharedRareCount(a, b, index.df, opts.jointAnchorDfCap);
+  if (opts.precise)
+  {
+    p.lcs = lcsRatio(a, b);
+  }
+}
+
 std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragments, const CloneIndex &index,
                                         const ScannerOptions &opts)
 {
@@ -50,18 +77,8 @@ std::vector<Pair> phase3ScoreCandidates(const std::vector<Fragment> &allFragment
     p.b = pr.second;
     if (!pairInFocus(allFragments, p.a, p.b, opts.focusFiles))
       continue;
-    p.weighted = weightedJaccard(allFragments[p.a], allFragments[p.b], index.idf);
-    p.plain = plainJaccard(allFragments[p.a], allFragments[p.b]);
-    p.line = lineOverlap(allFragments[p.a], allFragments[p.b]);
-    // Ordered line-LCS: a real edited copy keeps a long run; an idiom shares scattered lines.
-    p.sharedLines = lcsLength(allFragments[p.a].normLineSeq, allFragments[p.b].normLineSeq);
-    p.sharedRare = sharedRareCount(allFragments[p.a], allFragments[p.b], index.df, opts.jointAnchorDfCap);
-    if (opts.precise)
-    {
-      p.lcs = lcsRatio(allFragments[p.a], allFragments[p.b]);
-    }
-    double score = scoreOf(p);
-    if (score >= opts.simThreshold)
+    fillPairMetrics(p, allFragments, index, opts);
+    if (scoreOf(p) >= opts.simThreshold)
     {
       candidates.push_back(p);
     }
@@ -139,6 +156,23 @@ void phase7SameFunctionFilter(std::vector<Pair> &candidates, const std::vector<F
     bool adjacent = (fa.endLine + 1 == fb.startLine || fb.endLine + 1 == fa.startLine);
 
     if (!overlapping && !adjacent)
+    {
+      filtered.push_back(p);
+    }
+  }
+  candidates = std::move(filtered);
+}
+
+int lineSpan(const Fragment &f) { return f.endLine - f.startLine + 1; }
+
+void phaseSpanBalance(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  std::vector<Pair> filtered;
+  for (const Pair &p : candidates)
+  {
+    const int aLines = lineSpan(allFragments[p.a]);
+    const int bLines = lineSpan(allFragments[p.b]);
+    if (std::max(aLines, bLines) <= std::min(aLines, bLines) * 2)
     {
       filtered.push_back(p);
     }
@@ -424,6 +458,47 @@ bool spanContains(const Fragment &outer, const Fragment &inner)
   return outer.file == inner.file && outer.startLine <= inner.startLine && inner.endLine <= outer.endLine;
 }
 
+bool spanOverlaps(const Fragment &x, const Fragment &y)
+{
+  return x.file == y.file && x.startLine <= y.endLine && y.startLine <= x.endLine;
+}
+
+bool sameSpanPair(const Pair &p, const Pair &q, const std::vector<Fragment> &frags)
+{
+  return frags[q.a].startLine == frags[p.a].startLine && frags[q.a].endLine == frags[p.a].endLine &&
+         frags[q.b].startLine == frags[p.b].startLine && frags[q.b].endLine == frags[p.b].endLine;
+}
+
+bool pairContainedIn(const Pair &inner, const Pair &outer, const std::vector<Fragment> &frags)
+{
+  return (spanContains(frags[outer.a], frags[inner.a]) && spanContains(frags[outer.b], frags[inner.b])) ||
+         (spanContains(frags[outer.b], frags[inner.a]) && spanContains(frags[outer.a], frags[inner.b]));
+}
+
+bool pairOverlapsPair(const Pair &x, const Pair &y, const std::vector<Fragment> &frags)
+{
+  return (spanOverlaps(frags[x.a], frags[y.a]) && spanOverlaps(frags[x.b], frags[y.b])) ||
+         (spanOverlaps(frags[x.b], frags[y.a]) && spanOverlaps(frags[x.a], frags[y.b]));
+}
+
+bool boundaryPair(const Pair &p, const std::vector<Fragment> &frags)
+{
+  return frags[p.a].boundary && frags[p.b].boundary;
+}
+
+bool shouldDropContainedPair(const Pair &p, const Pair &q, const std::vector<Fragment> &frags)
+{
+  if (sameSpanPair(p, q, frags))
+  {
+    return false;
+  }
+  if (boundaryPair(p, frags) && !boundaryPair(q, frags))
+  {
+    return pairOverlapsPair(p, q, frags);
+  }
+  return pairContainedIn(p, q, frags);
+}
+
 // #190: since the fragmenter descends into function bodies, one copy-paste site now
 // yields both the enclosing pair and the nested pair. Keep the maximal span: drop a
 // pair whose both sides sit inside the corresponding sides of another surviving pair.
@@ -438,19 +513,7 @@ void phaseNestedContainment(std::vector<Pair> &candidates, const std::vector<Fra
         std::any_of(candidates.begin(), candidates.end(),
                     [&](const Pair &q)
                     {
-                      if (&q == &p)
-                      {
-                        return false;
-                      }
-                      const bool sameSpan =
-                          frags[q.a].startLine == frags[p.a].startLine && frags[q.a].endLine == frags[p.a].endLine &&
-                          frags[q.b].startLine == frags[p.b].startLine && frags[q.b].endLine == frags[p.b].endLine;
-                      if (sameSpan)
-                      {
-                        return false;
-                      }
-                      return (spanContains(frags[q.a], frags[p.a]) && spanContains(frags[q.b], frags[p.b])) ||
-                             (spanContains(frags[q.b], frags[p.a]) && spanContains(frags[q.a], frags[p.b]));
+                      return &q != &p && shouldDropContainedPair(p, q, frags);
                     });
 
     if (!nested)
@@ -461,6 +524,30 @@ void phaseNestedContainment(std::vector<Pair> &candidates, const std::vector<Fra
   candidates = std::move(filtered);
 }
 
+void phaseOverlapDedup(std::vector<Pair> &candidates, const std::vector<Fragment> &frags)
+{
+  std::vector<Pair> filtered;
+  for (const Pair &p : candidates)
+  {
+    const bool duplicate =
+        std::any_of(filtered.begin(), filtered.end(),
+                    [&](const Pair &q) { return pairOverlapsPair(p, q, frags); });
+    if (!duplicate)
+    {
+      filtered.push_back(p);
+    }
+  }
+  candidates = std::move(filtered);
+}
+
+void phaseP1Guards(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments,
+                   const ScannerOptions &opts)
+{
+  phase10DataTableClassifier(candidates, allFragments, opts);
+  phase11BoilerplateDensity(candidates, allFragments);
+  phase13FileLocalIdfDownweight(candidates, allFragments);
+}
+
 void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments, ScanResult &result,
                            const ScannerOptions &opts)
 {
@@ -468,6 +555,7 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
   phase5SymmetricPairCanon(candidates);
   phase6CoordinateRevalidation(candidates, allFragments);
   phase7SameFunctionFilter(candidates, allFragments);
+  phaseSpanBalance(candidates, allFragments);
   if (opts.enableJointFloor)
   {
     phase8JointTokenOrderFloor(candidates, allFragments, opts);
@@ -484,11 +572,10 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
   // P1 classifiers (optional, can reduce recall if miscalibrated)
   if (opts.enableP1Guards)
   {
-    phase10DataTableClassifier(candidates, allFragments, opts);
-    phase11BoilerplateDensity(candidates, allFragments);
-    phase13FileLocalIdfDownweight(candidates, allFragments);
+    phaseP1Guards(candidates, allFragments, opts);
   }
   phaseNestedContainment(candidates, allFragments);
+  phaseOverlapDedup(candidates, allFragments);
   phaseClassifyCloneType(candidates, allFragments);
 }
 
