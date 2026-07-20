@@ -1,8 +1,8 @@
 # [RES] 193: re-measure the clone endpoint after #190 — is the old undercount uniform or size-correlated?
 
 **Created:** 2026-07-19
-**Start date:** —
-**Status:** new
+**Start date:** 2026-07-20
+**Status:** wip
 **Module:** SCAN/DUPLICATION + research corpus
 **Priority:** critical
 **Difficulty:** large
@@ -148,19 +148,42 @@ evidence, and the write-ups need a scale note rather than new numbers.
 
 ## Definition of done (checkable without judgment)
 
-- [ ] Binary sha recorded; the two known-case checks (duckdb pair, monit 6/8) pass with it.
-- [ ] `experiments/clone_remeasure_193/worklist.tsv` committed; seed and strata recorded.
-- [ ] Stage A completed with ≥ 95% of sampled commits in ok-status; every non-ok row
-      classified as ERROR (never counted as 0).
-- [ ] **Non-clone counters identical** to cached values on every ok row. Any mismatch →
-      status `blocked`, report, stop (the scope claim is then wrong).
-- [ ] Central table produced: `Δn_newclone` by function-size stratum, with n per cell.
-- [ ] ≥ 10 newly-appeared findings hand-classified TP/FP, split reported with sample size.
-- [ ] Explicit verdict on the central question: **uniform** vs **size-correlated** shift,
-      with the statistic that supports it.
-- [ ] A written recommendation for each affected write-up (#184 / #180 / #182 / #185):
-      "numbers stand", "numbers stand + add scale note", or "numbers must be re-estimated".
-- [ ] Closure verdict per `docs/dev/haiku_task_guide.md` §2.5 with cited evidence.
+- [x] Binary sha recorded (post-#190 HEAD `2fd7986`, 0.1.8, sha256 `6b8983be5a64575b`;
+      clean pre-#190 baseline built at `eaa99fe^ = 13c8dfa`); duckdb pair reproduced
+      exactly (`pipeline_executor.cpp:23-28 <-> 82-86 EXACT`), monit fix active
+      (49 pairs, 26 intra-file nested); pre-#190 negative control passes.
+- [x] `experiments/clone_remeasure_193/worklist.tsv` written (seed 193, 12 cells
+      = 3 size × 2 role × 2 side, 50/cell; strata in `sample_meta.tsv`).
+      NOTE: artifacts staged, **awaiting an explicit `/commit`** (no auto-commit).
+- [x] Stage A completed with **600/600 ok** on BOTH binaries (100%); no non-ok rows.
+- [x] **Non-clone identity check PASS** — every non-clone counter identical pre-#190
+      vs post-#190 on all 600 commits (the cached June-vintage file could not do this,
+      so a fresh immediate-pre-#190 binary was built; documented in FINDINGS.md).
+- [x] Central table produced: `Δn_newclone` by size stratum (small 1.16 / medium 1.16 /
+      large 1.32; overall 1.23; +116 from 40 commits, 560/600 identical).
+- [x] 17 newly-appeared findings hand-classified across 7 repos / 3 strata / 4 clone
+      types: **17/17 TP, 0 FP** (incl. verifying ZenDNN's dominant +34).
+- [x] Verdict: **mild size-correlation, ≈ uniform** — Spearman(avg_nloc, Δ)=+0.077;
+      ratio 1.16→1.32; large-vs-small gap widens ~14% (1.97×→2.24×).
+- [x] Recommendation: #184/#180/#182/#185 **numbers stand + add a scale note**
+      (~1.23× lower bound; direction/significance unaffected). Stage B optional.
+- [x] Closure verdict below.
+
+## Closure verdict (2026-07-20)
+
+**DONE — Stage A only; Stage B not justified by the evidence.**
+
+The #190 fix raises clone counts ~1.23× overall on a clean paired re-measure
+(pre-#190 vs post-#190 binary, same 600 commits, 100% ok). The undercount is
+**mild and close to uniform** (Spearman of per-commit Δ vs repo mean-function-size
+= +0.077; multiplicative ratio 1.16→1.32 across size terciles), with a real but
+small size lean (large-vs-small clone-rate gap widens ~14%). Newly-added findings
+are high precision (17/17 TP by hand). The before/after-**adoption** headline is
+robust: adopter post/pre clone surge 3.87→3.84 (unchanged); adopter≫control gap
+persists. Balanced sample → no new population DiD; #184's 1.37 is not re-estimated
+here and does not need to be. **Recommendation to every affected write-up: numbers
+stand, add a scale note.** Evidence: `experiments/clone_remeasure_193/FINDINGS.md`,
+`worklist.tsv`, `sample_meta.tsv`, `results_193.jsonl`, `results_193_prefix.jsonl`.
 
 ## Do NOT
 
