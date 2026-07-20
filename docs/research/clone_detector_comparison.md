@@ -6,6 +6,22 @@ How archcheck's `--duplication` pass compares against the two viable free,
 C++-capable copy-paste detectors that build/run in our environment. Not a corpus
 claim — a small, hand-verified comparison to locate where we win and where we lose.
 
+## At a glance
+
+Defaults, out of the box (rendered visual: `blurman-ai.github.io/assets/images/clone_detector_comparison.png`).
+
+| Capability | Duplo | PMD CPD | archcheck |
+|---|:---:|:---:|:---:|
+| What it is | line-based | token-based | fragment-based, typed & scored |
+| Free for C++ | ✓ GPL-2.0 | ✓ BSD | ✓ Apache-2.0 |
+| Runs on a bare clone (no build, no JVM) | ✓ native | ✗ needs Java | ✓ one binary, offline |
+| **Renamed (Type-2) clones, default** | ✗ renamed lines read as different | ✗ id-sensitive by default | **✓ 32-line copy-rename caught** |
+| Labels the clone (EXACT / RENAMED / STRUCTURAL) | ✗ | ✗ | ✓ |
+| Skips vendored / third-party code | ✗ reports ImGui clones | ✗ | ✓ by design |
+| Usable signal with zero tuning | ~ noisy at 4-line default | ~ Type-2 mode floods ~4× | ✓ typed, deduped |
+| Cross-function shared prologue | ✗ | ✓ | ~ partial — in progress (#195) |
+| **Per-PR drift gate** (only new clones vs a baseline) | ✗ snapshot only | ✗ snapshot only | ✓ `--diff` vs baseline |
+
 ## Setup
 
 | Tool | Kind | Invocation | License |
