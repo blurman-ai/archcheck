@@ -176,6 +176,34 @@ Required checks:
 4. Run fixtures and dogfood on `archcheck` itself.
 5. Decide whether an upgrade of `Violation` is needed at all, or the current contract is enough.
 
+## Comparison with other tools (why this signal is not redundant)
+
+Added 2026-07-20 after a web survey — this closes a documented gap: our other
+comparison docs cover architecture (`architecture-spec.md`), clones
+(`research/clone_tools_landscape.md`), cognitive complexity
+(`research/cognitive_complexity_delta_design.md`) and boolean **state/fields**
+(`research/tooling_survey.md`), but no head-to-head existed for the flag
+**argument** signal (ARG.1/ARG.2). Result of the survey: **no mainstream C++
+static analyzer detects the flag-argument smell as a rule.**
+
+| Tool | Flag-argument detection | Notes |
+|------|------------------------|-------|
+| **clang-tidy** | ✗ none | `bugprone-easily-swappable-parameters` **explicitly excludes `bool`** by default (bool is in the ignored-suffix list), so the one adjacent check that could fire, does not. No `readability` check targets boolean/flag parameters. |
+| **SonarQube / sonar-cxx** | ✗ none direct | Has `S107` (too many parameters, count-only) and boolean smell only *indirectly* via Cognitive Complexity `S3776`. No rule keys on a `bool` parameter or on `f(true, false)` call sites. |
+| **lizard** | ✗ (arity only) | `--arguments` counts parameter *count*, no type/semantics; can't tell a `bool` flag from any other param, and never looks at call sites. (We already run it as a dogfood gate — #001.) |
+| **Cppcheck** | ✗ none | Bug/UB focus; no boolean-parameter or flag-argument smell. |
+| **CppDepend (commercial)** | ⚠ expressible, not built-in | CQLinq could match "methods with ≥2 bool params" as a custom query, but there is no shipped flag-argument rule. |
+| **Designite (academic)** | ✗ | Design-smell tool, targets class/method smells (God Class, long method); no flag-argument detector, and C++ support is thin. |
+| **Code-smell catalogs** | (concept only) | Fowler's *FlagArgument*, `luzkan.github.io/smells/flag-argument`, Fluent C++ "10 code smells" — the smell is well-documented as a concept, but not implemented as a C++ static rule anywhere surveyed. |
+
+**Conclusion:** like `DRIFT.BOOL_FIELD_ACCRETION` (see `research/tooling_survey.md`
+verdict "novel in the practical C++ ecosystem"), the flag-argument signal is
+**not redundant with any existing tool**. The nearest thing — clang-tidy's
+easily-swappable-parameters — deliberately skips `bool`, which is exactly the
+case ARG.1 targets. Positioning stays advisory/delta-first (a cheap drift
+early-warning, not a linter over legacy), which is also what distinguishes it
+from a hypothetical strict "no bool params" lint.
+
 ## Key decisions
 
 | Decision | Reason |

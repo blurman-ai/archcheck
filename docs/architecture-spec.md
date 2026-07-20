@@ -109,6 +109,10 @@ The trend is unambiguous: C++ is the last large unoccupied niche. The appearance
 | **Sotograph** | enterprise | no | Closed, enterprise |
 | **archcheck** | **architecture in CI** | **yes** | **This niche** |
 
+The full head-to-head across all four dimensions (architecture, complexity,
+duplication, boolean/flag), with the per-commit-drift-gate gap and its receipts,
+is consolidated in [comparison.md](comparison.md).
+
 ### 4. The cultural risk and how to remove it
 
 The C++ community is more conservative than the Java one. "Clean architecture" and "hexagonal architecture" in C++ are not a religion. But it has its own authoritative tradition: **Lakos** ("Large-Scale C++ Software Design") and **C++ Core Guidelines** (Stroustrup, Sutter).
