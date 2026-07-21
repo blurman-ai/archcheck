@@ -301,3 +301,35 @@ TEST_CASE("#191: similar-shape but unrelated functions stay silent", "[duplicati
   const ScanResult result = scanForDuplication(files, opts);
   REQUIRE(result.pairs.empty());
 }
+
+TEST_CASE("#196: byte-identical trailing-const method bodies are reported", "[duplication][fixtures]")
+{
+  // Two operators share a byte-identical `ParamsToString() const {...}`. The token
+  // before `{` is `const`, so the pre-#196 `)`-before-`{` heuristic never emitted the
+  // whole body and the pair was reported by no layer. opensCallableBody now walks the
+  // trailing qualifier run back to `)`.
+  const auto files = loadFixtureDir("qualified_method_clone/fail_identical_const_body");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files);
+  REQUIRE(result.pairs.size() == 1);
+
+  const Pair &p = result.pairs.front();
+  const Fragment &fa = result.fragments[p.a];
+  const Fragment &fb = result.fragments[p.b];
+  REQUIRE(fa.file != fb.file);
+  REQUIRE(std::string_view(cloneType(fa, fb)) == "EXACT");
+  REQUIRE_FALSE(fa.boundary); // the whole `const` body (#190/#196), not a synthetic run
+  REQUIRE_FALSE(fb.boundary);
+}
+
+TEST_CASE("#196: distinct const-method bodies stay silent", "[duplication][fixtures]")
+{
+  // Same qualifier shape (both are `ParamsToString() const`), unrelated bodies. The
+  // broadened heuristic must not equate "both are const methods" with a clone.
+  const auto files = loadFixtureDir("qualified_method_clone/pass");
+  REQUIRE(files.size() == 2);
+
+  const ScanResult result = scanForDuplication(files);
+  REQUIRE(result.pairs.empty());
+}

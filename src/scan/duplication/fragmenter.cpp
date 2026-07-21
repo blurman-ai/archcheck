@@ -338,6 +338,30 @@ bool isControlBody(const std::vector<Token> &t, std::size_t brace)
   return false;
 }
 
+// True when `brace` (index of a `{`) opens a callable body: the tokens right before
+// it are a (possibly empty) run of trailing member-function qualifiers ending at a `)`.
+// The bare `)`-before-`{` test misses `f() const {`, `f() noexcept {`, `f() override {`,
+// ref-qualified `f() && {` etc. — #196. `noexcept(expr)` ends in `)` so it needs no
+// entry; trailing return `-> T {` is intentionally NOT matched (return-type token
+// before `{` is not a qualifier). `struct S {`, `= {`, `namespace N {` stay false.
+bool opensCallableBody(const std::vector<Token> &t, std::size_t brace)
+{
+  static const std::unordered_set<std::string> qual = {"const",    "noexcept", "override", "final",
+                                                       "volatile", "mutable",  "&",        "&&"};
+  for (std::size_t k = brace; k-- > 0;)
+  {
+    if (t[k].sym == ")")
+    {
+      return true;
+    }
+    if (qual.count(t[k].sym) == 0)
+    {
+      return false;
+    }
+  }
+  return false;
+}
+
 struct Range
 {
   std::size_t from = 0;
@@ -371,7 +395,7 @@ void scanRange(const CollectContext &ctx, const Range &range, std::vector<Range>
     }
     const std::size_t j = static_cast<std::size_t>(ctx.match[i]);
     const std::size_t body = j - i - 1;
-    const bool fnBody = (i > 0 && ctx.tokens[i - 1].sym == ")");
+    const bool fnBody = opensCallableBody(ctx.tokens, i);
     if (fnBody && body > ctx.opts.maxTokens && !isControlBody(ctx.tokens, i))
     {
       // #191: statement runs over the interior of a body too large to be emitted
