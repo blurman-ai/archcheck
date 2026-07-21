@@ -30,7 +30,10 @@ Steps:
    - Summarize sections **Goal**, **How it works**, **Key decisions**, **Changed files** and stop. Do not propose continuation unless the user asks.
    - Exception: if the user explicitly says "reopen" / "return to wip", move the file to `backlog/wip/`, set `**Status:** wip` and `**Start date:** <today>`.
 
-6. **If file is in `backlog/new/` or `backlog/future/`**:
+6. **If file is in `backlog/new/`**:
+   - Immediately `git mv` to `backlog/wip/`, add `**Start date:** <today>`, set status to `wip`, and start work. Do **not** ask for confirmation — invoking `/issue <id>` on a `new/` task is itself the go-ahead.
+
+   **If file is in `backlog/future/`**:
    - Ask the user: "Move to wip and start?" — if yes, `git mv` to `backlog/wip/` and add `**Start date:** <today>`, set status to `wip`.
    - If no, treat as read-only briefing.
 
