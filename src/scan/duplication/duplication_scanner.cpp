@@ -18,6 +18,7 @@ void phase1TokenizeAndExtract(const std::vector<std::pair<std::string, std::stri
 {
   FragmentOptions fragmentOpts = opts.fragmentOpts;
   fragmentOpts.boundaryRuns = opts.enableBoundaryRuns;
+  fragmentOpts.statementRuns = opts.enableStatementRuns;
   for (const auto &[path, source] : files)
   {
     const auto tokens = lex(source, fragmentOpts.minTokens > 0); // #147: lex() caps oversized data files
@@ -495,6 +496,15 @@ bool shouldDropContainedPair(const Pair &p, const Pair &q, const std::vector<Fra
   if (boundaryPair(p, frags) && !boundaryPair(q, frags))
   {
     return pairOverlapsPair(p, q, frags);
+  }
+  // #191: a synthetic run pair (q boundary) must never suppress a real body pair (p
+  // not boundary) by containment. A statement-run window can be LARGER than a small
+  // body, so without this guard a real clone gets dropped as "contained in" a run
+  // pair that phaseOverlapDedup then discards too — a net loss (duckdb regressed 3
+  // baseline pairs). Runs add recall for uncovered spans; they don't replace bodies.
+  if (!boundaryPair(p, frags) && boundaryPair(q, frags))
+  {
+    return false;
   }
   return pairContainedIn(p, q, frags);
 }

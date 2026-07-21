@@ -122,13 +122,46 @@ that occur in both enclosing whole-function documents, giving it zero IDF weight
 For boundary-vs-boundary pairs only, a zero weighted score falls back to plain
 Jaccard; the normal joint token/line floor still applies. Reporting then removes
 overlapping shifted windows after sorting, keeping the strongest span for a copy
-site. This is deliberately not the general #191 statement-run layer: arbitrary
-middle-of-function runs still need a measured sliding-window design.
+site.
 
-**Limitation:** blocks > `max_tokens` (≈100 lines) are split → large duplicates
-are not reported as a single pair (a documented segmentation boundary). Blocks
-< `min_tokens` are never fragments at any depth. Shared middle runs that are neither
-brace-delimited nor a function prefix/suffix remain out of scope (#191).
+**Statement runs (#191).** Boundary runs generalize to interior offsets: for a
+function body **larger than `max_tokens`** (one the whole-body layer never emits and
+whose ends #195 alone anchors), the scanner slides a window start across every
+top-level statement boundary and, at each start, snaps an end at ~`min_tokens`,
+`2*min_tokens`, `4*min_tokens`. This reaches a copied run sitting in the MIDDLE of two
+otherwise-different functions — flush with neither `bodyLo` nor `bodyHi` — the class
+that reopened #195 (Smatchet `JiraClient` `FetchUsers`/`FetchFieldCatalog`, an
+offset 14-line auth-setup run). Runs are `nested + boundary`, reusing every #190/#195
+invariant (out of df/IDF, the fingerprint cap, whole-file ratios; the zero-IDF
+plain-Jaccard fallback). Three scope guards keep this from exploding:
+
+- **Function bodies only** — control bodies (`if`/`for`/`while`/`switch`/`catch`) are
+  skipped, or a `switch`'s near-identical type-dispatch cases (`Select<int8_t>`,
+  `Select<int16_t>`, …) get sliced into a clique of mutual RENAMED clones (a measured
+  FP flood on duckdb `expression_executor`).
+- **`> max_tokens` only** — bodies within `[min, max]` are already covered by the whole
+  body (#190) + its boundary runs (#195); interior runs there are pure idiom-flood /
+  all-pairs cost for no unique recall.
+- **Same-file overlap/adjacency dropped at candidate generation** — heavily-overlapping
+  windows within one function would otherwise form an O(k²) same-function clique that
+  the scanner's `phase7` only discards *after* scoring; dropping it at candidacy is a
+  pure cost win (equivalent result). Also fixes the containment hazard where a synthetic
+  run pair could suppress a real body pair it happens to contain.
+
+Cost on duckdb `src/execution` (205 files): +85% wall (18s→33s), +40% RSS (215→300 MB),
+154→183 reported pairs, **lost = 0** baseline pairs. The +29 are the JiraClient-class
+offset runs plus real repeated blocks (duckdb `csv_state_machine_cache` transition-table
+setup — copy-pasted per-state, refactorable, reported as a dense clique).
+
+**Limitation:** blocks > `max_tokens` (≈100 lines) are still split for the *whole-body*
+layer → a large duplicate is not reported as one pair (a documented segmentation
+boundary); statement runs cover the sub-spans. Blocks < `min_tokens` are never fragments
+at any depth. A copied run inside a large `for`/`while` body (not the function top level)
+is out of scope (control bodies are skipped). **Trailing-qualifier methods**
+(`T Foo() const {`, `... noexcept {`) are still not recognized as function bodies — the
+`)`-before-`{` heuristic misses them — so neither their whole body (#190) nor their
+statement runs (#191) are emitted (why the identical `PhysicalLimit`/
+`PhysicalStreamingLimit` `ParamsToString() const` bodies are missed); tracked separately.
 
 ### 3.3. Inverted index — recall, with a RELATIVE rare-df
 
@@ -429,15 +462,20 @@ See also the rules for the config-agent (`v1_maj_agent_config_authoring_rules`).
   substantive duplicate blocks covered before, **17 of 24** after. NiCad cannot serve
   as the C++ oracle here — it has no C++ grammar and the present-as-C workaround fails
   to parse 38–94% of files.
-- **Copy-paste that is not a braced block — still not detected.** The fragmenter is
-  brace-based: it emits `{…}` bodies. A copied region that is a bare *run of statements*,
-  a fragment of one multi-line call's argument list, or a span covering several sibling
-  blocks plus the code between them is not a single braced unit and therefore never
-  becomes a fragment, at any nesting depth. This is the residual class, and it is what
-  a sliding-window/suffix pass would add. Witnesses: duckdb
-  `physical_limit.cpp:246 ↔ physical_streaming_limit.cpp:72` (a `ParamsToString` body —
-  several sibling `if` blocks with statements between them), monit
-  `cervlet.c:1357 ↔ 1484` (19 verbatim lines of consecutive `out_print` calls).
+- **Copy-paste that is not a braced block — mostly detected (#191, 2026-07-20).** The
+  fragmenter is brace-based, so a copied region that is a bare *run of statements* or a
+  span covering several sibling blocks plus the code between them is not a single braced
+  unit. #191's statement runs (§3.2) now emit such runs for function bodies **larger than
+  `max_tokens`**, closing the offset-middle-run class: the reopening witness
+  (Smatchet `JiraClient` `FetchUsers`↔`FetchFieldCatalog`, an offset 14-line auth run)
+  and duckdb `physical_iejoin.cpp:2073 ↔ 2098` (a bare mid-function run) are now reported.
+  Residual gaps: (a) runs inside a large `for`/`while`/`switch` body — control bodies are
+  skipped to avoid the switch type-dispatch FP flood; (b) trailing-qualifier methods
+  (`ParamsToString() const`) are not recognized as function bodies at all, so neither
+  their whole body nor their statement runs are emitted — this is a `)`-before-`{`
+  heuristic gap, not a fragmentation gap, and the reason the identical duckdb
+  `physical_limit`/`physical_streaming_limit` `ParamsToString` bodies stay missed
+  (tracked separately). monit `cervlet.c` witnesses (a C file) are not re-measured here.
 - Also still bounded below by `min_tokens`: a block under 30 tokens is not a fragment
   at any nesting depth, so the shortest copy-paste stays invisible.
 - **Segmentation** — `max_tokens` splits blocks >~100 lines. The older wording here ("a

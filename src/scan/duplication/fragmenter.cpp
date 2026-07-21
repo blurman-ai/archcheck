@@ -223,6 +223,121 @@ void emitBoundaryRuns(const CollectContext &ctx, std::size_t bodyLo, std::size_t
   }
 }
 
+// Record `p` as a statement-start boundary if it opens a real statement (in range,
+// not a bare `;`/`}` continuation).
+void pushBoundary(std::vector<std::size_t> &starts, const CollectContext &ctx, std::size_t p, std::size_t hi)
+{
+  if (p < hi && ctx.tokens[p].sym != ";")
+  {
+    starts.push_back(p);
+  }
+}
+
+// Top-level statement-start offsets within [lo, hi): `lo`, plus the index right
+// after each top-level `;` (paren depth 0) and each matched-brace block. A matched
+// `{...}` is skipped as a unit — a statement boundary never falls inside a brace
+// group (a nested block, or a `cpr::Header h{...};` initializer) — so a window can
+// never start mid-block or mid-expression. This is the interior generalization of
+// #195's two fixed anchors (bodyLo / bodyHi) to every offset in between.
+std::vector<std::size_t> statementStarts(const CollectContext &ctx, std::size_t lo, std::size_t hi)
+{
+  std::vector<std::size_t> starts{lo};
+  int paren = 0;
+  for (std::size_t i = lo; i < hi; ++i)
+  {
+    const std::string &sym = ctx.tokens[i].sym;
+    if (sym == "(")
+    {
+      ++paren;
+    }
+    else if (sym == ")" && paren > 0)
+    {
+      --paren;
+    }
+    else if (sym == "{" && ctx.match[i] >= 0 && static_cast<std::size_t>(ctx.match[i]) < hi)
+    {
+      i = static_cast<std::size_t>(ctx.match[i]); // skip the whole block; ++i steps past `}`
+      pushBoundary(starts, ctx, i + 1, hi);
+    }
+    else if (sym == ";" && paren == 0)
+    {
+      pushBoundary(starts, ctx, i + 1, hi);
+    }
+  }
+  return starts;
+}
+
+// Smallest statement-boundary end at or beyond `s + tier` tokens (bodyHi if none).
+std::size_t snapEnd(const std::vector<std::size_t> &starts, std::size_t si, std::size_t s, std::size_t tier,
+                    std::size_t bodyHi)
+{
+  for (std::size_t sj = si + 1; sj < starts.size(); ++sj)
+  {
+    if (starts[sj] - s >= tier)
+    {
+      return starts[sj];
+    }
+  }
+  return bodyHi;
+}
+
+// #191: emit bounded runs of top-level statements starting at *every* statement
+// boundary of a body. For each start, snap the end to a statement boundary at ~min,
+// 2*min and 4*min tokens (deduping equal snaps). Marked nested+boundary so the spans
+// stay out of df/IDF (like #190/#195) yet reach the boundary-aware plain-Jaccard
+// fallback when IDF has no signal.
+void emitStatementRuns(const CollectContext &ctx, std::size_t bodyLo, std::size_t bodyHi)
+{
+  if (!ctx.opts.statementRuns || bodyHi <= bodyLo || bodyHi - bodyLo < ctx.opts.minTokens)
+  {
+    return;
+  }
+  const std::vector<std::size_t> starts = statementStarts(ctx, bodyLo, bodyHi);
+  const std::array<std::size_t, 3> tiers = {ctx.opts.minTokens, ctx.opts.minTokens * 2, ctx.opts.minTokens * 4};
+  for (std::size_t si = 0; si < starts.size(); ++si)
+  {
+    const std::size_t s = starts[si];
+    std::size_t prevEnd = 0;
+    for (std::size_t tier : tiers)
+    {
+      const std::size_t e = snapEnd(starts, si, s, tier, bodyHi);
+      if (e - s >= ctx.opts.minTokens && e != prevEnd)
+      {
+        pushNestedBoundary(ctx, s, e);
+        prevEnd = e;
+      }
+    }
+  }
+}
+
+// True when the body opened at `brace` belongs to a control statement (if/for/while/
+// switch/catch) rather than a function. Statement runs over control bodies are a pure
+// FP flood — a switch's near-identical type-dispatch cases (`Select<int8_t,...>`,
+// `Select<int16_t,...>`, …) get sliced into a clique of mutual RENAMED clones — so
+// #191 slices only real function bodies. Walks back from the `)` before `{` to its
+// matching `(` and inspects the preceding keyword.
+bool isControlBody(const std::vector<Token> &t, std::size_t brace)
+{
+  if (brace == 0 || t[brace - 1].sym != ")")
+  {
+    return false;
+  }
+  int depth = 0;
+  for (std::size_t k = brace; k-- > 0;)
+  {
+    if (t[k].sym == ")")
+    {
+      ++depth;
+    }
+    else if (t[k].sym == "(" && --depth == 0)
+    {
+      static const std::unordered_set<std::string> kw = {"if", "for", "while", "switch", "catch"};
+      return k > 0 && kw.count(t[k - 1].sym) != 0;
+    }
+  }
+  return false;
+}
+
 struct Range
 {
   std::size_t from = 0;
@@ -257,6 +372,17 @@ void scanRange(const CollectContext &ctx, const Range &range, std::vector<Range>
     const std::size_t j = static_cast<std::size_t>(ctx.match[i]);
     const std::size_t body = j - i - 1;
     const bool fnBody = (i > 0 && ctx.tokens[i - 1].sym == ")");
+    if (fnBody && body > ctx.opts.maxTokens && !isControlBody(ctx.tokens, i))
+    {
+      // #191: statement runs over the interior of a body too large to be emitted
+      // whole (emitBodyAndDescend below never fires for it, and #195's boundary
+      // windows anchor to the ends), so a copied run offset in the MIDDLE of two
+      // such functions still becomes a comparable fragment. Bodies within
+      // [minTokens, maxTokens] are already covered by the whole body (#190) plus
+      // its prefix/suffix boundary runs (#195); adding interior runs there is the
+      // dominant idiom-flood / all-pairs cost source for no recall the others miss.
+      emitStatementRuns(ctx, i + 1, j);
+    }
     if (fnBody && body >= ctx.opts.minTokens && body <= ctx.opts.maxTokens)
     {
       // Emit the body, then descend into it anyway (#190): copied nested blocks

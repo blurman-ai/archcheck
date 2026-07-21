@@ -44,6 +44,11 @@ struct FragmentOptions
   // #195: emit bounded function prefix/suffix spans so a shared prologue or
   // epilogue in two otherwise-different functions can be compared as a unit.
   bool boundaryRuns = false;
+  // #191: generalize #195 to interior offsets — emit bounded runs of top-level
+  // statements starting at *every* statement boundary of a function body, so a
+  // copied span sitting in the middle of two otherwise-different functions
+  // (flush with neither bodyLo nor bodyHi) becomes a comparable fragment.
+  bool statementRuns = false;
 };
 
 // Extract function-scale fragments from tokenized source.

@@ -258,3 +258,46 @@ TEST_CASE("#195: short coincidental shared prologue stays silent", "[duplication
   const ScanResult result = scanForDuplication(files);
   REQUIRE(result.pairs.empty());
 }
+
+TEST_CASE("#191: an offset middle-of-function run is reported", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("statement_run_clone/fail_offset_middle_run");
+  REQUIRE(files.size() == 2);
+
+  // The fixture functions are ~50 lines; lowering maxTokens makes each body exceed it,
+  // taking the exact "too large to emit whole" statement-run path a >600-token function
+  // takes at the default. The shared session-setup run sits in the MIDDLE of both bodies
+  // — offset by a DIFFERENT prologue in each — so #190 (one braced block) and #195 (a run
+  // flush with bodyLo/bodyHi) both miss it; only #191's interior runs reach it.
+  ScannerOptions opts;
+  opts.fragmentOpts.maxTokens = 120;
+  const ScanResult result = scanForDuplication(files, opts);
+  REQUIRE(result.pairs.size() >= 1);
+
+  const Pair &p = result.pairs.front();
+  const Fragment &fa = result.fragments[p.a];
+  const Fragment &fb = result.fragments[p.b];
+  REQUIRE(fa.file != fb.file);
+  REQUIRE(fa.boundary); // a synthetic statement-run span, not a whole body
+  REQUIRE(fb.boundary);
+  // The match is the middle run, not the whole ~50-line body.
+  REQUIRE(fa.endLine - fa.startLine < 25);
+  REQUIRE(fb.endLine - fb.startLine < 25);
+
+  // Negative control (the #195 "fixture passes != feature works" lesson): the run is
+  // invisible to #190/#195 alone — disabling statement runs drops it to zero, proving
+  // #191's interior slicing is what reports it.
+  opts.enableStatementRuns = false;
+  REQUIRE(scanForDuplication(files, opts).pairs.empty());
+}
+
+TEST_CASE("#191: similar-shape but unrelated functions stay silent", "[duplication][fixtures]")
+{
+  const auto files = loadFixtureDir("statement_run_clone/pass");
+  REQUIRE(files.size() == 2);
+
+  ScannerOptions opts;
+  opts.fragmentOpts.maxTokens = 120;
+  const ScanResult result = scanForDuplication(files, opts);
+  REQUIRE(result.pairs.empty());
+}

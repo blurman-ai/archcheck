@@ -62,7 +62,12 @@ void buildRareTokenIndex(const std::vector<Fragment> &fragments, std::size_t eff
   {
     for (const auto &[sym, cnt] : fragments[fi].bag)
     {
-      if (static_cast<std::size_t>(df.at(sym)) <= effRareDf)
+      // #191: a token can live only in statement-run fragments whose oversized
+      // enclosing body was never emitted as a document, so it is absent from df.
+      // Absent = zero documents = maximally rare; index it (df.find, not df.at).
+      const auto d = df.find(sym);
+      const std::size_t docFreq = d == df.end() ? 0 : static_cast<std::size_t>(d->second);
+      if (docFreq <= effRareDf)
       {
         postings[sym].push_back(fi);
       }
@@ -70,7 +75,24 @@ void buildRareTokenIndex(const std::vector<Fragment> &fragments, std::size_t eff
   }
 }
 
-void findCandidatePairs(const std::unordered_map<std::string, std::vector<std::size_t>> &postings,
+// A same-file candidate pair whose spans overlap or merely abut is never actionable
+// copy-paste (a parent/child fragment, or two abutting windows of the same site) and
+// the scanner's phase7 drops it unconditionally. Skipping it at candidate generation
+// keeps #191's heavily-overlapping statement-run windows from forming an O(k^2)
+// same-function clique that would otherwise be scored and only then discarded.
+bool sameFileOverlapOrAdjacent(const Fragment &a, const Fragment &b)
+{
+  if (a.file != b.file || a.startLine <= 0 || b.startLine <= 0)
+  {
+    return false; // different files, or unset coordinates — cannot assert overlap
+  }
+  const bool overlap = a.startLine <= b.endLine && b.startLine <= a.endLine;
+  const bool adjacent = a.endLine + 1 == b.startLine || b.endLine + 1 == a.startLine;
+  return overlap || adjacent;
+}
+
+void findCandidatePairs(const std::vector<Fragment> &fragments,
+                        const std::unordered_map<std::string, std::vector<std::size_t>> &postings,
                         std::map<std::pair<std::size_t, std::size_t>, std::size_t> &sharedRare)
 {
   for (const auto &[sym, list] : postings)
@@ -79,6 +101,10 @@ void findCandidatePairs(const std::unordered_map<std::string, std::vector<std::s
     {
       for (std::size_t y = x + 1; y < list.size(); ++y)
       {
+        if (sameFileOverlapOrAdjacent(fragments[list[x]], fragments[list[y]]))
+        {
+          continue;
+        }
         const auto key = std::make_pair(std::min(list[x], list[y]), std::max(list[x], list[y]));
         ++sharedRare[key];
       }
@@ -170,9 +196,29 @@ std::unordered_set<std::uint64_t> fingerprintsOf(const std::vector<std::string> 
   return fps;
 }
 
-// Add candidate pairs whose fragments share a fingerprint. Bumps the shared count
-// to the candidacy floor so a fingerprint match alone qualifies (it is a stronger
-// signal than two shared rare tokens: a verbatim run of fpK+fpWindow-1 tokens).
+// Pair up every fragment sharing one fingerprint, bumping the shared count to the
+// candidacy floor (a fingerprint match alone qualifies — a verbatim run of
+// fpK+fpWindow-1 tokens is stronger than two shared rare tokens).
+void pairFingerprintPostings(const std::vector<std::size_t> &list, const std::vector<Fragment> &fragments,
+                             const IndexOptions &opts,
+                             std::map<std::pair<std::size_t, std::size_t>, std::size_t> &sharedRare)
+{
+  for (std::size_t x = 0; x < list.size(); ++x)
+  {
+    for (std::size_t y = x + 1; y < list.size(); ++y)
+    {
+      if (sameFileOverlapOrAdjacent(fragments[list[x]], fragments[list[y]]))
+      {
+        continue;
+      }
+      const auto key = std::make_pair(std::min(list[x], list[y]), std::max(list[x], list[y]));
+      auto &c = sharedRare[key];
+      c = std::max(c, opts.minSharedRare); // ensure it clears shouldKeepPair's count gate
+    }
+  }
+}
+
+// Add candidate pairs whose fragments share a fingerprint.
 void addFingerprintCandidates(const std::vector<Fragment> &fragments, const IndexOptions &opts,
                               std::map<std::pair<std::size_t, std::size_t>, std::size_t> &sharedRare)
 {
@@ -186,27 +232,18 @@ void addFingerprintCandidates(const std::vector<Fragment> &fragments, const Inde
   }
   for (const auto &[fp, list] : fpPostings)
   {
-    // Count documents, not fragments (#190): a run inside a body is fingerprinted
-    // both in that body and in the nested block, so counting raw postings
-    // double-counts the same text and pushes ordinary runs over the cap. That
-    // silenced whole families of real clones (duckdb's duckdb_tables/views/indexes)
-    // by killing their fingerprint candidacy. Nested fragments still pair up below;
-    // they just do not inflate the frequency judgement.
+    // Count documents, not fragments (#190): a run inside a body is fingerprinted both
+    // in that body and in the nested block, so counting raw postings double-counts the
+    // same text and pushes ordinary runs over the cap — that silenced whole families of
+    // real clones (duckdb's duckdb_tables/views/indexes). Nested fragments still pair up
+    // below; they just do not inflate the frequency judgement.
     const std::size_t documents = static_cast<std::size_t>(
         std::count_if(list.begin(), list.end(), [&](std::size_t fi) { return !fragments[fi].nested; }));
     if (opts.fpMaxPostings > 0 && documents > opts.fpMaxPostings)
     {
       continue; // over-frequent fingerprint = boilerplate idiom, not a clone signal
     }
-    for (std::size_t x = 0; x < list.size(); ++x)
-    {
-      for (std::size_t y = x + 1; y < list.size(); ++y)
-      {
-        const auto key = std::make_pair(std::min(list[x], list[y]), std::max(list[x], list[y]));
-        auto &c = sharedRare[key];
-        c = std::max(c, opts.minSharedRare); // ensure it clears shouldKeepPair's count gate
-      }
-    }
+    pairFingerprintPostings(list, fragments, opts, sharedRare);
   }
 }
 } // namespace
@@ -221,7 +258,7 @@ CloneIndex buildIndex(const std::vector<Fragment> &fragments, const IndexOptions
   computeIdfWeights(N, idx.df, idx.idf);
   std::size_t effRareDf = getEffectiveRareDf(N, opts);
   buildRareTokenIndex(fragments, effRareDf, idx.df, idx.postings);
-  findCandidatePairs(idx.postings, idx.sharedRare);
+  findCandidatePairs(fragments, idx.postings, idx.sharedRare);
   if (opts.fingerprints)
   {
     addFingerprintCandidates(fragments, opts, idx.sharedRare);
