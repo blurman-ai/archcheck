@@ -2,7 +2,7 @@
 
 **Created:** 2026-07-20
 **Start date:** 2026-07-20
-**Status:** wip (reopened — acceptance witness fails, see Verification #194)
+**Status:** completed (2026-07-21) — witness now reported; boundary-run layer confirmed load-bearing (see Closure)
 **Module:** SCAN
 **Priority:** major
 **Difficulty:** unknown
@@ -139,3 +139,19 @@ so lowering the global duplication floor also lowers the boundary-run floor.
   files still reports pre-existing long functions/tests (`phase13FileLocalIdfDownweight`
   and long duplication tests); new/modified product logic no longer appears in
   the warning list.
+
+## Closure (2026-07-21)
+
+The acceptance witness that reopened this task — `Smatchet@f8368a23
+JiraClient.cpp:587↔884` — **is now reported** (`587-605 ↔ 883-900`, STRUCTURAL
+weighted=0.732), verified against the pinned OSS-git blob. It is caught by *this*
+task's boundary prefix window; the fix that pushed its score over threshold came
+with #191's index/scoring changes. So #195 + #191 together close the case.
+
+**This layer is NOT subsumed by #191.** An A/B (disable `enableBoundaryRuns`,
+statement-runs on) on duckdb `src/execution` dropped pairs **183 → 123** and lost
+the witness — boundary-runs carry ~52 real pairs statement-runs do not. So
+`enableBoundaryRuns` stays; the two layers are complementary, not overlapping.
+(The "#191 supersedes #195" phrasing in commit `104cde9` and an earlier #191 draft
+was wrong and is corrected in #191's write-up.) Full A/B numbers: #191 task,
+§"A/B — #195 boundary-runs are load-bearing".
