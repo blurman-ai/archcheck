@@ -519,12 +519,8 @@ void phaseNestedContainment(std::vector<Pair> &candidates, const std::vector<Fra
 
   for (const auto &p : candidates)
   {
-    const bool nested =
-        std::any_of(candidates.begin(), candidates.end(),
-                    [&](const Pair &q)
-                    {
-                      return &q != &p && shouldDropContainedPair(p, q, frags);
-                    });
+    const bool nested = std::any_of(candidates.begin(), candidates.end(),
+                                    [&](const Pair &q) { return &q != &p && shouldDropContainedPair(p, q, frags); });
 
     if (!nested)
     {
@@ -540,8 +536,7 @@ void phaseOverlapDedup(std::vector<Pair> &candidates, const std::vector<Fragment
   for (const Pair &p : candidates)
   {
     const bool duplicate =
-        std::any_of(filtered.begin(), filtered.end(),
-                    [&](const Pair &q) { return pairOverlapsPair(p, q, frags); });
+        std::any_of(filtered.begin(), filtered.end(), [&](const Pair &q) { return pairOverlapsPair(p, q, frags); });
     if (!duplicate)
     {
       filtered.push_back(p);
@@ -550,8 +545,7 @@ void phaseOverlapDedup(std::vector<Pair> &candidates, const std::vector<Fragment
   candidates = std::move(filtered);
 }
 
-void phaseP1Guards(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments,
-                   const ScannerOptions &opts)
+void phaseP1Guards(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments, const ScannerOptions &opts)
 {
   phase10DataTableClassifier(candidates, allFragments, opts);
   phase11BoilerplateDensity(candidates, allFragments);
