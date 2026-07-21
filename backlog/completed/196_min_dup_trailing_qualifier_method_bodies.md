@@ -2,7 +2,7 @@
 
 **Created:** 2026-07-20
 **Start date:** 2026-07-21
-**Status:** wip
+**Status:** completed
 **Module:** SCAN/DUPLICATION
 **Priority:** minor
 **Difficulty:** small
@@ -96,3 +96,27 @@ qualified methods short-circuit it to false.
 - Full suite 661/661 (2 new #196 tests). Dogfood self-check clean, lizard clean.
 - duckdb `src/execution`: baseline 183 pairs → 226 pairs; witness reported; net +45 sites, −1
   justified borderline pair.
+
+## Key decisions
+
+- **Qualifier walk-back, not a full declarator parse.** A fixed set of trailing member-function
+  qualifiers is enough; anything beyond `)` grammar (trailing return `-> T`) is out of scope for
+  a minor task and left as a documented limitation.
+- **`isControlBody` untouched.** It still keys on the immediate `)`; a qualified method never has
+  `)` right before `{`, so it short-circuits to false — no change needed there.
+- **One borderline loss accepted, not chased.** The asof/iejoin RENAMED pair drops just under the
+  0.60 gate from the df/IDF-scale shift. Recovering it means recalibrating the gate — the "own
+  precision pass" the task explicitly deferred — so it is accepted with the corpus evidence above.
+
+## Changed files
+
+- `src/scan/duplication/fragmenter.cpp` — `opensCallableBody()` helper; `scanRange` uses it in
+  place of the `)`-before-`{` test (commit b7ed7c3).
+- `tests/duplication_synthetic_fp_test.cpp` — two #196 test cases (commit b7ed7c3).
+- `fixtures/duplication/qualified_method_clone/{pass,fail_identical_const_body}/` — new fixture
+  (commit b7ed7c3).
+
+## Summary
+
+**Status:** completed
+**Completion date:** 2026-07-21
