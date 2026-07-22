@@ -10,7 +10,7 @@ lies precisely in staying narrow.
 
 ## Data
 
-- **Corpus:** 310 C++ repositories (`~/oss/`), ~13-month window
+- **Corpus:** 310 C++ repositories (`~/oss_corpus/oss/`), ~13-month window
   (May 2025 → June 2026), **135,092 commits** analyzed per-commit
   (`experiments/ai_repo_run/*_graph_drift.{jsonl,md}`,
   generator `generate_per_commit_graph_drift.py`).

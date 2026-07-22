@@ -114,7 +114,7 @@ Each rule = one class = one file in `src/rules/`; registration — the factory i
 
 ## F. Corpus and methodology
 
-- **Corpus** — ~1686 local C++ git repos on NVMe (`~/oss/`); per-commit table
+- **Corpus** — ~1686 local C++ git repos on NVMe (`~/oss_corpus/oss/`); per-commit table
   `experiments/per_commit/results_full.jsonl` (~340k records), worklist `worklist_full.tsv`.
 - **Corpus criteria gate** — the repo selection gate (`experiments/CORPUS_CRITERIA.md`): the main one —
   >300 commits since May 2025. Check it before every clone.

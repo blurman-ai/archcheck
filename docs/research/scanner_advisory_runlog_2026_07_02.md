@@ -40,7 +40,7 @@ Struct events reported:            13315
 Live repro:
 
 ```bash
-cd ~/oss/EricLeeFriedman_CopilotChess
+cd ~/oss_corpus/oss/EricLeeFriedman_CopilotChess
 ~/projects/cpparch/build/debug/src/archcheck \
   --diff --format=json \
   d19b8246d1322e2cf0c89f6d62217371dc098f75^..d19b8246d1322e2cf0c89f6d62217371dc098f75 .
@@ -112,7 +112,7 @@ deletion-shift:            4
 ### Live TP
 
 ```bash
-cd ~/oss/AlchemyViewer_Alchemy
+cd ~/oss_corpus/oss/AlchemyViewer_Alchemy
 ~/projects/cpparch/build/debug/src/archcheck \
   --diff --format=json \
   fc56e0801fabc19d514d8c877050d0feb00b7de5^..fc56e0801fabc19d514d8c877050d0feb00b7de5 .
@@ -140,7 +140,7 @@ Verdict: clean LCX TP.
 ### Historical FP Recheck
 
 ```bash
-cd ~/oss/AlchemyViewer_Alchemy
+cd ~/oss_corpus/oss/AlchemyViewer_Alchemy
 ~/projects/cpparch/build/debug/src/archcheck \
   --diff --format=json \
   9a6ace99ded620a0f30a549c2f68153cee89daf2^..9a6ace99ded620a0f30a549c2f68153cee89daf2 .

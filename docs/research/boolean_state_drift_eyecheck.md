@@ -25,11 +25,11 @@
 
 > One meaningful structure (god-class / widget / domain handle) slowly accretes state/mode flags commit after commit.
 
-- **ToolboxUIElement.h** — [file](file://~/oss/gwdevhub_GWToolboxpp/GWToolboxdll/ToolboxUIElement.h) — `gwdevhub_GWToolboxpp`. ⭐ Reference case: one UI class, ~24 bool, flags feature by feature over 2 years (titlebar→breakout→mobile→collapse→snap).
-- **platform.hpp** — [file](file://~/oss/oneapi-src_unified-runtime/source/adapters/level_zero/platform.hpp) — `oneapi unified-runtime`. `ur_platform_handle_t_` — every new Level Zero extension adds `bool ...Supported{false}`, 2024→2026, one per commit.
-- **engine.hpp** — [file](file://~/oss/ThomasGhione_chess_engine/engine/engine.hpp) — `ThomasGhione_chess_engine`. The god-class `Engine` accumulates pondering/search coordination flags (2025-10→2026-05).
-- **channelrhiview.h** — [file](file://~/oss/mne-tools_mne-cpp/src/libraries/disp/viewers/helpers/channelrhiview.h) — `mne-cpp`. UI class, ~20 bool, one flag per commit (crosshair/scalebars/butterfly/zscore…).
-- **solidity_convert.h** — [file](file://~/oss/esbmc_esbmc/src/solidity-frontend/solidity_convert.h) — `esbmc`. The god-class converter accumulated mode flags (bound/reentry/pointer/unchecked) on top of state.
+- **ToolboxUIElement.h** — [file](file://~/oss_corpus/oss/gwdevhub_GWToolboxpp/GWToolboxdll/ToolboxUIElement.h) — `gwdevhub_GWToolboxpp`. ⭐ Reference case: one UI class, ~24 bool, flags feature by feature over 2 years (titlebar→breakout→mobile→collapse→snap).
+- **platform.hpp** — [file](file://~/oss_corpus/oss/oneapi-src_unified-runtime/source/adapters/level_zero/platform.hpp) — `oneapi unified-runtime`. `ur_platform_handle_t_` — every new Level Zero extension adds `bool ...Supported{false}`, 2024→2026, one per commit.
+- **engine.hpp** — [file](file://~/oss_corpus/oss/ThomasGhione_chess_engine/engine/engine.hpp) — `ThomasGhione_chess_engine`. The god-class `Engine` accumulates pondering/search coordination flags (2025-10→2026-05).
+- **channelrhiview.h** — [file](file://~/oss_corpus/oss/mne-tools_mne-cpp/src/libraries/disp/viewers/helpers/channelrhiview.h) — `mne-cpp`. UI class, ~20 bool, one flag per commit (crosshair/scalebars/butterfly/zscore…).
+- **solidity_convert.h** — [file](file://~/oss_corpus/oss/esbmc_esbmc/src/solidity-frontend/solidity_convert.h) — `esbmc`. The god-class converter accumulated mode flags (bound/reentry/pointer/unchecked) on top of state.
 
 ## 🟡 Config growth by design (7)
 

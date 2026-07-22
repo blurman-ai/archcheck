@@ -1,6 +1,6 @@
 # AI-reviewed drift PRs: concrete dependency deltas
 
-_Generated 2026-07-07 from `experiments/trending_run/inverted_corpus.jsonl` by rerunning `archcheck --diff <sha>~1..<sha>` on local `/home/localadm/oss/*` clones._
+_Generated 2026-07-07 from `experiments/trending_run/inverted_corpus.jsonl` by rerunning `archcheck --diff <sha>~1..<sha>` on local `/home/localadm/oss_corpus/oss/*` clones._
 
 Scope: 43 drift commits grouped into 38 PRs. `structural review?` is the manual read from `ai_hit_eyecheck2.jsonl`: whether the AI reviewer actually mentioned the structural issue, not just any keyword.
 

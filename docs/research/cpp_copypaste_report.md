@@ -13,7 +13,7 @@
 - **Repos with non-empty copy-paste:** 763 (rows with `verdict==VIOLATION_KEPT`, `dup_pairs>0` from census).
 - **Method:** census computed `dup_pairs` via the fast token pass of archcheck v0.1. I sorted by
   `dup_per100f` (duplicate density per 100 files) — the most "copy-paste-heavy" on top. I went through the
-  top 20 by hand: took the clone at `~/oss/<owner_repo>`, pinned the `sha` (12 chars), ran
+  top 20 by hand: took the clone at `~/oss_corpus/oss/<owner_repo>`, pinned the `sha` (12 chars), ran
   `archcheck --duplication`, and read **both** fragments of each notable pair verbatim from the clone.
 - **Duplicate classes** (archcheck output format): `EXACT` (tokens match 1:1), `LITERAL` (match up to
   literals/strings), `RENAMED` (match up to names), `STRUCTURAL` (skeleton matches, details diverge).

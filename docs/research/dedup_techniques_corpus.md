@@ -14,7 +14,7 @@ commit — and that is precisely the authority of Lakos's practice over our opin
 > **Provenance.** The data was obtained in a corpus run (#079/#080) whose artifacts
 > live locally outside git (`experiments/` — not tracked). The source of dates/windows at the time:
 > `runs_history/all/<repo>.tsv` + the summary `drift_summary_v2.tsv`; commits were verified
-> in the clones `~/oss/_aidev_run/<repo>`. Preserved here is the result — the tables and
+> in the clones `~/oss_corpus/oss/_aidev_run/<repo>`. Preserved here is the result — the tables and
 > conclusions that should not be lost together with the local dumps.
 
 The theme is physical design in the spirit of John Lakos: lifting common code up the levels,

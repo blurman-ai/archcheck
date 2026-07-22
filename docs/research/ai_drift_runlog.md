@@ -5,7 +5,7 @@ This file is the operational journal of the DRIFT research for task
 Final findings move to [ai_drift_cases.md](ai_drift_cases.md).
 Milestone summaries are in [milestones.md](../milestones.md).
 
-**Clones:** `~/oss/<repo>/` (permanent storage, not a sandbox).
+**Clones:** `~/oss_corpus/oss/<repo>/` (permanent storage, not a sandbox).
 **archcheck version:** working tree after the #047 fix (BOM strip).
 **Methodology:** clean checkout via `git clean -fdx` + `git checkout -f`
 (see [#048](../../backlog/new/048_maj_drift_clean_checkout_methodology.md)
@@ -153,6 +153,6 @@ The script guarantees a clean state before each revision via `git clean -fdx` + 
 bash scripts/drift_run.sh <repo-path> <subdir> <before-sha> <after-sha> <label>
 
 # Example:
-bash scripts/drift_run.sh ~/oss/LibreSprite src \
+bash scripts/drift_run.sh ~/oss_corpus/oss/LibreSprite src \
     5f0fcd28ab2d5e74e0fa5b0e7bda79d8fafcc61a 276fdbdb27b537a074c3e170af6afc88c244a539 libresprite_581
 ```

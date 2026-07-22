@@ -59,7 +59,7 @@ of the ranking was almost entirely FP. Real cycles (see the manual verification 
 
 ## Method
 
-1. A re-run of the fixed `archcheck` (SF.9) over on-disk violators under `~/oss/<owner_repo>`.
+1. A re-run of the fixed `archcheck` (SF.9) over on-disk violators under `~/oss_corpus/oss/<owner_repo>`.
 2. For the top — `git rev-parse HEAD` (12 chars), the cycle path from SF.9 (`A → B → A`).
 3. Each cycle is **verified manually** in the clone's code — real `#include` lines opened.
    ✅ = mutual include is visible in the code; ⚠️ = vendor/generated/disputable.

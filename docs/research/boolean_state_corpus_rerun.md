@@ -6,11 +6,11 @@
 
 | Struct | Bools | State | Ratio | File |
 |---|---|---|---|---|
-| SimulationData | 6 | 4 | 66% | [simulation_data.hpp](file://~/oss/EVerest_EVerest/modules/EV/EvManager/main/simulation_data.hpp) |
+| SimulationData | 6 | 4 | 66% | [simulation_data.hpp](file://~/oss_corpus/oss/EVerest_EVerest/modules/EV/EvManager/main/simulation_data.hpp) |
 
 ## Fields per item
 
-- **SimulationData** (6 bool, 4 state-like, 66%) — [simulation_data.hpp](file://~/oss/EVerest_EVerest/modules/EV/EvManager/main/simulation_data.hpp)
+- **SimulationData** (6 bool, 4 state-like, 66%) — [simulation_data.hpp](file://~/oss_corpus/oss/EVerest_EVerest/modules/EV/EvManager/main/simulation_data.hpp)
   `v2g_finished, iso_stopped, iso_charger_paused, iso_pwr_ready, bcb_toggle_C, dc_power_on`
   → Real TP: phases of an EV charging-session simulation (`finished`/`stopped`/`paused`/`ready`) + 2 orthogonal toggles. The state subset is explicit.
 
