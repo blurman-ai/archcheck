@@ -75,9 +75,15 @@ echo "► Collecting coverage data ..."
 INFO_ALL="$BUILD_DIR/cov_all.info"
 INFO_SRC="$BUILD_DIR/cov_src.info"
 
+# --ignore-errors mismatch: lcov 2.x + GCC 13 (Ubuntu) aborts capture on
+# "mismatched exception tag" for throw-arcs it cannot reconcile; ignoring it is
+# lcov's own documented remedy and only drops the offending arc. gcov/source/
+# negative silence the other benign geninfo warnings so --capture cannot fail on
+# a warning. (No-op on lcov 1.13, which never emitted these.)
 lcov --capture \
      --directory "$BUILD_DIR" \
      --rc lcov_branch_coverage=1 \
+     --ignore-errors mismatch,gcov,source,negative \
      --output-file "$INFO_ALL" \
      --quiet
 
@@ -85,6 +91,7 @@ lcov --capture \
 lcov --remove "$INFO_ALL" \
      '*/_deps/*' '/usr/*' '*/c++/*' '*/tests/*' '*/catch2/*' \
      --rc lcov_branch_coverage=1 \
+     --ignore-errors unused,source \
      --output-file "$INFO_SRC" \
      --quiet
 
