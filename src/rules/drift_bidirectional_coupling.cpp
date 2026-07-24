@@ -1,14 +1,13 @@
 #include "archcheck/rules/drift_bidirectional_coupling.h"
 
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
 
 #include "archcheck/graph/diff.h"
-#include "archcheck/graph/node_id.h"
 #include "archcheck/rules/area_of.h"
+#include "archcheck/rules/cross_area_edges.h"
 
 namespace archcheck::rules
 {
@@ -20,19 +19,7 @@ namespace
 std::unordered_set<std::string> areaDeps(const graph::DependencyGraph &g)
 {
   std::unordered_set<std::string> deps;
-  for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(g.nodeCount()); ++i)
-  {
-    const graph::NodeId u{i};
-    const std::string a = areaOf(g.pathOf(u));
-    if (a.empty())
-      continue;
-    for (const auto v : g.successors(u))
-    {
-      const std::string b = areaOf(g.pathOf(v));
-      if (!b.empty() && a != b)
-        deps.insert(a + "\n" + b);
-    }
-  }
+  forEachCrossAreaEdge(g, [&](const std::string &a, const std::string &b) { deps.insert(a + "\n" + b); });
   return deps;
 }
 

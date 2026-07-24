@@ -1,15 +1,14 @@
 #include "archcheck/rules/drift_lateral_module_dependency.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "archcheck/graph/diff.h"
-#include "archcheck/graph/node_id.h"
 #include "archcheck/rules/area_of.h"
+#include "archcheck/rules/cross_area_edges.h"
 
 namespace archcheck::rules
 {
@@ -37,24 +36,15 @@ std::unordered_map<std::string, ModuleMetrics> computeMetrics(const graph::Depen
   std::unordered_map<std::string, ModuleMetrics> m;
   // Use a set of pairs to avoid counting parallel file-edges between same modules.
   std::unordered_set<std::string> seen;
-  for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(g.nodeCount()); ++i)
-  {
-    const graph::NodeId u{i};
-    const std::string a = areaOf(g.pathOf(u));
-    if (a.empty())
-      continue;
-    for (const auto v : g.successors(u))
-    {
-      const std::string b = areaOf(g.pathOf(v));
-      if (b.empty() || a == b)
-        continue;
-      const std::string key = a + "\n" + b;
-      if (!seen.insert(key).second)
-        continue;
-      m[a].fod++;
-      m[b].fid++;
-    }
-  }
+  forEachCrossAreaEdge(g,
+                       [&](const std::string &a, const std::string &b)
+                       {
+                         if (seen.insert(a + "\n" + b).second)
+                         {
+                           m[a].fod++;
+                           m[b].fid++;
+                         }
+                       });
   return m;
 }
 
@@ -98,19 +88,7 @@ bool isShared(const std::string &mod, const std::unordered_map<std::string, Modu
 std::unordered_set<std::string> modulePairs(const graph::DependencyGraph &g)
 {
   std::unordered_set<std::string> pairs;
-  for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(g.nodeCount()); ++i)
-  {
-    const graph::NodeId u{i};
-    const std::string a = areaOf(g.pathOf(u));
-    if (a.empty())
-      continue;
-    for (const auto v : g.successors(u))
-    {
-      const std::string b = areaOf(g.pathOf(v));
-      if (!b.empty() && a != b)
-        pairs.insert(a + "\n" + b);
-    }
-  }
+  forEachCrossAreaEdge(g, [&](const std::string &a, const std::string &b) { pairs.insert(a + "\n" + b); });
   return pairs;
 }
 
