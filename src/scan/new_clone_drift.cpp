@@ -15,6 +15,19 @@ namespace
 
 constexpr const char *kRuleId = "DRIFT.NEW_CLONE";
 
+// Normalized tokens of a fragment joined by a unit separator (the shared body of
+// both key functions below).
+std::string joinTokens(const duplication::Fragment &f)
+{
+  std::string joined;
+  for (const auto &t : f.seq)
+  {
+    joined += t;
+    joined.push_back('\x1f');
+  }
+  return joined;
+}
+
 // Location-aware identity of a fragment: its file plus the hash of its normalized
 // token sequence. Including the file is what lets the parent-guard tell apart "this
 // PR reformatted a copy that already existed here" (same file+content → suppress)
@@ -23,25 +36,12 @@ constexpr const char *kRuleId = "DRIFT.NEW_CLONE";
 // stable across reformat/whitespace churn, so the reformat case is still recognised.
 std::string fragKey(const duplication::Fragment &f)
 {
-  std::string joined = f.file;
-  joined.push_back('\x1f');
-  for (const auto &t : f.seq)
-  {
-    joined += t;
-    joined.push_back('\x1f');
-  }
-  return std::to_string(std::hash<std::string>{}(joined));
+  return std::to_string(std::hash<std::string>{}(f.file + '\x1f' + joinTokens(f)));
 }
 
 std::string contentKey(const duplication::Fragment &f)
 {
-  std::string joined;
-  for (const auto &t : f.seq)
-  {
-    joined += t;
-    joined.push_back('\x1f');
-  }
-  return std::to_string(std::hash<std::string>{}(joined));
+  return std::to_string(std::hash<std::string>{}(joinTokens(f)));
 }
 
 // Order-independent key for a clone pair, so parent and new trees match regardless
@@ -63,23 +63,13 @@ std::unordered_set<std::string> parentPairKeys(const duplication::ScanResult &sc
   return keys;
 }
 
-// True if any line of [f.startLine, f.endLine] is among the commit's added
-// lines in f.file.
-bool touchesAdded(const duplication::Fragment &f, const AddedLineMap &added)
+// True if any line of [f.startLine, f.endLine] appears in lineMap[f.file].
+// AddedLineMap and DeletedLineMap are the same type, so one query serves both the
+// added-line and deleted-line lookups (caller names the direction via the argument).
+bool fragmentTouches(const duplication::Fragment &f, const AddedLineMap &lineMap)
 {
-  const auto it = added.find(f.file);
-  if (it == added.end())
-    return false;
-  for (int ln = f.startLine; ln <= f.endLine; ++ln)
-    if (it->second.count(ln))
-      return true;
-  return false;
-}
-
-bool touchesDeleted(const duplication::Fragment &f, const DeletedLineMap &deleted)
-{
-  const auto it = deleted.find(f.file);
-  if (it == deleted.end())
+  const auto it = lineMap.find(f.file);
+  if (it == lineMap.end())
     return false;
   for (int ln = f.startLine; ln <= f.endLine; ++ln)
     if (it->second.count(ln))
@@ -93,7 +83,7 @@ std::unordered_set<std::string> deletedFragmentKeys(const duplication::ScanResul
   if (deleted.empty())
     return keys;
   for (const auto &f : scan.fragments)
-    if (touchesDeleted(f, deleted))
+    if (fragmentTouches(f, deleted))
       keys.insert(contentKey(f));
   return keys;
 }
@@ -144,8 +134,8 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
   {
     const auto &fa = scan.fragments[p.a];
     const auto &fb = scan.fragments[p.b];
-    const bool aTouched = touchesAdded(fa, added);
-    const bool bTouched = touchesAdded(fb, added);
+    const bool aTouched = fragmentTouches(fa, added);
+    const bool bTouched = fragmentTouches(fb, added);
     if (!aTouched && !bTouched)
       continue;
     if ((aTouched && deletedKeys.count(contentKey(fa)) != 0) || (bTouched && deletedKeys.count(contentKey(fb)) != 0))
