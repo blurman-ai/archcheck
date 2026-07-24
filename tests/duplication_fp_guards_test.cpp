@@ -336,6 +336,41 @@ TEST_CASE("P0.2: extract-to-module with a live original is reported, not whole-f
   }
 }
 
+// #198: the whole-file guard used to count MODERATE (structural-parallel) matches as
+// coverage, so two files that share a control skeleton but not their contents — e.g.
+// a latex vs a matlab emitter — were classed as a whole-file clone and had ALL their
+// pairs suppressed, burying a genuine verbatim block hiding among the parallel ones.
+// The guard now counts only near-verbatim matches toward coverage, so the real block
+// surfaces while true byte-copies (all fragments ~1.0) stay suppressed (see above).
+TEST_CASE("P0.2: a verbatim block inside two parallel-structure files is reported, not suppressed",
+          "[duplication][fp-guards]")
+{
+  const auto dir = std::filesystem::path{ARCHCHECK_FIXTURES_DIR} / "duplication" / "wholefile_parallel_twin";
+  const auto read = [&](const char *name)
+  {
+    std::ifstream in(dir / name);
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+  };
+  const std::string sum = read("fold_sum.cpp");
+  const std::string prod = read("fold_prod.cpp");
+  REQUIRE_FALSE(sum.empty());
+  REQUIRE_FALSE(prod.empty());
+
+  const auto result = scanForDuplication({{"fold_sum.cpp", sum}, {"fold_prod.cpp", prod}}, {});
+
+  // Structurally parallel, but not copies of each other → not a whole-file clone.
+  REQUIRE(result.wholeFileClones == 0);
+
+  // The byte-identical resolveAxis block must be reported as a cross-file clone. Under
+  // the old guard every cross-file pair here was suppressed, so this was empty.
+  const bool verbatimReported =
+      std::any_of(result.pairs.begin(), result.pairs.end(), [&](const Pair &p)
+                  { return result.fragments[p.a].file != result.fragments[p.b].file && p.weighted >= 0.99; });
+  REQUIRE(verbatimReported);
+}
+
 // The most common copy-paste pattern: a function duplicated DIRECTLY below the
 // original (one blank line gap), then tweaked. The former P0.4 "function-boundary
 // anchor" suppressed exactly this true positive: it assumed fragments could straddle

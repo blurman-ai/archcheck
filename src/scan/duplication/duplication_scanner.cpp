@@ -320,7 +320,19 @@ bool isWholeFileClone(int matched, int fragsX, int fragsY)
   return lo >= 2 && matched * 5 >= hi * 4; // hi coverage implies lo coverage (hi ≥ lo)
 }
 
-// Whole-body fragments per file and matched cross-file pairs between them.
+// A "whole-file clone" is a file that was COPIED (move / vendored / byte-twin), so
+// its constituent fragments match their partner near-verbatim. A file-pair that is
+// merely structurally PARALLEL — e.g. a latex vs a matlab emitter: identical control
+// skeleton, different output tokens per line — matches broadly but only at MODERATE
+// similarity. Counting those moderate matches as whole-file coverage let the guard
+// classify such twins as copies and suppress ALL their pairs, burying the genuine
+// verbatim block hiding among the parallel ones (#198: minsky node_latex/node_matlab
+// shared a byte-identical 13-line hypercube-axis lookup that never surfaced). Only
+// near-verbatim matches count toward coverage; a real copy still clears the bar
+// because its fragments match at ~1.0.
+constexpr double kWholeFileStrongSim = 0.90;
+
+// Whole-body fragments per file and near-verbatim matched cross-file pairs between them.
 // Nested fragments (#190) are excluded from BOTH sides of the ratio: counting them
 // inflates numerator and denominator unequally — a block matching inside an already
 // matching body adds to `matched` — which pushed ordinary sibling files over the 80%
@@ -339,7 +351,7 @@ void countWholeBodyPairs(const std::vector<Pair> &candidates, const std::vector<
   }
   for (const auto &p : candidates)
   {
-    if (frags[p.a].nested || frags[p.b].nested)
+    if (frags[p.a].nested || frags[p.b].nested || p.weighted < kWholeFileStrongSim)
     {
       continue;
     }
