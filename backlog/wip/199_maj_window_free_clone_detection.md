@@ -2,7 +2,7 @@
 
 **Created:** 2026-07-24
 **Start date:** 2026-07-24
-**Status:** new
+**Status:** wip
 **Module:** SCAN
 **Priority:** major
 **Difficulty:** large (design spike first, then core rewrite)
