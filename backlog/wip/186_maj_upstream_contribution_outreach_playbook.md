@@ -1,8 +1,8 @@
 # [RELEASE][DOCS] 186: upstream-contribution outreach — turn findings into genuine PRs/issues, not spam
 
 **Created:** 2026-07-14
-**Start date:** —
-**Status:** new
+**Start date:** 2026-07-16
+**Status:** wip — 4 targets submitted; apache/trafficserver#13403 MERGED 2026-07-20 (first archcheck finding into OSS mainline); rocksdb#14944 / grpc#43010 / terminal#20441 open, awaiting maintainers
 **Module:** RELEASE / DOCS
 **Priority:** major
 **Difficulty:** medium (mostly judgement + drafting; low code)
