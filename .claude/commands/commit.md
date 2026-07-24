@@ -74,7 +74,19 @@ Argument (optional): a type hint (for example `/commit fix` or `/commit test`).
    > run it manually:
    > `CXX=clang++-18 cmake -B build/clang -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug && cmake --build build/clang`.
 
-6. **Coverage gate** — run the coverage script:
+6. **Clone advisory** — surface copy-paste this commit *introduces* (advisory, does NOT block):
+
+   ```bash
+   # New-clone drift: compare HEAD -> working tree. Reports DRIFT.NEW_CLONE for
+   # clones the staged changes add. Duplication is advisory by design in archcheck,
+   # so this NEVER stops the commit — it's a heads-up to extract a helper instead.
+   ./build/debug/src/archcheck --diff HEAD . 2>&1 | sed -n '/new-clone drift/,/^$/p'
+   ```
+
+   If it flags a new clone, tell the user the `file:line` and suggest extracting a
+   shared helper — then proceed with the commit regardless (this is a heads-up, not a gate).
+
+7. **Coverage gate** — run the coverage script:
 
    ```bash
    bash scripts/check_coverage.sh
@@ -90,8 +102,8 @@ Argument (optional): a type hint (for example `/commit fix` or `/commit test`).
 
    Thresholds can be overridden: `MIN_LINES=50 bash scripts/check_coverage.sh`.
 
-7. The test log was already created by step 5 (`build/debug/Testing/Temporary/LastTest.log`) — read it, extract the suite name, the test list, PASSED/FAILED.
-8. Analyze the changes and build the message per the Conventional Commits schema:
+8. The test log was already created by step 5 (`build/debug/Testing/Temporary/LastTest.log`) — read it, extract the suite name, the test list, PASSED/FAILED.
+9. Analyze the changes and build the message per the Conventional Commits schema:
 
    ```
    <type>(<scope>): <subject>
@@ -101,14 +113,14 @@ Argument (optional): a type hint (for example `/commit fix` or `/commit test`).
    [optional trailers]
    ```
 
-9. **Show the message to the user and WAIT for confirmation.** Edits requested — rewrite and show again.
-10. Carefully stage only the relevant files:
+10. **Show the message to the user and WAIT for confirmation.** Edits requested — rewrite and show again.
+11. Carefully stage only the relevant files:
    - No `.env`, keys, secrets.
    - Binaries — only if the user explicitly asked.
    - Related `.h` and `.cpp` — together.
-11. Create the commit via heredoc.
-12. `git push origin master` (direct push is allowed for admins; if working on a feature branch — `git push -u origin <branch>`).
-13. `git status` afterward — confirm it went through.
+12. Create the commit via heredoc.
+13. `git push origin master` (direct push is allowed for admins; if working on a feature branch — `git push -u origin <branch>`).
+14. `git status` afterward — confirm it went through.
 
 ## Type — what to choose
 
