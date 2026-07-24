@@ -112,24 +112,31 @@ void phase5SymmetricPairCanon(std::vector<Pair> &candidates)
   candidates = std::move(deduped);
 }
 
-// P0.3: coordinate revalidation (simplified) — filter phantom ranges
-// Drops pairs where fragment line ranges are invalid (startLine < 1)
-void phase6CoordinateRevalidation(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+// Every phase* filter below shares one skeleton: keep each candidate whose two
+// fragments satisfy a predicate, drop the rest. Factor the skeleton out so each
+// phase is just its predicate (was seven hand-rolled copies of this loop).
+template <typename Keep>
+void retainCandidates(std::vector<Pair> &candidates, const std::vector<Fragment> &frags, Keep keep)
 {
   std::vector<Pair> filtered;
-
   for (const auto &p : candidates)
   {
-    const Fragment &fa = allFragments[p.a];
-    const Fragment &fb = allFragments[p.b];
-
-    // Sanity check: both fragments must have valid line ranges
-    if (fa.startLine > 0 && fa.endLine >= fa.startLine && fb.startLine > 0 && fb.endLine >= fb.startLine)
+    if (keep(p, frags[p.a], frags[p.b]))
     {
       filtered.push_back(p);
     }
   }
   candidates = std::move(filtered);
+}
+
+// P0.3: coordinate revalidation (simplified) — filter phantom ranges
+// Drops pairs where fragment line ranges are invalid (startLine < 1)
+void phase6CoordinateRevalidation(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
+{
+  // Sanity check: both fragments must have valid line ranges
+  retainCandidates(
+      candidates, allFragments, [](const Pair &, const Fragment &fa, const Fragment &fb)
+      { return fa.startLine > 0 && fa.endLine >= fa.startLine && fb.startLine > 0 && fb.endLine >= fb.startLine; });
 }
 
 // P0.1: diff-hunk + blame attribution (simplified) — filter same-function/overlapping spans
@@ -137,48 +144,32 @@ void phase6CoordinateRevalidation(std::vector<Pair> &candidates, const std::vect
 // drop same-file pairs that overlap or are immediately adjacent (likely internal idiom, not clone)
 void phase7SameFunctionFilter(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
 {
-  std::vector<Pair> filtered;
-
-  for (const auto &p : candidates)
-  {
-    const Fragment &fa = allFragments[p.a];
-    const Fragment &fb = allFragments[p.b];
-
-    // Different files: always keep (can't determine function boundary without AST)
-    if (fa.file != fb.file)
-    {
-      filtered.push_back(p);
-      continue;
-    }
-
-    // Same file: check for overlap or adjacent ranges
-    // If ranges don't overlap and aren't immediately adjacent, keep the pair
-    bool overlapping = (fa.startLine <= fb.endLine && fb.startLine <= fa.endLine);
-    bool adjacent = (fa.endLine + 1 == fb.startLine || fb.endLine + 1 == fa.startLine);
-
-    if (!overlapping && !adjacent)
-    {
-      filtered.push_back(p);
-    }
-  }
-  candidates = std::move(filtered);
+  retainCandidates(candidates, allFragments,
+                   [](const Pair &, const Fragment &fa, const Fragment &fb)
+                   {
+                     // Different files: always keep (can't determine function boundary without AST)
+                     if (fa.file != fb.file)
+                     {
+                       return true;
+                     }
+                     // Same file: keep only if ranges neither overlap nor are immediately adjacent
+                     const bool overlapping = fa.startLine <= fb.endLine && fb.startLine <= fa.endLine;
+                     const bool adjacent = fa.endLine + 1 == fb.startLine || fb.endLine + 1 == fa.startLine;
+                     return !overlapping && !adjacent;
+                   });
 }
 
 int lineSpan(const Fragment &f) { return f.endLine - f.startLine + 1; }
 
 void phaseSpanBalance(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
 {
-  std::vector<Pair> filtered;
-  for (const Pair &p : candidates)
-  {
-    const int aLines = lineSpan(allFragments[p.a]);
-    const int bLines = lineSpan(allFragments[p.b]);
-    if (std::max(aLines, bLines) <= std::min(aLines, bLines) * 2)
-    {
-      filtered.push_back(p);
-    }
-  }
-  candidates = std::move(filtered);
+  retainCandidates(candidates, allFragments,
+                   [](const Pair &, const Fragment &fa, const Fragment &fb)
+                   {
+                     const int aLines = lineSpan(fa);
+                     const int bLines = lineSpan(fb);
+                     return std::max(aLines, bLines) <= std::min(aLines, bLines) * 2;
+                   });
 }
 
 // P0.6: joint token∧order floor — require high similarity in BOTH metrics
@@ -187,31 +178,27 @@ void phaseSpanBalance(std::vector<Pair> &candidates, const std::vector<Fragment>
 void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, const std::vector<Fragment> &frags,
                                 const ScannerOptions &opts)
 {
-  std::vector<Pair> filtered;
-
-  for (const auto &p : candidates)
-  {
-    // Classic path: both metrics high (rejects high-weight/low-line idiom collisions),
-    // and both fragments carry enough statements to be copy-paste, not a dense one-liner
-    // (a 30-token fragment can collapse onto 1-3 lines at lineOverlap=1.0). Statement count
-    // is style-robust where a line count would not be (7 calls on 2 lines = 7 statements).
-    const std::size_t minStmts = std::min(frags[p.a].statementCount, frags[p.b].statementCount);
-    const bool ratioOk = p.weighted >= opts.jointWeightedThreshold && p.line >= opts.jointLineThreshold &&
-                         minStmts >= opts.jointMinClassicStatements;
-    // Run path: an edited copy deflates BOTH the line-ratio (union grows) AND the
-    // weighted bag (inserted/deleted tokens), so a long ordered run of verbatim lines
-    // passes at a lower weighted floor — gated by diversity (no tables) and, optionally,
-    // rare project anchors (no framework idioms). P0.6b, #131 Group 3.
-    const double maxDiv = std::max(frags[p.a].diversity, frags[p.b].diversity);
-    const bool runOk = p.weighted >= opts.jointRunWeightedThreshold && opts.jointMinSharedLines > 0 &&
-                       p.sharedLines >= opts.jointMinSharedLines && maxDiv >= 0.30 &&
-                       p.sharedRare >= opts.jointMinSharedRare;
-    if (ratioOk || runOk)
-    {
-      filtered.push_back(p);
-    }
-  }
-  candidates = std::move(filtered);
+  retainCandidates(candidates, frags,
+                   [&opts](const Pair &p, const Fragment &fa, const Fragment &fb)
+                   {
+                     // Classic path: both metrics high (rejects high-weight/low-line idiom collisions),
+                     // and both fragments carry enough statements to be copy-paste, not a dense one-liner
+                     // (a 30-token fragment can collapse onto 1-3 lines at lineOverlap=1.0). Statement count
+                     // is style-robust where a line count would not be (7 calls on 2 lines = 7 statements).
+                     const std::size_t minStmts = std::min(fa.statementCount, fb.statementCount);
+                     const bool ratioOk = p.weighted >= opts.jointWeightedThreshold &&
+                                          p.line >= opts.jointLineThreshold &&
+                                          minStmts >= opts.jointMinClassicStatements;
+                     // Run path: an edited copy deflates BOTH the line-ratio (union grows) AND the
+                     // weighted bag (inserted/deleted tokens), so a long ordered run of verbatim lines
+                     // passes at a lower weighted floor — gated by diversity (no tables) and, optionally,
+                     // rare project anchors (no framework idioms). P0.6b, #131 Group 3.
+                     const double maxDiv = std::max(fa.diversity, fb.diversity);
+                     const bool runOk = p.weighted >= opts.jointRunWeightedThreshold && opts.jointMinSharedLines > 0 &&
+                                        p.sharedLines >= opts.jointMinSharedLines && maxDiv >= 0.30 &&
+                                        p.sharedRare >= opts.jointMinSharedRare;
+                     return ratioOk || runOk;
+                   });
 }
 
 // --- P0.9 generated-file FP guard ------------------------------------------
@@ -230,16 +217,9 @@ void phase8JointTokenOrderFloor(std::vector<Pair> &candidates, const std::vector
 // P0.9 driver: drop pairs where either file is machine-generated.
 void phasePathBasedFpSuppress(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
 {
-  std::vector<Pair> filtered;
-  for (const auto &p : candidates)
-  {
-    if (scan::isGeneratedPath(allFragments[p.a].file) || scan::isGeneratedPath(allFragments[p.b].file))
-    {
-      continue; // generated output — not actionable copy-paste
-    }
-    filtered.push_back(p);
-  }
-  candidates = std::move(filtered);
+  // generated output — not actionable copy-paste
+  retainCandidates(candidates, allFragments, [](const Pair &, const Fragment &fa, const Fragment &fb)
+                   { return !scan::isGeneratedPath(fa.file) && !scan::isGeneratedPath(fb.file); });
 }
 
 // P1.1: data-table / literal-run classifier — DROP pairs that look like data tables
@@ -249,57 +229,39 @@ void phasePathBasedFpSuppress(std::vector<Pair> &candidates, const std::vector<F
 void phase10DataTableClassifier(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments,
                                 const ScannerOptions &opts)
 {
-  std::vector<Pair> filtered;
-
-  for (const auto &p : candidates)
-  {
-    const Fragment &fa = allFragments[p.a];
-    const Fragment &fb = allFragments[p.b];
-
-    // Low diversity = many repeated token patterns (case tables, init loops)
-    // Drop if BOTH diversity < 0.30 AND type is LITERAL or MIXED (sig of data table)
-    if (opts.enableDataTableDrop && fa.diversity < 0.30 && fb.diversity < 0.30)
-    {
-      // Classify clone type inline to decide drop
-      const char *type = cloneType(fa, fb);
-      // LITERAL or MIXED indicates data table (differences are only in literals)
-      if (type == std::string_view("LITERAL") || type == std::string_view("MIXED"))
-      {
-        continue; // DROP this pair (data table)
-      }
-    }
-    filtered.push_back(p);
-  }
-  candidates = std::move(filtered);
+  retainCandidates(candidates, allFragments,
+                   [&opts](const Pair &, const Fragment &fa, const Fragment &fb)
+                   {
+                     // Low diversity = many repeated token patterns (case tables, init loops).
+                     // Drop if BOTH diversity < 0.30 AND type is LITERAL or MIXED (sig of data table).
+                     if (opts.enableDataTableDrop && fa.diversity < 0.30 && fb.diversity < 0.30)
+                     {
+                       const char *type = cloneType(fa, fb);
+                       // LITERAL or MIXED indicates a data table (differences are only in literals)
+                       if (type == std::string_view("LITERAL") || type == std::string_view("MIXED"))
+                       {
+                         return false; // DROP this pair (data table)
+                       }
+                     }
+                     return true;
+                   });
 }
 
 // P1.2: boilerplate-density filter — drop pairs with mostly non-substantive lines
 // Fragments dominated by guard clauses, setter chains, or empty structure are boilerplate
 void phase11BoilerplateDensity(std::vector<Pair> &candidates, const std::vector<Fragment> &allFragments)
 {
-  std::vector<Pair> filtered;
-
-  for (const auto &p : candidates)
-  {
-    const Fragment &fa = allFragments[p.a];
-    const Fragment &fb = allFragments[p.b];
-
-    // Very short fragments (<5 lines) are often boilerplate (constructors, getters)
-    // Require higher similarity for them
-    if (fa.tokenCount < 20 && fb.tokenCount < 20)
-    {
-      if (p.weighted >= 0.90)
-      {
-        filtered.push_back(p); // Only keep very high-confidence short matches
-      }
-      // else: drop short, low-confidence matches (boilerplate)
-    }
-    else
-    {
-      filtered.push_back(p); // Keep longer fragments
-    }
-  }
-  candidates = std::move(filtered);
+  retainCandidates(candidates, allFragments,
+                   [](const Pair &p, const Fragment &fa, const Fragment &fb)
+                   {
+                     // Very short fragments (<20 tokens) are often boilerplate (constructors,
+                     // getters): keep only very high-confidence short matches, drop the rest.
+                     if (fa.tokenCount < 20 && fb.tokenCount < 20)
+                     {
+                       return p.weighted >= 0.90;
+                     }
+                     return true; // keep longer fragments
+                   });
 }
 
 // P1.4: file-local IDF down-weight — reduce weight of tokens that are very common in the file
