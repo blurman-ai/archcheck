@@ -30,13 +30,7 @@ namespace
   // S6: set GIT_CONFIG_NOSYSTEM=1 so the system-wide git config is ignored.
   setenv("GIT_CONFIG_NOSYSTEM", "1", 1);
 
-  std::vector<char *> argv;
-  argv.reserve(args.size() + kGitHardeningCount + 2);
-  argv.push_back(const_cast<char *>("git"));
-  for (int i = 0; i < kGitHardeningCount; ++i)
-  {
-    argv.push_back(const_cast<char *>(kGitHardeningArgs[i]));
-  }
+  std::vector<char *> argv = hardenedGitArgv();
   for (const auto &a : args)
   {
     argv.push_back(const_cast<char *>(a.c_str()));

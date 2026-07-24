@@ -69,11 +69,7 @@ namespace
     _exit(127);
   // S6: disable system config, hooks, fsmonitor, and pager (shared policy).
   ::setenv("GIT_CONFIG_NOSYSTEM", "1", 1);
-  std::vector<char *> argv;
-  argv.reserve(kGitHardeningCount + 4);
-  argv.push_back(const_cast<char *>("git"));
-  for (int i = 0; i < kGitHardeningCount; ++i)
-    argv.push_back(const_cast<char *>(kGitHardeningArgs[i]));
+  std::vector<char *> argv = hardenedGitArgv();
   argv.push_back(const_cast<char *>("cat-file"));
   argv.push_back(const_cast<char *>("--batch"));
   argv.push_back(nullptr);

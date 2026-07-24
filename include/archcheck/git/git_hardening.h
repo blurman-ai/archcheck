@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace archcheck::git
 {
 
@@ -16,5 +18,23 @@ inline constexpr const char *kGitHardeningArgs[] = {
     "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=", "-c", "core.pager=cat",
 };
 inline constexpr int kGitHardeningCount = 6; // entries in kGitHardeningArgs
+
+// Build the argv prefix ["git", <hardening args>...] with the S6 policy applied.
+// Each spawn path appends its own subcommand and a trailing nullptr before
+// execvp; sharing this one assembly step (not just the array above) keeps the
+// hardening application itself from drifting between the two fork sites.
+// LCOV_EXCL_START — only ever called post-fork in the child, invisible to gcov.
+inline std::vector<char *> hardenedGitArgv()
+{
+  std::vector<char *> argv;
+  argv.reserve(kGitHardeningCount + 8);
+  argv.push_back(const_cast<char *>("git"));
+  for (int i = 0; i < kGitHardeningCount; ++i)
+  {
+    argv.push_back(const_cast<char *>(kGitHardeningArgs[i]));
+  }
+  return argv;
+}
+// LCOV_EXCL_STOP
 
 } // namespace archcheck::git
