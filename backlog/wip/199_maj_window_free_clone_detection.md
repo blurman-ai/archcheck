@@ -59,17 +59,121 @@ framing — decide deliberately.
 
 ## Execution plan
 
-- [ ] **Design spike / ADR** — problem statement (this), proposed window-free core, what we
-      gain (window-independence, honest monotonic min-size, stability) vs lose (STRUCTURAL
-      typing), and a migration plan. Do NOT start the rewrite before the ADR is accepted.
-- [ ] Prototype the maximal-normalized-token-run detector on a few fixtures; confirm
-      monotonicity in min-size and that the #198 witnesses (RENAMED, member-decl, cross-fn)
-      behave sanely.
-- [ ] Migration map: how #190/#191/#195/#196 (nested / statement-run / boundary / const-method
-      classes) and #059/#083/#158 (coincidental filter / precision / FP reduction) translate
-      — or become unnecessary — under the new core.
-- [ ] Re-baseline the duplication fixtures consciously; update `duplication_architecture.md`
-      (SSOT) in the same PR.
+- [x] **Design spike / ADR** — [ADR-004](../../docs/decisions/004-window-free-clone-core.md)
+      (2026-07-24; author waived formal acceptance, directed straight to prototype).
+- [x] Prototype the maximal-normalized-token-run detector; confirm monotonicity and witness
+      behavior — `experiments/window_free_spike/` (gitignored), links the PRODUCT lexer.
+      Results in ADR-004 §Spike evidence; summary below.
+- [x] Migration map — ADR-004 §Migration map (per-layer fate table).
+- [x] Product implementation: run-matching core landed behind `--window-free` next to the
+      window core (seeds+extension). New module `src/scan/duplication/token_run_matcher.{h,cpp}`
+      (reuses `lex()` unchanged), wired via `ScannerOptions::windowFree` → early branch in
+      `scanForDuplication`; CLI `archcheck --duplication <path> --window-free`. Unit test
+      `tests/duplication_token_run_matcher_test.cpp` (cross-file Type-2 witness + monotonicity
+      subset property). 664 tests green, lizard clean, dogfood 0, deterministic, default path
+      untouched (see note below).
+- [x] `--min-lines N` output filter (mode-agnostic, monotonic; `filterByMinLines` in
+      `cli/preview_commands.cpp`) — delivers #200's interim surface. P0.9/vendored need NO
+      port: `collectNonVendoredSources` (#129 gate) already drops generated/vendored before
+      scanning, so window-free inherits it.
+- [x] Stage-3 A/B (window vs `--window-free`, both via the reporter), hand-verified per
+      bucket — see "A/B evidence" below and ADR-004 §Implementation status.
+- [x] Idiom-FP filter — built + witness-verified TWO candidates, chose the clean one:
+      **control-flow guard** (span must branch/return) is default `--window-free`; **rarity**
+      (`--rare-anchors N`) kept as an aggressive knob. Measured on src/ (ml6): rarity 125→68
+      but kills the writer-TP class (`write_nodes/edges`, `writeAdded/Grown` — no rare anchor);
+      control-flow 125→96, kills every idiom-FP (namespace-preamble, `check()` sig, keyword
+      table) and keeps all writer/catch/dist TP. Cost of cf: drops control-flow-free clones
+      (straight-line void fns, #197 member-decl runs) — recoverable via `--no-control-flow`.
+- [ ] P0.2 whole-file suppress (coverage logic; 0 groups on src/, matters on corpus moves).
+- [ ] **Author decision: the STRUCTURAL trade-off** (drop fuzzy band → changes product
+      framing) + full corpus A/B vs #198 → then flip default + delete window layers + rewrite
+      SSOT. The one genuine product call left; everything mechanical is done behind the flag.
+- [ ] Corpus A/B vs the #198 baseline (same inputs, per-bucket hand-verified); quantify the
+      STRUCTURAL loss bucket before flipping the default.
+- [ ] Flip default, delete the window layers (#190/#191/#195 machinery), re-baseline the
+      duplication fixtures consciously; rewrite `duplication_architecture.md` (SSOT) in the
+      same PR. Add the monotonicity fixture.
+
+## Spike results (2026-07-24)
+
+- **Monotonicity:** min-tokens 30→50 on `src/` = strict subset, 0 violations (window model:
+  35→18 non-nested). Holds with stitching (stitch-then-filter, threshold-independent).
+- **Witnesses:** JiraClient 587↔884 cross-fn (native 115-tok run, no #195 layer needed);
+  `ParamsToString() const` #196 (native 133-tok run — open window-model bug fixed for free);
+  xml_utils Type-2 flagship (full pair via stitching, matched=99%); SmatchetUI adjacent twin;
+  diff_query 19-line clone as one stitched span at BOTH thresholds.
+- **A/B on `src/`:** 22/24 current pairs covered; both losses STRUCTURAL (hand-read: one real
+  scattered-micro-edit Type-3 (`++x`/`x++` every 2-3 lines), one idiom-tail borderline).
+  New true finds: identical `catch(ConfigError)` blocks `check_command↔main` (EXACT).
+- **Perf:** duckdb `src/execution` 2.9 s (spike, incl. stitching) vs 33 s current.
+## Product core landed (2026-07-24, uncommitted — awaiting /commit)
+
+New files: `include/archcheck/scan/duplication/token_run_matcher.h`,
+`src/scan/duplication/token_run_matcher.cpp`, `tests/duplication_token_run_matcher_test.cpp`.
+Edits: `duplication_scanner.{h,cpp}` (windowFree branch), `cli/preview_commands.{h,cpp}`,
+`main.cpp` (`--window-free` + help), both CMakeLists. All the spike's guards ported
+(pp-mask, tandem guard, negative-gap stitch, containment dedup, EXACT/RENAMED/LITERAL/MIXED
+classify). Emits `Fragment`+`Pair` so the reporter/`--diff` path consume it unchanged.
+
+Note (self-check): default `--duplication` on `src/` went 24→25 pairs — fully explained,
+NOT a default-path regression: the new module file `token_run_matcher.cpp` is now in `src/`
+and (a) carries one internal STRUCTURAL self-clone (the `dedupRuns`/`dedupSpans` containment
+skeletons — different predicates/types, advisory 0.66, not worth a template), (b) shifts
+corpus IDF a hair; plus line-number shifts from the help/branch edits. Default path
+deterministic (25/25/25), logic untouched.
+
+## Duplo validation — 9 repos, and a REAL recall gap the aggregate hid (2026-07-25 → #201)
+
+Against Duplo v2.3.10 (`-ml 8 -ip -json`), fair (Duplo fed EXACTLY archcheck's non-vendored
+file set; phantom-guarded), **9 repos**: aggregate raw recall **1768/1848 = 96%** (`--no-cf`),
+1449/1848 = 78% default (cf). Per repo: src 5/5, smatchet 2/2, duckdb-exec 23/23, 3drepo 50/51,
+gladius 312/320, matrixos 197/199, falco 10/10, irreden 272/295, openvdb 897/943.
+
+**The 96% aggregate is misleading — hand-verifying the 80 `--no-cf` misses split them:**
+- *Duplo noise, correctly ignored*: `#include` blocks (preprocessor mask), license headers
+  (comments), data tables (font glyphs, byte arrays, enum arrays), method signatures
+  (Metal↔OpenGL `uploadSubImage2D`, decl/def), self-overlaps, generated stubs.
+- *GENUINE misses — worse than Duplo*: real verbatim/near-verbatim clones in **repeated /
+  self-similar regions** — `nanovdb/math/Ray.h:403-423↔435-455` (21-line ray-box block,
+  region covered by ZERO window-free pairs — lost entirely), `ParmFactory.cc:1163↔1218` (real
+  logic copy), `QuantizedUnitVec.cc` (5 at ~127-line stride), gladius codegen (region flagged
+  but pairs dropped).
+
+**Root cause = the same one that blows up perf** (openvdb: 117,237 spans; batch 257 min):
+dedup + tandem guard + extension cap over-collapse self-similar cliques, dropping real distinct
+pairs. Recall gap + O(n²) cost are one problem → **filed #201**. Corrects the earlier "82/83
+not worse" note (that was 4 repos and read the aggregate; the 9-repo hand-verify found the gap).
+Harness: `experiments/window_free_spike/{vs_duplo.py,batch_duplo.sh}`. Two harness self-catches:
+phantom-guard window-sizing bug (fixed); fairness fileset needed (vendored bvh/ → 8% artifact).
+
+## A/B evidence (2026-07-25, stage 3 — window core vs `--window-free`, both via reporter)
+
+| Input (min-lines) | window | window-free | window covered | window-only dropped |
+|---|--:|--:|--:|--:|
+| `src/` (6) | 17 | 124 | **15/17** | 2 (both STRUCTURAL) |
+| Smatchet (8) | 8 | 45 | **6/8** | 2 (both STRUCTURAL) |
+
+- **Window-only drops are always STRUCTURAL** (scattered-micro-edit / low-overlap band),
+  hand-verified: `diff_query:129↔165` (`x++`→`++x`), `include_scanner:73↔105`, Smatchet
+  `JiraClient:684↔1237`, `SpreadsheetState.h` member block. Deliberate trade-off, not a bug.
+- **Adds are a MIX (hand-read):** real TP the window core can't see (cross-file
+  `catch(ConfigError)` EXACT `check_command`↔`main`; `write_nodes_block`↔`write_edges_block`
+  parameterizable twins; copy-pasted line-distance search in `local_complexity_drift`;
+  JiraClient request repeats) + newly-surfaced **idiom FP** (namespace-preamble `constexpr`
+  runs; IRule `check()` interface signatures = #159 accidental class; some member-decl runs).
+- **Root cause of the idiom FP:** the fragmenter was ALSO an implicit function-body-scope +
+  rarity filter. **Required next filter = rarity/IDF anchor** (author-calibrated).
+
+Next-stage staging: port the rarity/IDF filter (author calibration) → corpus A/B vs #198
+baseline (quantify STRUCTURAL loss) → **author decides the STRUCTURAL trade-off** → flip
+default + delete window layers + rewrite SSOT. No step flips by "the run finished".
+
+- **Design lessons pinned in ADR-004:** preprocessor mask required (include-preamble floods);
+  tandem/adjacent-twin handling must be token-based (line-based guard killed the
+  copy-below-original pattern — P0.4 lesson repeated); stitch gap must admit small negative
+  overlaps; same-file span must not cross its own partner (tandem chain fusion);
+  volume at small min-size is filter-territory (min-lines 6: 425→122 on `src/`).
 
 ## Fixtures (if a rule)
 
