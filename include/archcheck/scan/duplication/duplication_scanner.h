@@ -65,6 +65,13 @@ struct ScannerOptions
   // large tree this skips the all-pairs scoring (the dominant cost) without changing the result.
   // Empty (the default) scores every pair — whole-repo --duplication is unaffected.
   std::unordered_set<std::string> focusFiles;
+  // #199 / ADR-004: opt-in window-free core (maximal matching token runs). When set,
+  // scanForDuplication bypasses the fragment/window pipeline entirely and returns
+  // run-stitched span pairs, with min size as a pure (monotonic) post-filter.
+  bool windowFree = false;
+  int minLines = 0;                         // window-free: also require this many source lines each side (0 = off)
+  int windowFreeMinRareAnchors = 0;         // window-free rarity idiom guard (SSOT §3.3 / P1.4); 0 = off
+  bool windowFreeRequireControlFlow = true; // window-free structural idiom guard; drops non-executable spans
 };
 
 struct ScanResult

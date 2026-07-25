@@ -38,6 +38,7 @@ add_executable(archcheck_tests
    duplication_qt_p06_test.cpp
    duplication_clone_type_wiring_test.cpp
    duplication_thin_delegates_test.cpp
+   duplication_token_run_matcher_test.cpp
    unit/scan/include_scanner_test.cpp
    unit/scan/project_files_test.cpp
    unit/scan/include_resolver_test.cpp

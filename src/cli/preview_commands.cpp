@@ -122,16 +122,39 @@ int runGraph(const std::filesystem::path &root)
   return sf9Violations.empty() ? 0 : 1;
 }
 
-int runDuplication(const std::filesystem::path &root)
+// #200 / #199: minimum clone size in LINES, applied as a pure output filter over the
+// result set — monotonic (raise N ⇒ strict subset), mode-agnostic, and honest in a way
+// the internal token window is not. Drop a pair when either endpoint spans < minLines.
+void filterByMinLines(std::vector<archcheck::scan::duplication::Pair> &pairs,
+                      const std::vector<archcheck::scan::duplication::Fragment> &frags, int minLines)
+{
+  if (minLines <= 0)
+    return;
+  pairs.erase(std::remove_if(pairs.begin(), pairs.end(),
+                             [&](const auto &p)
+                             {
+                               return frags[p.a].endLine - frags[p.a].startLine + 1 < minLines ||
+                                      frags[p.b].endLine - frags[p.b].startLine + 1 < minLines;
+                             }),
+              pairs.end());
+}
+
+int runDuplication(const std::filesystem::path &root, const DuplicationOptions &opts)
 {
   // Exclude vendored code (noise in every signal), mirroring the graph builder.
   archcheck::scan::DiskFileSource diskSrc(root);
   const auto sources = archcheck::scan::collectNonVendoredSources(diskSrc);
-  const auto result = archcheck::scan::duplication::scanForDuplication(sources);
+  archcheck::scan::duplication::ScannerOptions scanOpts;
+  scanOpts.windowFree = opts.windowFree; // #199 / ADR-004
+  scanOpts.windowFreeMinRareAnchors = opts.rareAnchors;
+  scanOpts.windowFreeRequireControlFlow = opts.controlFlow;
+  const auto result = archcheck::scan::duplication::scanForDuplication(sources, scanOpts);
 
   // Re-sort by weighted desc: P1 classifiers down-weight pairs after the scanner's sort.
   auto pairs = result.pairs;
   std::sort(pairs.begin(), pairs.end(), [](const auto &l, const auto &r) { return l.weighted > r.weighted; });
+
+  filterByMinLines(pairs, result.fragments, opts.minLines);
 
   std::cout << "scanned " << result.fileCount << " files, " << result.fragments.size() << " fragments, "
             << result.candidateCount << " candidate pairs\n"

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -33,7 +34,10 @@ Usage:
   archcheck --help
   archcheck --scan  <path>                     (preview: discover + scan #includes)
   archcheck --graph <path>                     (preview: build dependency graph + SCC stats)
-  archcheck --duplication <path>               (report duplicate code; advisory, does not gate CI)
+  archcheck --duplication <path> [--window-free] [--min-lines N]
+                  (report duplicate code; advisory, does not gate CI;
+                  --window-free: experimental maximal-token-run core, ADR-004;
+                  --min-lines N: minimum clone size in lines, output filter)
   archcheck --history <path>                   (history analytics: god-file growth; advisory, does not gate CI)
   archcheck --diff  [--diff-mode=disk|memory] [--format=text|json] <revspec> [path]
                   (PR diff; gates new/grown cycles and new god-headers, reports advisories)
@@ -222,6 +226,24 @@ int dispatch_fail_unresolved_local(int argc, char *argv[])
   return cli::runCheck(root, cli::OutputFormat::Text, {}, std::nullopt, /*failOnUnresolvedLocal=*/true);
 }
 
+cli::DuplicationOptions parseDuplicationOptions(int argc, char *argv[])
+{
+  cli::DuplicationOptions opts;
+  for (int i = 3; i < argc; ++i)
+  {
+    const std::string_view flag{argv[i]};
+    if (flag == "--window-free")
+      opts.windowFree = true; // #199 / ADR-004, opt-in
+    else if (flag == "--min-lines" && i + 1 < argc)
+      opts.minLines = std::atoi(argv[++i]); // #200: minimum clone size in lines
+    else if (flag == "--rare-anchors" && i + 1 < argc)
+      opts.rareAnchors = std::atoi(argv[++i]); // window-free rarity-guard sweep (advanced)
+    else if (flag == "--no-control-flow")
+      opts.controlFlow = false; // window-free structural-guard sweep (advanced)
+  }
+  return opts;
+}
+
 int dispatch_with_path(std::string_view arg, int argc, char *argv[])
 {
   if (argc < 3)
@@ -234,7 +256,7 @@ int dispatch_with_path(std::string_view arg, int argc, char *argv[])
   if (arg == "--scan")
     return cli::runScan(argv[2]);
   if (arg == "--duplication")
-    return cli::runDuplication(argv[2]);
+    return cli::runDuplication(argv[2], parseDuplicationOptions(argc, argv));
   if (arg == "--history")
     return cli::runHistory(argv[2]);
   return cli::runGraph(argv[2]);

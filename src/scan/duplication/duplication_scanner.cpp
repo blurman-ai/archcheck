@@ -6,6 +6,7 @@
 
 #include "archcheck/scan/duplication/clone_classifier.h"
 #include "archcheck/scan/duplication/token_normalizer.h"
+#include "archcheck/scan/duplication/token_run_matcher.h"
 #include "archcheck/scan/file_classification.h"
 
 namespace archcheck::scan::duplication
@@ -562,8 +563,20 @@ void applyCandidateFilters(std::vector<Pair> &candidates, const std::vector<Frag
 ScanResult scanForDuplication(const std::vector<std::pair<std::string, std::string>> &files, const ScannerOptions &opts)
 {
   ScanResult result;
-  std::vector<Fragment> allFragments;
 
+  if (opts.windowFree) // #199 / ADR-004: maximal token runs instead of the window pipeline
+  {
+    RunMatchOptions runOpts;
+    runOpts.minTokens = opts.fragmentOpts.minTokens;
+    runOpts.minLines = opts.minLines;
+    runOpts.minRareAnchors = opts.windowFreeMinRareAnchors;         // rarity idiom guard (SSOT §3.3 / P1.4)
+    runOpts.requireControlFlow = opts.windowFreeRequireControlFlow; // structural idiom guard
+    matchTokenRuns(files, runOpts, result.fragments, result.pairs);
+    result.fileCount = files.size();
+    return result;
+  }
+
+  std::vector<Fragment> allFragments;
   phase1TokenizeAndExtract(files, opts, allFragments, result.totalLoc);
   result.fileCount = files.size();
   result.fragments = allFragments;
