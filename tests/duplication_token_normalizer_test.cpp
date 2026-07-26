@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 
 #include "archcheck/scan/duplication/token_normalizer.h"
@@ -118,5 +119,64 @@ TEST_CASE("Token normalizer: newline inside a quoted run keeps later line number
       checked = true;
     }
   }
+  REQUIRE(checked);
+}
+
+// A `#if 0` block is dead code and must not be lexed, but its `#else`/`#elif` alternative
+// is LIVE and must be. skipDeadIfBlock tracked only #if/#endif depth, so it ran past the
+// #else and swallowed the live branch — manufacturing recall gaps against line-based
+// oracles that do not preprocess (nanovdb Ray.h intersects() clone, #201). Nested #if in
+// the dead branch stays fully skipped.
+TEST_CASE("Token normalizer: #if 0 skips dead branch but keeps the #else branch (#201)", "[duplication]")
+{
+  const std::string src = "int a;\n"
+                          "#if 0\n"
+                          "  DEAD deadCall();\n"
+                          "#if NESTED\n"
+                          "  STILL_DEAD;\n"
+                          "#endif\n"
+                          "#else\n"
+                          "  int liveVar = 7;\n"
+                          "#endif\n"
+                          "int b;\n";
+  const auto tokens = lex(src, true);
+
+  const auto hasRaw = [&](const std::string &r)
+  { return std::any_of(tokens.begin(), tokens.end(), [&](const Token &t) { return t.raw == r; }); };
+
+  REQUIRE_FALSE(hasRaw("DEAD"));
+  REQUIRE_FALSE(hasRaw("STILL_DEAD"));
+  REQUIRE(hasRaw("liveVar"));
+
+  // The live token and the trailing code keep their true source line numbers.
+  for (const auto &t : tokens)
+    if (t.raw == "liveVar")
+      REQUIRE(t.line == 8);
+  for (const auto &t : tokens)
+    if (t.raw == "b")
+      REQUIRE(t.line == 10);
+}
+
+// A backslash-newline line continuation inside a string literal ("...\n\<newline>...) is a
+// physical line and must be counted, or every later token's reported line drifts. openvdb
+// ParmFactory.cc has an ~18-line continued help string; the drift reported real clones tens
+// of lines off, so they failed to match line-based oracles (Duplo) — read as recall misses
+// (#201). file:line is the product contract.
+TEST_CASE("Token normalizer: backslash-newline in a string keeps later line numbers (#201)", "[duplication]")
+{
+  const std::string src = "int a;\n"
+                          "const char* s = \"line one\\n\\\n"
+                          "line two\\n\\\n"
+                          "line three\\n\";\n"
+                          "int later;\n";
+  const auto tokens = lex(src, true);
+
+  bool checked = false;
+  for (const auto &t : tokens)
+    if (t.raw == "later")
+    {
+      REQUIRE(t.line == 5); // int a=1, string spans 2-4, later=5
+      checked = true;
+    }
   REQUIRE(checked);
 }

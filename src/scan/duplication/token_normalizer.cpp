@@ -112,6 +112,24 @@ int updatePreprocessorDepth(const std::string &src, std::size_t i)
   }
   return 0;
 }
+
+// True when position i starts a `#else`/`#elif` directive. A dead `#if 0` block ends at its
+// matching `#else`/`#elif`: the alternative branch is live and must be lexed (Duplo, which
+// does not preprocess, sees it — dropping it manufactures recall gaps against the oracle).
+bool isElseOrElif(const std::string &src, std::size_t i)
+{
+  const std::size_t n = src.size();
+  if (src[i] != '#')
+  {
+    return false;
+  }
+  std::size_t j = i + 1;
+  while (j < n && (src[j] == ' ' || src[j] == '\t'))
+  {
+    ++j;
+  }
+  return src.compare(j, 4, "else") == 0 || src.compare(j, 4, "elif") == 0;
+}
 } // namespace
 
 void skipDeadIfBlock(const std::string &src, std::size_t &i, int &line)
@@ -120,6 +138,9 @@ void skipDeadIfBlock(const std::string &src, std::size_t &i, int &line)
   int depth = 0;
   while (i < n)
   {
+    // A `#else`/`#elif` at the outermost level closes the dead branch; the live alternative
+    // is lexed normally after this line. Nested `#if ... #endif` (depth > 1) are skipped whole.
+    const bool liveAlternative = depth == 1 && isElseOrElif(src, i);
     depth += updatePreprocessorDepth(src, i);
     while (i < n && src[i] != '\n')
     {
@@ -130,7 +151,7 @@ void skipDeadIfBlock(const std::string &src, std::size_t &i, int &line)
       ++i;
       ++line;
     }
-    if (depth == 0)
+    if (depth == 0 || liveAlternative)
     {
       break;
     }
@@ -236,16 +257,16 @@ bool tryConsumeQuoted(const std::string &source, std::size_t &i, int &line, char
   ++i;
   while (i < source.size() && source[i] != delim)
   {
-    if (source[i] == '\\' && i + 1 < source.size())
-    {
-      i += 2;
-      continue;
-    }
-    if (source[i] == '\n')
+    // A backslash escapes the next char; a backslash-newline is a line continuation. Either
+    // way the physical newline — escaped at i+1, or bare at i — is counted, or every later
+    // token's reported line drifts (file:line is the product contract). CRLF leaves the `\n`
+    // for the next iteration to count.
+    const bool esc = source[i] == '\\' && i + 1 < source.size();
+    if (source[esc ? i + 1 : i] == '\n')
     {
       ++line;
     }
-    ++i;
+    i += esc ? 2 : 1;
   }
   if (i < source.size())
   {
