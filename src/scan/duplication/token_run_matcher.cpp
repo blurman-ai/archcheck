@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 #include <tuple>
@@ -138,22 +139,28 @@ void extendRuns(const std::vector<StreamTok> &stream, const Buckets &buckets, st
 }
 
 // Drop a run contained in a longer run on the same diagonal (they overlap identically).
+// Containment can only hold on the same diagonal (a-b), so kept runs are indexed by diagonal
+// as start->end interval maps: a new run tests just the one interval that could contain it
+// (the predecessor by start), not every kept run. Self-similar data tables put ~n runs on one
+// diagonal, so the old O(n^2) linear scan was the openvdb blow-up (#201); this is O(n log n)
+// and keeps the identical set (same len-desc order, same containment test).
 void dedupRuns(std::vector<Run> &runs)
 {
   std::sort(runs.begin(), runs.end(),
             [](const Run &x, const Run &y) { return std::tie(y.len, x.a, x.b) < std::tie(x.len, y.a, y.b); });
+  std::unordered_map<int, std::map<int, int>> byDiag; // diagonal (a-b) -> (start a -> end a)
   std::vector<Run> kept;
   for (const auto &r : runs)
   {
-    bool contained = false;
-    for (const auto &k : kept)
-      if (r.a - k.a == r.b - k.b && r.a >= k.a && r.a + r.len <= k.a + k.len)
-      {
-        contained = true;
-        break;
-      }
+    auto &ivals = byDiag[r.a - r.b];
+    const auto it = ivals.upper_bound(r.a); // kept intervals are start- and end-monotonic, so
+    const bool contained =                  // only the predecessor by start can cover [a, a+len)
+        it != ivals.begin() && std::prev(it)->second >= r.a + r.len;
     if (!contained)
+    {
+      ivals[r.a] = r.a + r.len;
       kept.push_back(r);
+    }
   }
   runs.swap(kept);
 }
@@ -183,44 +190,90 @@ void absorb(Span &s, const Run &r)
   ++s.runs;
 }
 
+int spanDiag(const Span &s) { return s.aEnd - s.bEnd; }
+
+using DiagIndex = std::unordered_map<int, std::vector<int>>; // (aEnd-bEnd) -> span indices, stale after absorb
+
+// Highest-index span that stitches onto run r, or -1. canStitch forces the host's diagonal
+// within (maxGap-minGap) of the run's, so only that diagonal window is scanned (not every span);
+// stale entries (a span moved diagonal after absorb) are re-checked by spanDiag and skipped.
+int findStitchHost(const DiagIndex &byDiag, const std::vector<Span> &spans, const Run &r,
+                   const std::vector<StreamTok> &stream, std::pair<int, int> gaps)
+{
+  const int dr = r.a - r.b, band = gaps.second - gaps.first;
+  int host = -1;
+  for (int d = dr - band; d <= dr + band; ++d)
+  {
+    const auto it = byDiag.find(d);
+    if (it == byDiag.end())
+      continue;
+    for (auto j = it->second.rbegin(); j != it->second.rend() && *j > host; ++j)
+      if (spanDiag(spans[*j]) == d && canStitch(spans[*j], r, stream, gaps.first, gaps.second))
+      {
+        host = *j; // reverse order: first stitchable here is this bucket's highest index
+        break;
+      }
+  }
+  return host;
+}
+
+// Merge co-linear runs into Type-3 spans. Spans are indexed by growing diagonal so each run
+// scans only the compatible diagonal band, not every span — the picked host is the same one the
+// old full reverse scan chose, so the result is identical. Self-similar regions spread spans
+// across many diagonals, so the old O(runs*spans) scan was the openvdb blow-up (#201).
 void stitchSpans(std::vector<Run> &runs, const std::vector<StreamTok> &stream, int gap, std::size_t k,
                  std::vector<Span> &spans)
 {
   std::sort(runs.begin(), runs.end(),
             [](const Run &x, const Run &y) { return std::tie(x.a, x.b, x.len) < std::tie(y.a, y.b, y.len); });
   const int minGap = -static_cast<int>(k);
+  DiagIndex byDiag;
   for (const auto &r : runs)
   {
-    Span *host = nullptr;
-    for (auto it = spans.rbegin(); it != spans.rend() && host == nullptr; ++it)
-      if (canStitch(*it, r, stream, minGap, gap))
-        host = &*it;
-    if (host != nullptr)
-      absorb(*host, r);
+    const int host = findStitchHost(byDiag, spans, r, stream, {minGap, gap});
+    if (host >= 0)
+    {
+      const int oldD = spanDiag(spans[host]);
+      absorb(spans[host], r);
+      if (spanDiag(spans[host]) != oldD)
+        byDiag[spanDiag(spans[host])].push_back(host);
+    }
     else
+    {
       spans.push_back({r.a, r.a + r.len, r.b, r.b + r.len, r.len, 1});
+      byDiag[spanDiag(spans.back())].push_back(static_cast<int>(spans.size()) - 1);
+    }
   }
 }
 
 int spanTokens(const Span &s) { return (s.aEnd - s.a) + (s.bEnd - s.b); }
 
 // Drop a span contained in another span on both sides (a stitched superset already covers it).
-void dedupSpans(std::vector<Span> &spans)
+// Both-side containment forces the two spans into the same (fileA, fileB) pair, so a span tests
+// only its own file-pair bucket, not every kept span. Self-similar regions push half a million
+// spans through here on openvdb; the old global O(n^2) scan was 7+ minutes of the run (#201).
+void dedupSpans(std::vector<Span> &spans, const std::vector<StreamTok> &stream)
 {
   std::sort(spans.begin(), spans.end(), [](const Span &x, const Span &y)
             { return std::make_tuple(spanTokens(y), y.a, y.b) < std::make_tuple(spanTokens(x), x.a, x.b); });
+  std::unordered_map<std::int64_t, std::vector<Span>> byFilePair;
   std::vector<Span> kept;
   for (const auto &s : spans)
   {
+    const std::int64_t fp = (static_cast<std::int64_t>(stream[s.a].fileIdx) << 32) | stream[s.b].fileIdx;
+    auto &bucket = byFilePair[fp];
     bool contained = false;
-    for (const auto &k : kept)
+    for (const auto &k : bucket)
       if (s.a >= k.a && s.aEnd <= k.aEnd && s.b >= k.b && s.bEnd <= k.bEnd)
       {
         contained = true;
         break;
       }
     if (!contained)
+    {
+      bucket.push_back(s);
       kept.push_back(s);
+    }
   }
   spans.swap(kept);
 }
@@ -366,10 +419,14 @@ void matchTokenRuns(const std::vector<std::pair<std::string, std::string>> &file
 
   std::vector<Span> spans;
   stitchSpans(runs, stream, opts.gapTokens, k, spans);
-  dedupSpans(spans);
+  // Idiom/structureless drops run BEFORE dedup: a rare-poor or control-flow-free span cannot
+  // contain a rare-rich or control-flow-bearing one (its wider range would hold those tokens
+  // too), so the surviving set is identical — but in the default (control-flow) mode the huge
+  // data-table span flood is shed here, so dedup's work shrinks to the spans that can survive.
   const int dfCap = std::max(2, static_cast<int>(opts.rareDfFrac * static_cast<double>(names.size())));
   dropIdiomSpans(spans, stream, computeDf(stream), dfCap, opts.minRareAnchors);
   dropStructurelessSpans(spans, stream, opts.requireControlFlow);
+  dedupSpans(spans, stream);
   SpanEmit emitted = emitSpans(spans, stream, names, opts);
   outFragments = std::move(emitted.frags);
   outPairs = std::move(emitted.pairs);

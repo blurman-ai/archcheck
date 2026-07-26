@@ -40,6 +40,48 @@ std::vector<Pair> run(const std::vector<std::pair<std::string, std::string>> &fi
   matchTokenRuns(files, opts, frags, pairs);
   return pairs;
 }
+
+// A control-flow-bearing block, copied verbatim three times in one file with a distinct
+// function name each (the only difference). Bodies are identical, so the three form a
+// self-similar clique.
+const std::string kRepeatedTriple = "int alpha(int x)\n"
+                                    "{\n"
+                                    "  int s = 0;\n"
+                                    "  for (int i = 0; i < x; ++i)\n"
+                                    "  {\n"
+                                    "    if (i % 2 == 0)\n"
+                                    "      s += i;\n"
+                                    "    else\n"
+                                    "      s -= i;\n"
+                                    "  }\n"
+                                    "  return s;\n"
+                                    "}\n"
+                                    "\n"
+                                    "int beta(int x)\n"
+                                    "{\n"
+                                    "  int s = 0;\n"
+                                    "  for (int i = 0; i < x; ++i)\n"
+                                    "  {\n"
+                                    "    if (i % 2 == 0)\n"
+                                    "      s += i;\n"
+                                    "    else\n"
+                                    "      s -= i;\n"
+                                    "  }\n"
+                                    "  return s;\n"
+                                    "}\n"
+                                    "\n"
+                                    "int gamma(int x)\n"
+                                    "{\n"
+                                    "  int s = 0;\n"
+                                    "  for (int i = 0; i < x; ++i)\n"
+                                    "  {\n"
+                                    "    if (i % 2 == 0)\n"
+                                    "      s += i;\n"
+                                    "    else\n"
+                                    "      s -= i;\n"
+                                    "  }\n"
+                                    "  return s;\n"
+                                    "}\n";
 } // namespace
 
 // The core edge (ADR-004): a renamed copy across two files aligns as one maximal run,
@@ -138,4 +180,36 @@ TEST_CASE("Window-free core: min-size is monotonic (raise N -> strict subset)", 
   // it) — otherwise "subset" would hold trivially over empty sets.
   REQUIRE(!sets.front().empty());
   REQUIRE(sets.back().size() < sets.front().size());
+}
+
+// #201 acceptance: a block copied 3x in one file (a self-similar clique) must have EVERY
+// instance covered by at least one reported pair — the recall contract the dedup/tandem/stitch
+// path must not violate — while the pair count stays bounded (a clique of k copies yields at
+// most k*(k-1)/2 pairs; it must not explode). Guards the O(n^2) diagonal-indexed dedup/stitch
+// rework against over-collapsing repeated regions.
+TEST_CASE("Window-free core: a 3x-repeated block covers every instance, bounded pairs (#201)",
+          "[duplication][window-free]")
+{
+  std::vector<Fragment> frags;
+  std::vector<Pair> pairs;
+  RunMatchOptions o;
+  o.minLines = 6;
+  matchTokenRuns({{"triple.cpp", kRepeatedTriple}}, o, frags, pairs);
+
+  // The three instances occupy these body line ranges (alpha/beta/gamma; see kRepeatedTriple).
+  const std::vector<std::pair<int, int>> instances = {{1, 12}, {14, 25}, {27, 38}};
+  const auto covered = [&](std::pair<int, int> inst)
+  {
+    for (const auto &f : frags)
+      if (f.startLine <= inst.second && inst.first <= f.endLine) // overlaps the instance
+        return true;
+    return false;
+  };
+  for (const auto &inst : instances)
+    REQUIRE(covered(inst)); // recall contract: no instance is dropped by dedup/tandem collapse
+
+  REQUIRE(pairs.size() >= 2); // >=2 pairs are needed to touch all three instances
+  REQUIRE(pairs.size() <= 3); // bounded: a 3-clique is at most 3 pairs, not an explosion
+  for (const auto &p : pairs)
+    REQUIRE(p.type == "EXACT"); // identical bodies -> exact clones
 }
