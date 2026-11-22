@@ -18,7 +18,9 @@ enum class DiffMode
 // (SATD, test co-evolution, local complexity drift). Thresholds come from the
 // .archcheck.yml discovered at the repo root. Exit 1 only on gated regressions
 // (new/grown cycles, new god-headers); everything else is advisory. Exit 2 on error.
+// windowFreeClones (#199 / ADR-004): opt into the maximal-token-run clone core. Off by
+// default - it is a different detector, so enabling it changes the reported clone set.
 int runDiff(std::string_view revspec, const std::filesystem::path &root, DiffMode mode,
-            OutputFormat format = OutputFormat::Text);
+            OutputFormat format = OutputFormat::Text, bool windowFreeClones = false);
 
 } // namespace archcheck::cli

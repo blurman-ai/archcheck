@@ -132,6 +132,48 @@ const FunctionComplexity *findRescopedMatch(const std::vector<FunctionComplexity
   return best;
 }
 
+// A rename (#209): the old name vanished, the new name never existed, the parameter list
+// is spelled identically. One-to-one only - with two candidates on either side the pairing
+// is a guess, and a wrong one would hide a genuinely new function. Zero-arity functions
+// all share the empty fingerprint, so they are never paired this way.
+const FunctionComplexity *findRenamedMatch(const std::vector<FunctionComplexity> &olds,
+                                           const std::vector<FunctionComplexity> &news, const FunctionComplexity &fn)
+{
+  const auto named = [](const std::vector<FunctionComplexity> &fns, const std::string &name)
+  {
+    return std::any_of(fns.begin(), fns.end(),
+                       [&name](const FunctionComplexity &f) { return f.qualifiedName == name; });
+  };
+  const auto sameSignature = [&fn](const FunctionComplexity &f)
+  { return f.paramArity == fn.paramArity && f.paramFingerprint == fn.paramFingerprint; };
+  if (fn.paramArity == 0)
+    return nullptr;
+  const auto renamedTo = std::count_if(news.begin(), news.end(), [&](const FunctionComplexity &n)
+                                       { return sameSignature(n) && !named(olds, n.qualifiedName); });
+  const FunctionComplexity *match = nullptr;
+  for (const FunctionComplexity &old : olds)
+  {
+    if (!sameSignature(old) || named(news, old.qualifiedName))
+      continue;
+    if (match != nullptr)
+      return nullptr;
+    match = &old;
+  }
+  return renamedTo == 1 ? match : nullptr;
+}
+
+// Fallbacks after an exact (name, arity) miss, strongest first: a signature change,
+// a namespace/class move, a rename. Each keeps the old body's score as the baseline.
+const FunctionComplexity *findLooseMatch(const std::vector<FunctionComplexity> &olds,
+                                         const std::vector<FunctionComplexity> &news, const FunctionComplexity &fn)
+{
+  if (const FunctionComplexity *old = findArityChangedMatch(olds, fn))
+    return old;
+  if (const FunctionComplexity *old = findRescopedMatch(olds, news, fn))
+    return old;
+  return findRenamedMatch(olds, news, fn);
+}
+
 // An unclosed brace (broken commit) swallows every following function into one
 // garbage mega-span; #109 corpus showed phantom "new function" findings from
 // such parents. Stray extra `}` is tolerated: forward discovery self-heals at
@@ -238,10 +280,8 @@ ComplexityDriftResult compareFunctions(const std::vector<FunctionComplexity> &ol
   {
     bool lowConfidence = false;
     const FunctionComplexity *old = findOldMatch(olds, fn, lowConfidence);
-    if (old == nullptr && (old = findArityChangedMatch(olds, fn)) != nullptr)
-      lowConfidence = true; // signature change: only the soft LCX.3 signal applies
-    if (old == nullptr && (old = findRescopedMatch(olds, news, fn)) != nullptr)
-      lowConfidence = true; // namespace/class move: same body under a new scope
+    if (old == nullptr && (old = findLooseMatch(olds, news, fn)) != nullptr)
+      lowConfidence = true; // only the soft LCX.3 signal applies
     const int oldScore = old != nullptr ? old->score : 0;
     const int delta = fn.score - oldScore;
     (delta > 0 ? result.positiveDelta : result.negativeDelta) += delta;

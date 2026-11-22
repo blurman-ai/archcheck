@@ -112,12 +112,19 @@ std::size_t authoredBytes(const std::vector<std::pair<std::string, std::string>>
   return bytes;
 }
 
+// What the parent tree already contained: pre-existing clone pairs, and fragments whose
+// content the diff deleted. Both are "not introduced here" guards, so they travel together.
+struct ParentGuards
+{
+  const std::unordered_set<std::string> &pairKeys;
+  const std::unordered_set<std::string> &deletedFragmentKeys;
+};
+
 // Scan the new tree and emit one violation per introduced clone pair: a pair where
 // one side touches an added line and the parent did not already contain it.
 NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::string>> &sources,
-                                  const std::unordered_set<std::string> &parentKeys,
-                                  const std::unordered_set<std::string> &deletedKeys, const AddedLineMap &added,
-                                  const std::unordered_set<std::string> &focus)
+                                  const ParentGuards &parent, const AddedLineMap &added,
+                                  const std::unordered_set<std::string> &focus, bool windowFree)
 {
   NewCloneDriftResult result;
   // Whole-file guard ON (#179 follow-up): a MULTI-fragment whole-file / whole-subtree
@@ -129,6 +136,7 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
   duplication::ScannerOptions opts;
   opts.enableWholeFileGuard = true;
   opts.focusFiles = focus;
+  opts.windowFree = windowFree;
   const auto scan = duplication::scanForDuplication(sources, opts);
   for (const auto &p : scan.pairs)
   {
@@ -138,9 +146,10 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
     const bool bTouched = fragmentTouches(fb, added);
     if (!aTouched && !bTouched)
       continue;
-    if ((aTouched && deletedKeys.count(contentKey(fa)) != 0) || (bTouched && deletedKeys.count(contentKey(fb)) != 0))
+    if ((aTouched && parent.deletedFragmentKeys.count(contentKey(fa)) != 0) ||
+        (bTouched && parent.deletedFragmentKeys.count(contentKey(fb)) != 0))
       continue; // moved from deleted parent lines, not an additional copy
-    if (parentKeys.count(pairKey(fa, fb)))
+    if (parent.pairKeys.count(pairKey(fa, fb)))
       continue; // pre-existing clone, diff merely touched it
     result.violations.push_back(aTouched ? makeViolation(fa, fb, p) : makeViolation(fb, fa, p));
   }
@@ -150,7 +159,7 @@ NewCloneDriftResult emitNewClones(const std::vector<std::pair<std::string, std::
 } // namespace
 
 NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
-                                    const AddedLineMap &added, const DeletedLineMap &deleted, std::size_t maxScanBytes)
+                                    const AddedLineMap &added, const DeletedLineMap &deleted, CloneScanOptions scan)
 {
   NewCloneDriftResult result;
   if (added.empty())
@@ -159,7 +168,7 @@ NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const Sou
   // #149: the clone scan is a whole-tree pass twice over (parent + new); on a huge
   // authored tree it blows the per-commit budget. Skip past the cap — advisory only,
   // so the gate (cycles/god-headers) still runs and the commit is not lost.
-  if (authoredBytes(sources) > maxScanBytes)
+  if (authoredBytes(sources) > scan.maxScanBytes)
   {
     result.skippedLargeTree = true;
     return result;
@@ -176,14 +185,17 @@ NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const Sou
   duplication::ScannerOptions parentOpts;
   parentOpts.enableWholeFileGuard = false;
   parentOpts.focusFiles = focus;
+  parentOpts.windowFree = scan.windowFree;
   const auto parentScan = duplication::scanForDuplication(parentSnapshot.authoredSources(), parentOpts);
-  return emitNewClones(sources, parentPairKeys(parentScan), deletedFragmentKeys(parentScan, deleted), added, focus);
+  const auto pairKeys = parentPairKeys(parentScan);
+  const auto deletedKeys = deletedFragmentKeys(parentScan, deleted);
+  return emitNewClones(sources, ParentGuards{pairKeys, deletedKeys}, added, focus, scan.windowFree);
 }
 
 NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot, const SourceSnapshot &parentSnapshot,
                                     const AddedLineMap &added, std::size_t maxScanBytes)
 {
-  return detectNewClones(newSnapshot, parentSnapshot, added, DeletedLineMap{}, maxScanBytes);
+  return detectNewClones(newSnapshot, parentSnapshot, added, DeletedLineMap{}, CloneScanOptions{maxScanBytes, false});
 }
 
 } // namespace archcheck::scan

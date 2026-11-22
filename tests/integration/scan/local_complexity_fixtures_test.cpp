@@ -103,6 +103,24 @@ TEST_CASE("complexity fixtures: new function above 25 is reported", "[scan][comp
   REQUIRE(res.violations[0].message.find("new function 'saturate'") != std::string::npos);
 }
 
+TEST_CASE("complexity fixtures: a renamed function is not a new function (#209)", "[scan][complexity][fixtures]")
+{
+  const std::string baseline = fixture("pass_rename/filter_baseline.cpp");
+  REQUIRE(archcheck::scan::computeFileComplexity(baseline).at(0).score >= 25); // would fire as "new function"
+  const auto res =
+      archcheck::scan::compareLocalComplexity(baseline, fixture("pass_rename/filter_current.cpp"), "filter.cpp");
+  REQUIRE(res.violations.empty());
+}
+
+TEST_CASE("complexity fixtures: a rename that adds branches reports the growth only (#209)",
+          "[scan][complexity][fixtures]")
+{
+  const auto res = archcheck::scan::compareLocalComplexity(
+      fixture("fail_rename_grew/filter_baseline.cpp"), fixture("fail_rename_grew/filter_current.cpp"), "filter.cpp");
+  REQUIRE(res.violations.size() == 1);
+  REQUIRE(res.violations[0].message.find("'applyRowFilter' grew local complexity from") != std::string::npos);
+}
+
 TEST_CASE("absolute complexity: flat function stays silent below the ceiling", "[scan][complexity][fixtures]")
 {
   const auto flat = archcheck::scan::computeFileComplexity(absoluteFixture("pass/flat_three_ifs.cpp"));

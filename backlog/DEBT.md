@@ -10,6 +10,18 @@ Entry format:
 
 ---
 
+- **[2026-11-03] `--diff` turns a failed `git diff` into "no changes"** — `collectAddedLines`,
+  `collectDeletedLines`, `collectNumstat`, `collectRenamedPaths` (src/git/diff_query.cpp) return
+  `{}` on a non-zero git exit. They diff without a pathspec, so in a partial clone with a missing
+  blob of *any* changed file (a .js, a .gitattributes from the index) git exits 128 and archcheck
+  reports the commit with NEW_CLONE / SATD / TEST.1 / flag findings silently dropped, exit 0.
+  *Consequence:* replay pilot2 lost findings on 36 of 1087 commits (CollaboraOnline 4818baa4:
+  2 NEW_CLONE + TEST.1 → nothing); a CI job on a blobless or offline checkout would pass a commit
+  it should flag. How to fix: propagate the failure (exit 3, or an explicit "diff unavailable"
+  advisory), and test it with a fixture repo whose changed blob is absent. Not fixed now: the
+  ICCQ26 re-run pins the binary; rerun_2026-11/rerun_replay.py runs the same diffs first and
+  records `blob_missing`. Open.
+
 - **[2026-07-14] `--config` and `--format json` cannot be combined** — `dispatch_config`
   (src/main.cpp) hardcodes `OutputFormat::Text` and treats the arg after the config path as
   the check-path, so `--config F --format json P` (either order) scans a bogus path (`"--format"`
@@ -118,3 +130,13 @@ Entry format:
   not "one-directional nagging". What survives of this entry is a research-methodology
   caveat only: per-commit history runs count clone creation but never repayment, so any
   duplication trend derived from `--diff` is an upper bound. No product change planned.
+
+- **[2026-11-06] A pure file move is reported as hundreds of new include edges** — in the ICCQ26
+  re-run (`bin/archcheck_fix209_210`), picolibc `b4faae61ae` ("Flatten newlib directory": 2715 exact
+  renames, 10 added C/C++ lines) gives 2353 added edges; Samsung_ONE `6ea42f45e0` (640 renames, 0 added
+  lines) gives 1231. The edge diff compares edges by path, so every edge of a moved file looks new.
+  *Consequence:* a directory reorganisation fails the gate as architectural drift, and drift counts
+  in history runs are inflated by refactoring commits (75 of 210594 sampled commits carried 19.5k of the
+  added edges). Fix sketch: map pre-side paths through `collectRenamedPaths` before diffing the edge
+  sets. The re-run excludes such commits as `rename_bulk`
+  (`experiments/rerun_2026-11/estimates/build_panel.py`).

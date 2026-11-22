@@ -42,10 +42,22 @@ struct NewCloneDriftResult
 // maxScanBytes (#149): when the new tree's authored bytes exceed this, the scan is
 // skipped (result.skippedLargeTree = true, no violations) because the whole-tree
 // pass would not fit the per-commit budget. Advisory-only, so the gate is unaffected.
+// How the per-commit clone scan is run. Grouped rather than passed as loose arguments:
+// the scan is the dominant cost of --diff and has grown two independent knobs.
+struct CloneScanOptions
+{
+  // #149: skip the scan when the new tree exceeds this, so a vendored dump cannot blow the
+  // per-commit budget. Advisory-only, so the gate still runs.
+  std::size_t maxScanBytes = std::numeric_limits<std::size_t>::max();
+  // #199 / ADR-004: run the maximal-token-run core instead of the window pipeline. Opt-in,
+  // because it is a different detector, not a faster spelling of the same one - it reports a
+  // different pair set, so a run using it is not comparable with one that does not.
+  bool windowFree = false;
+};
+
 [[nodiscard]] NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot,
                                                   const SourceSnapshot &parentSnapshot, const AddedLineMap &added,
-                                                  const DeletedLineMap &deleted,
-                                                  std::size_t maxScanBytes = std::numeric_limits<std::size_t>::max());
+                                                  const DeletedLineMap &deleted, CloneScanOptions scan = {});
 
 [[nodiscard]] NewCloneDriftResult detectNewClones(const SourceSnapshot &newSnapshot,
                                                   const SourceSnapshot &parentSnapshot, const AddedLineMap &added,

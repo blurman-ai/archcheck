@@ -25,12 +25,17 @@ constexpr const char *kRuleId = "DRIFT.BOOL_FIELD_ACCRETION";
 const std::regex kStructRe(R"((?:struct|class)\s+([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*(?:final\s*)?(?::[^{;]*)?\{)");
 const std::regex kBoolRe(
     R"(^\s*(?:(?:mutable|const)\s+)?bool\s+([A-Za-z_]\w*)\s*(?::\s*\d+)?(?:\s*=\s*[^;]+|\s*\{[^{};]*\})?;\s*(?://.*)?$)");
+// Any other data member (`uint8_t flag;`, `std::vector<T> v;`): only its name is kept, so a
+// member retyped to bool is recognised as existing state, not accretion (#210).
+const std::regex kMemberRe(
+    R"(^\s*(?:[A-Za-z_][\w:]*(?:\s*<[^;()]*>)?[\s*&]+)+([A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*(?::\s*\d+)?(?:\s*=\s*[^;]+|\s*\{[^{};]*\})?;\s*(?://.*)?$)");
 
-struct BoolField
+struct Field
 {
   std::string structName;
   std::string fieldName;
   int line = 0;
+  bool isBool = true;
 };
 
 enum class Lex
@@ -138,11 +143,11 @@ std::pair<std::size_t, std::size_t> findBody(const std::string &neut, std::size_
   return {std::string::npos, std::string::npos};
 }
 
-// Append depth-0 bool members of the struct whose body is [body.first, body.second) to
+// Append depth-0 data members of the struct whose body is [body.first, body.second) to
 // `out`. Field text comes from `orig`; brace depth from `neut` (same offsets) so literals
 // never shift depth.
-void appendStructBools(const std::string &orig, const std::string &neut, const std::string &name,
-                       std::pair<std::size_t, std::size_t> body, std::vector<BoolField> &out)
+void appendStructFields(const std::string &orig, const std::string &neut, const std::string &name,
+                        std::pair<std::size_t, std::size_t> body, std::vector<Field> &out)
 {
   const int baseLine = newlinesBefore(orig, body.first) + 1;
   int depth = 0;
@@ -156,9 +161,11 @@ void appendStructBools(const std::string &orig, const std::string &neut, const s
     // comment (#164 A.3: `bool x = false; // TODO(Phase4)` was invisible to the baseline).
     const std::string code = line.substr(0, line.find("//"));
     std::smatch m;
-    if (depth == 0 && code.find('(') == std::string::npos && code.find(')') == std::string::npos &&
-        std::regex_match(line, m, kBoolRe))
-      out.push_back({name, m[1].str(), baseLine + off});
+    const bool member = depth == 0 && code.find('(') == std::string::npos && code.find(')') == std::string::npos;
+    if (member && std::regex_match(line, m, kBoolRe))
+      out.push_back({name, m[1].str(), baseLine + off, true});
+    else if (member && std::regex_match(line, m, kMemberRe))
+      out.push_back({name, m[1].str(), baseLine + off, false});
     depth += braceDelta(neut, pos, lineEnd);
     if (depth < 0)
       depth = 0;
@@ -166,15 +173,15 @@ void appendStructBools(const std::string &orig, const std::string &neut, const s
   }
 }
 
-std::vector<BoolField> boolFields(const std::string &text)
+std::vector<Field> structFields(const std::string &text)
 {
-  std::vector<BoolField> out;
+  std::vector<Field> out;
   const std::string neut = neutralizeBraces(text);
   for (auto it = std::sregex_iterator(text.begin(), text.end(), kStructRe); it != std::sregex_iterator(); ++it)
   {
     const auto body = findBody(neut, static_cast<std::size_t>(it->position()));
     if (body.first != std::string::npos)
-      appendStructBools(text, neut, (*it)[1].str(), body, out);
+      appendStructFields(text, neut, (*it)[1].str(), body, out);
   }
   return out;
 }
@@ -189,15 +196,22 @@ std::set<std::string> structNames(const std::string &text)
   return names;
 }
 
+struct OldMembers
+{
+  const std::set<std::string> &bools;
+  const std::set<std::string> &others; // non-bool members: a bool under one of these names was retyped
+};
+
 // Emit one finding when struct `name` has MORE bool fields than the baseline. Net count
 // (rename / reformat keep the count); the message lists the gained names (new \ old).
-void pushIfAccreted(const std::string &name, const std::vector<BoolField> &fields,
-                    const std::set<std::string> &oldNames, const std::string &file, rules::ViolationList &out)
+void pushIfAccreted(const std::string &name, const std::vector<Field> &fields, const OldMembers &old,
+                    const std::string &file, rules::ViolationList &out)
 {
   std::set<std::string> newNames;
   for (const auto &f : fields)
-    newNames.insert(f.fieldName);
-  if (newNames.size() <= oldNames.size())
+    if (old.others.count(f.fieldName) == 0)
+      newNames.insert(f.fieldName);
+  if (newNames.size() <= old.bools.size())
     return;
   int line = 0;
   int gainedCount = 0;
@@ -205,7 +219,7 @@ void pushIfAccreted(const std::string &name, const std::vector<BoolField> &field
   std::set<std::string> seen;
   for (const auto &f : fields)
   {
-    if (oldNames.count(f.fieldName) != 0 || !seen.insert(f.fieldName).second)
+    if (old.bools.count(f.fieldName) != 0 || old.others.count(f.fieldName) != 0 || !seen.insert(f.fieldName).second)
       continue;
     line = line == 0 ? f.line : std::min(line, f.line);
     ++gainedCount; // gross adds, matching the listed names (#164 A.4; the gate stays net)
@@ -223,19 +237,19 @@ BoolFieldDriftResult compareBoolFields(const std::string &oldSource, const std::
   BoolFieldDriftResult result;
   const std::set<std::string> oldStructs = structNames(oldSource);
   std::map<std::string, std::set<std::string>> oldBools;
-  for (const auto &f : boolFields(oldSource))
-    oldBools[f.structName].insert(f.fieldName);
-  std::map<std::string, std::vector<BoolField>> newByStruct;
-  for (const auto &f : boolFields(newSource))
-    newByStruct[f.structName].push_back(f);
+  std::map<std::string, std::set<std::string>> oldOthers;
+  for (const auto &f : structFields(oldSource))
+    (f.isBool ? oldBools : oldOthers)[f.structName].insert(f.fieldName);
+  std::map<std::string, std::vector<Field>> newByStruct;
+  for (const auto &f : structFields(newSource))
+    if (f.isBool)
+      newByStruct[f.structName].push_back(f);
 
-  static const std::set<std::string> kNone;
   for (const auto &[name, fields] : newByStruct)
   {
     if (oldStructs.count(name) == 0) // struct absent from baseline -> greenfield, not drift
       continue;
-    const auto oldIt = oldBools.find(name);
-    pushIfAccreted(name, fields, oldIt == oldBools.end() ? kNone : oldIt->second, file, result.violations);
+    pushIfAccreted(name, fields, OldMembers{oldBools[name], oldOthers[name]}, file, result.violations);
   }
   return result;
 }

@@ -41,4 +41,22 @@ TEST_CASE("bool_drift fixtures: brace in a string literal does not fake accretio
   REQUIRE(res.violations.empty());
 }
 
+TEST_CASE("bool_drift fixtures: a member retyped to bool is not accretion (#210)", "[scan][bool_drift][fixtures]")
+{
+  const auto res = archcheck::scan::compareBoolFields(fixture("pass_type_change/packet_baseline.h"),
+                                                      fixture("pass_type_change/packet_current.h"), "packet.h");
+  REQUIRE(res.violations.empty());
+}
+
+TEST_CASE("bool_drift fixtures: a retype next to a real new bool reports only the new one (#210)",
+          "[scan][bool_drift][fixtures]")
+{
+  std::string current = fixture("pass_type_change/packet_current.h");
+  current.insert(current.find("  bool valid"), "  bool encrypted = false;\n");
+  const auto res =
+      archcheck::scan::compareBoolFields(fixture("pass_type_change/packet_baseline.h"), current, "packet.h");
+  REQUIRE(res.violations.size() == 1);
+  REQUIRE(res.violations[0].message.find("accreted 1 bool field(s): encrypted") != std::string::npos);
+}
+
 } // namespace

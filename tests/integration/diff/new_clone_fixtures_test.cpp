@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -50,13 +51,15 @@ AddedLineMap loadAddedLines(const fs::path &file)
   return added;
 }
 
-archcheck::scan::NewCloneDriftResult runScenario(std::string_view name)
+archcheck::scan::NewCloneDriftResult runScenario(std::string_view name, bool windowFree = false)
 {
   const auto dir = scenarioDir(name);
   DiskFileSource parentSrc(dir / "parent");
   DiskFileSource newSrc(dir / "new");
   const auto added = loadAddedLines(dir / "added.txt");
-  return detectNewClones(SourceSnapshot::read(newSrc), SourceSnapshot::read(parentSrc), added);
+  return detectNewClones(SourceSnapshot::read(newSrc), SourceSnapshot::read(parentSrc), added,
+                         archcheck::scan::DeletedLineMap{},
+                         archcheck::scan::CloneScanOptions{std::numeric_limits<std::size_t>::max(), windowFree});
 }
 
 } // namespace
@@ -105,4 +108,18 @@ TEST_CASE("diff_new_clone fixture: small module extracted into a new file still 
   REQUIRE(res.violations.size() >= 1);
   REQUIRE(res.violations[0].file == "extracted.cpp");
   REQUIRE(res.violations[0].message.find("clone of big.cpp") != std::string::npos);
+}
+
+// #199 / ADR-004: the window-free core must find the same introduced copies as the window
+// pipeline on the fixtures whose answer is known. It is allowed to differ in how many pairs
+// it reports for one copy - it is a different detector - but "a copy was introduced here"
+// must not become "nothing happened".
+TEST_CASE("diff_new_clone fixtures: window-free core still detects the introduced copies",
+          "[diff][newclone][fixtures][windowfree]")
+{
+  CHECK(runScenario("fail_existing_file", true).violations.size() >= 1);
+  CHECK(runScenario("fail_new_file", true).violations.size() >= 1);
+  CHECK(runScenario("extraction", true).violations.size() >= 1);
+  CHECK(runScenario("pass", true).violations.empty());
+  CHECK(runScenario("pass_preexisting", true).violations.empty());
 }

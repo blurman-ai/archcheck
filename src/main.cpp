@@ -39,7 +39,7 @@ Usage:
                   --window-free: experimental maximal-token-run core, ADR-004;
                   --min-lines N: minimum clone size in lines, output filter)
   archcheck --history <path>                   (history analytics: god-file growth; advisory, does not gate CI)
-  archcheck --diff  [--diff-mode=disk|memory] [--format=text|json] <revspec> [path]
+  archcheck --diff  [--diff-mode=disk|memory] [--format=text|json] [--window-free] <revspec> [path]
                   (PR diff; gates new/grown cycles and new god-headers, reports advisories)
 
 Default rules (no config required): SF.9, CASE_MISMATCH_INCLUDE [gating];
@@ -83,30 +83,52 @@ bool parseDiffFormat(std::string_view raw, cli::OutputFormat &out)
   return true;
 }
 
-// Strip leading `--diff-mode=...` / `--format=...` flags from argv starting
-// at `idx`. Returns the new idx on success; -1 on malformed value.
-int consumeDiffFlags(int argc, char *argv[], int idx, cli::DiffMode &mode, cli::OutputFormat &format)
+// One "--key=value" diff flag. Both diff flags share this shape; keeping the parse in one
+// place is what stops the third one from being a third copy.
+enum class FlagParse
 {
-  constexpr std::string_view kModePrefix = "--diff-mode=";
-  constexpr std::string_view kFormatPrefix = "--format=";
+  NotMine,
+  Ok,
+  Bad
+};
+
+template <typename Parse>
+FlagParse parsePrefixedFlag(std::string_view arg, std::string_view prefix, Parse parse, const char *expected)
+{
+  if (arg.size() <= prefix.size() || arg.compare(0, prefix.size(), prefix) != 0)
+    return FlagParse::NotMine;
+  const auto value = arg.substr(prefix.size());
+  if (parse(value))
+    return FlagParse::Ok;
+  std::cerr << "archcheck: invalid " << prefix.substr(0, prefix.size() - 1) << " value '" << value << "' (expected "
+            << expected << ")\n";
+  return FlagParse::Bad;
+}
+
+// Strip leading diff flags from argv starting at `idx`. Returns the new idx; -1 on a
+// malformed value.
+int consumeDiffFlags(int argc, char *argv[], int idx, cli::DiffMode &mode, cli::OutputFormat &format,
+                     bool &windowFreeClones)
+{
   for (; idx < argc; ++idx)
   {
     const std::string_view a{argv[idx]};
-    if (a.size() > kModePrefix.size() && a.compare(0, kModePrefix.size(), kModePrefix) == 0)
-    {
-      if (parseDiffMode(a.substr(kModePrefix.size()), mode))
-        continue;
-      std::cerr << "archcheck: invalid --diff-mode value '" << a.substr(kModePrefix.size())
-                << "' (expected 'disk' or 'memory')\n";
+    const auto asMode = parsePrefixedFlag(
+        a, "--diff-mode=", [&](std::string_view v) { return parseDiffMode(v, mode); }, "'disk' or 'memory'");
+    if (asMode == FlagParse::Bad)
       return -1;
-    }
-    if (a.size() > kFormatPrefix.size() && a.compare(0, kFormatPrefix.size(), kFormatPrefix) == 0)
-    {
-      if (parseDiffFormat(a.substr(kFormatPrefix.size()), format))
-        continue;
-      std::cerr << "archcheck: invalid --format value '" << a.substr(kFormatPrefix.size())
-                << "' (expected 'text', 'json', or 'md')\n";
+    if (asMode == FlagParse::Ok)
+      continue;
+    const auto asFormat = parsePrefixedFlag(
+        a, "--format=", [&](std::string_view v) { return parseDiffFormat(v, format); }, "'text', 'json', or 'md'");
+    if (asFormat == FlagParse::Bad)
       return -1;
+    if (asFormat == FlagParse::Ok)
+      continue;
+    if (a == "--window-free") // #199 / ADR-004: maximal-token-run clone core, opt-in
+    {
+      windowFreeClones = true;
+      continue;
     }
     break;
   }
@@ -117,7 +139,8 @@ int dispatch_diff(int argc, char *argv[])
 {
   cli::DiffMode mode = cli::DiffMode::Memory;
   cli::OutputFormat format = cli::OutputFormat::Text;
-  const int idx = consumeDiffFlags(argc, argv, 2, mode, format);
+  bool windowFreeClones = false;
+  const int idx = consumeDiffFlags(argc, argv, 2, mode, format, windowFreeClones);
   if (idx < 0)
     return 2;
   if (idx >= argc)
@@ -128,7 +151,7 @@ int dispatch_diff(int argc, char *argv[])
   const std::string_view revspec{argv[idx]};
   const std::filesystem::path root =
       (idx + 1 < argc) ? std::filesystem::path{argv[idx + 1]} : std::filesystem::current_path();
-  return cli::runDiff(revspec, root, mode, format);
+  return cli::runDiff(revspec, root, mode, format, windowFreeClones);
 }
 
 int dispatch_drift_baseline(int argc, char *argv[])

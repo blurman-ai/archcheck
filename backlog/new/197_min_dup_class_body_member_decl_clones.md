@@ -50,3 +50,51 @@ body; #195 boundary-runs anchor to a body's edges. None emits a fragment for a r
 - [ ] Hand-triage new pairs; report TP/FP with sample size (watch the getter/override idiom flood).
 - [ ] Fixtures `fixtures/duplication/class_body_member_clone/{pass,fail_*}/`.
 - [ ] `docs/duplication_architecture.md` updated.
+
+---
+
+## Addendum (2026-08-25) — the DATA-member variant, and why its FP profile differs
+
+Independently confirmed on three repos while cross-validating against Duplo (#194). Same root
+cause as above — no fragment is emitted for a run of members at class scope — but the members
+are **data fields**, not methods.
+
+`u236/homed-service-zigbee` `ezsp.h:171-179` ↔ `ezsp.h:186-193`:
+
+```cpp
+struct ezspSendUnicastStruct        struct ezspSendMulticastStruct
+{                                   {
+    quint8  type;                       quint16 profileId;
+    quint16 networkAddress;             quint16 clusterId;
+    quint16 profileId;                  quint8  srcEndpointId;
+    quint16 clusterId;                  quint8  dstEndpointId;
+    quint8  srcEndpointId;              quint16 options;
+    quint8  dstEndpointId;              quint16 groupId;
+    quint16 options;                    quint8  sequence;
+    quint16 groupId;                    quint8  hops;
+    quint8  sequence;               ...
+```
+
+Also seen as a run of method declarations, which IS the shape this task already covers:
+`fmidev/smartmet-plugin-wms` `ArrowLayer.h:32-38` ↔ `RasterLayer.h:39-45` — an identical
+`init` / `generate` / `getFeatureInfo` override run.
+
+**The FP profile is not the same as for copied methods, and the fix must not assume it is.** A
+run of copied sibling *methods* is refactorable — extract a base, share the implementation. A run
+of identical *fields* in two structs is very often a wire-format mirror: `ezspSendUnicastStruct`
+and `ezspSendMulticastStruct` follow the EZSP protocol frame layout, and collapsing them into a
+common base would be wrong. By Kapser & Godfrey that is an API-protocol (incidental) clone —
+which the project's own doctrine says to tag or down-rank, never suppress
+([[project_accidental_clones_no_shape_signal]], `docs/duplication_architecture.md` §5.y).
+
+So detecting the data-member run without a way to separate "copied struct" from "protocol
+mirror" would add a noisy class to the output. Whether it should fire at all is a design
+question this addendum does not settle — but it must be answered before implementing, otherwise
+the layer ships an FP class the project has spent five tasks removing elsewhere.
+
+Method runs (the original scope) carry no such caveat and can proceed on their own.
+
+## Evidence
+
+`experiments/clone_compare/show_clone_deltas.py duplo_only` prints each finding with both code
+fragments; report at `archcheck-journal/reports/duplo_vs_archcheck.md`.
