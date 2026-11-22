@@ -3,6 +3,7 @@
 
 \usepackage{booktabs}
 \usepackage{threeparttable}
+\emergencystretch=2em
 
 % v2: camera-ready version with re-run results.
 \newcommand{\tool}{archcheck}
@@ -142,7 +143,7 @@ rules of Lakos~\cite{lakos1996} and the source-file (SF) section of the C++
 Core Guidelines~\cite{coreguidelines}.
 
 Local code signals include cognitive-complexity
-growth~\cite{campbell2018}, newly added TODO/FIXME/HACK markers
+growth~\cite{campbell2018}, newly added TODO/\allowbreak FIXME/\allowbreak HACK markers
 (self-admitted technical debt), lack of test co-evolution, and token-based
 clone introduction. Clone detection normalizes identifiers and literals before
 candidate matching, so copied-and-renamed fragments are still detected. The
@@ -237,6 +238,7 @@ not by a different per-change propensity to add complexity.
 ``headline'' vanishes once repository and commit size are held fixed.}
 \label{tab:ladder}
 \footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lll@{}}
 \toprule
 Control level & Complexity result & $p$ \\
@@ -410,8 +412,7 @@ The registered clone endpoint P4 is clone \emph{stock}; the panel measures
 clone \emph{introductions}, and stock is measured only in the replication of
 Section~\ref{sec:agarwal-repl}. TOST equivalence tests at $[0.80, 1.25]$ are
 inconclusive for every per-commit and per-KLOC ratio. Not run: the
-year-earlier and Dockerfile-adoption placebo controls and the pure-agent
-stratum S1.
+year-earlier and Dockerfile-adoption placebo controls.
 
 \begin{table*}[t]
 \caption{Adoption event study (854 adopters, 517 placebo). Main estimate:
@@ -455,9 +456,20 @@ gives $p=0.06$, so part of the P2 increase may continue a trend that began
 before adoption. In the registered dose--response split by post-adoption
 AI-commit share, weekly complexity growth rises with share (1.35\x{} for zero,
 1.43\x{} for low, 2.71\x{} for high), while per-KLOC rates do not (1.21\x{},
-1.07\x{}, 1.22\x{}). Clone introductions (P4) and flag-argument growth (P3)
+1.07\x{}, 1.22\x{}). In the registered pure-agent stratum S1 ($\ge$90\%
+post-adoption AI commits, $n=15$ versus $n=504$ pure-human controls),
+post-adoption complexity growth is 3.09\x{} higher per commit ($0.358$ vs.\
+$0.116$; equal-repo mean 1.73\x{}, repo median 3.44\x{}) and 2.64\x{} higher
+per KLOC, rising monotonically across all five AI-share strata ($0\%$,
+$<10\%$, $10\text{--}50\%$, $50\text{--}90\%$, $\ge90\%$). Clone introductions (P4) and flag-argument growth (P3)
 rise per week (1.75\x{}, 1.41\x{}) but not per commit (1.09\x{}, 0.93\x{}). The
-pre-period of P3 fails the joint test ($p=0.004$).
+pre-period of P3 fails the joint test ($p=0.004$). Evaluating whole-graph
+snapshots at the 12-week window edges (\texttt{-\/-drift-baseline} over 758
+adopters and 439 controls with complete local blobs), new shortcut edges
+between pre-existing files (\texttt{DRIFT.1}) rise 1.23\x{} in equal-repo
+$\log(1+y)$ difference-in-differences (95\% CI $[1.07, 1.43]$; winsorized at
+500 edges per repository: 1.34\x{} per window, 0.67\x{} per KLOC, consistent
+with the volume channel).
 
 \subsection{Independent replication on another study's repositories}
 \label{sec:agarwal-repl}
@@ -574,17 +586,21 @@ mismatch between generation and verification. A review process designed for
 human-scale change volume becomes underprovisioned even when individual
 AI-assisted changes are no worse than human changes of comparable size.
 
-\paragraph{One contested per-unit signal.} A single ``agents worse'' result in
-our broader investigation survived its checks and deserves an honest status
-note: a per-structure analysis (git-blame attribution over structures touched
-by $\ge$4 commits) found boolean-field accretion (flag fields accumulating
-in existing structs) in 9.8\% of agent-attributed structs versus 6.0\% of
-others, roughly 2.3\x{} after manually removing false positives from both
-arms. The adoption-level proxy for the same phenomenon (P3) is null per commit
-(0.93\x{}) and fails the pre-period test, and the
-per-struct method has not been re-run against the adoption cohorts. The result
-is therefore method-dependent: unconfirmed rather than refuted, and we present
-it as an open question rather than a claim.
+\paragraph{Cumulative boolean-state accretion.} A single ``agents worse'' result in
+our broader investigation survived its checks: a per-structure analysis
+(git-blame attribution over structures touched by $\ge$4 commits) found
+boolean-field accretion (flag fields accumulating in existing structs) in
+9.8\% of agent-attributed structs versus 6.0\% of others, roughly 2.3\x{}
+after manually removing false positives from both arms. While the single-commit
+weekly proxy (P3) is null per commit (0.93\x{}) and fails the pre-period test,
+re-running the cumulative per-structure method across the 12-week pre and post
+windows of the 854/517 adoption panel (2{,}692 bool-accreting commits,
+excluding configuration bags and churn) reproduces the accretion signal:
+content structures gaining boolean fields across $\ge$2, $\ge$3, and $\ge$4
+distinct commits in 12 weeks rise 1.56\x{}, 1.71\x{}, and 6.00\x{} relative to
+placebo (affected repositories: 1.80\x{}, 3.20\x{}, and 7.00\x{}). State
+degradation is therefore a multi-commit cumulative process that single-commit
+indicators under-detect.
 
 \paragraph{Implications for tooling.} The volume channel changes the role of
 static architecture checks. A CI gate should not attempt to classify whether
@@ -626,10 +642,17 @@ agent-assisted, and 43 of the 50 repositories record agent use only as a
 trailer on a human-authored commit. In the two repositories we inspected by
 hand, the unmarked commits were configuration, build and documentation
 changes, and the marked commits carried the C++ feature work. Within a repository, the
-agent/human contrast therefore partly compares kinds of work. The direction of
-this bias is not known.
+agent/human contrast therefore partly compares kinds of work. Across the 250
+mixed adopter repositories with at least three post-adoption C++ commits in
+each class, AI-attributed commits touch C/C++ files more often (74.5\% vs.\
+66.5\%) and are 1.37\x{} larger on C/C++ files (median 35 vs.\ 23 lines);
+moving from all commits to C++-only unmatched commits and then to C++
+size-matched commits attenuates the within-repository continuous agent/human
+ratio from 1.37\x{} to 1.17\x{} to 1.09\x{} on P1 (and from 1.32\x{} to
+1.15\x{} to 1.03\x{} on complexity), showing that task mix and conditioning on
+commit size jointly absorb the raw per-commit gap.
 
-\paragraph{Observational design.} Neither the within-repository comparison nor
+\paragraph{Observational design.} Neither the within-re\-pos\-i\-tory comparison nor
 the event study randomly assigns AI use. Adoption may coincide with
 organizational changes that affect development volume. The placebo design,
 pre-trend checks, donut windows, and leave-one-owner-out analysis reduce but
@@ -745,8 +768,8 @@ verification with generation volume.
 \section*{Data Availability}
 \label{sec:data}
 
-The artifact is deposited on Zenodo under DOI 10.5281/zenodo.24440566
-(concept DOI 10.5281/zenodo.22057749) and
+The artifact is deposited on Zenodo under DOI 10.5281/\allowbreak zenodo.24440566
+(concept DOI 10.5281/\allowbreak zenodo.22057749) and
 contains the analysis code for every study (per-commit pipeline, event-study
 estimators, review-capacity estimators), the preregistration, the raw
 estimator outputs from which the tables are drawn, the tables with a
