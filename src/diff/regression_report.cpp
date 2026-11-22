@@ -46,21 +46,30 @@ struct AreaEdgeStats
 
 using AreaEdgeMap = std::unordered_map<std::string, AreaEdgeStats>;
 
-AreaClassifier buildAreaClassifier(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current)
+std::string_view canonicalPath(std::string_view path, const graph::RenameMap &renames)
+{
+  if (renames.empty())
+    return path;
+  const auto it = renames.find(std::string(path));
+  return it == renames.end() ? path : std::string_view{it->second};
+}
+
+AreaClassifier buildAreaClassifier(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current,
+                                   const graph::RenameMap &renames)
 {
   std::unordered_set<std::string> topDirs;
-  const auto collectTopDirs = [&](const graph::DependencyGraph &g)
+  const auto collectTopDirs = [&](const graph::DependencyGraph &g, const graph::RenameMap &rm)
   {
     for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(g.nodeCount()); ++i)
     {
-      const auto path = g.pathOf(graph::NodeId{i});
+      const auto path = canonicalPath(g.pathOf(graph::NodeId{i}), rm);
       const auto slash = path.find('/');
       if (slash != std::string_view::npos)
         topDirs.emplace(path.substr(0, slash));
     }
   };
-  collectTopDirs(baseline);
-  collectTopDirs(current);
+  collectTopDirs(baseline, renames);
+  collectTopDirs(current, {});
   return AreaClassifier{topDirs.size() == 1};
 }
 
@@ -74,17 +83,18 @@ std::string makeAreaKey(std::string_view fromArea, std::string_view toArea)
   return key;
 }
 
-AreaEdgeMap collectCrossAreaEdges(const graph::DependencyGraph &g, const AreaClassifier &classifier)
+AreaEdgeMap collectCrossAreaEdges(const graph::DependencyGraph &g, const AreaClassifier &classifier,
+                                  const graph::RenameMap &renames = {})
 {
   AreaEdgeMap result;
   for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(g.nodeCount()); ++i)
   {
     const graph::NodeId from{i};
-    const auto fromPath = g.pathOf(from);
+    const auto fromPath = canonicalPath(g.pathOf(from), renames);
     const auto fromArea = classifier.classify(fromPath);
     for (graph::NodeId to : g.successors(from))
     {
-      const auto toPath = g.pathOf(to);
+      const auto toPath = canonicalPath(g.pathOf(to), renames);
       const auto toArea = classifier.classify(toPath);
       if (fromArea == toArea)
         continue;
@@ -104,10 +114,11 @@ AreaEdgeMap collectCrossAreaEdges(const graph::DependencyGraph &g, const AreaCla
 }
 
 std::vector<NewCrossAreaDependency> detectNewCrossAreaDependencies(const graph::DependencyGraph &baseline,
-                                                                   const graph::DependencyGraph &current)
+                                                                   const graph::DependencyGraph &current,
+                                                                   const graph::RenameMap &renames)
 {
-  const auto classifier = buildAreaClassifier(baseline, current);
-  const auto baselineAreas = collectCrossAreaEdges(baseline, classifier);
+  const auto classifier = buildAreaClassifier(baseline, current, renames);
+  const auto baselineAreas = collectCrossAreaEdges(baseline, classifier, renames);
   const auto currentAreas = collectCrossAreaEdges(current, classifier);
   std::vector<NewCrossAreaDependency> result;
   for (const auto &[key, stats] : currentAreas)
@@ -125,15 +136,15 @@ std::vector<NewCrossAreaDependency> detectNewCrossAreaDependencies(const graph::
 } // namespace
 
 void collectEdgesAndCycles(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current,
-                           RegressionReport &r)
+                           RegressionReport &r, const graph::RenameMap &renames)
 {
-  for (const auto &e : graph::addedEdges(baseline, current))
+  for (const auto &e : graph::addedEdges(baseline, current, renames))
     r.addedEdges.push_back(
         {std::string{current.pathOf(e.from)}, std::string{current.pathOf(e.to)}}); // LCOV_EXCL_BR_LINE
-  for (const auto &e : graph::removedEdges(baseline, current))
+  for (const auto &e : graph::removedEdges(baseline, current, renames))
     r.removedEdges.push_back(
         {std::string{current.pathOf(e.from)}, std::string{current.pathOf(e.to)}}); // LCOV_EXCL_BR_LINE
-  for (const auto &g : graph::grownSccs(baseline, current))
+  for (const auto &g : graph::grownSccs(baseline, current, renames))
   {
     GrownCycle gc;
     gc.baselineSize = g.baselineSize;
@@ -146,14 +157,15 @@ void collectEdgesAndCycles(const graph::DependencyGraph &baseline, const graph::
 }
 
 std::vector<std::string> detectNewGodHeaders(const graph::DependencyGraph &baseline,
-                                             const graph::DependencyGraph &current, std::uint32_t fanInThreshold)
+                                             const graph::DependencyGraph &current, std::uint32_t fanInThreshold,
+                                             const graph::RenameMap &renames)
 {
   const auto bFanIn = graph::computeFanIn(baseline);
   const auto cFanIn = graph::computeFanIn(current);
   std::unordered_set<std::string> baselineGodSet;
   for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(baseline.nodeCount()); ++i)
     if (bFanIn[i] > fanInThreshold)
-      baselineGodSet.insert(std::string{baseline.pathOf(graph::NodeId{i})});
+      baselineGodSet.emplace(canonicalPath(baseline.pathOf(graph::NodeId{i}), renames));
   std::vector<std::string> result;
   for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(current.nodeCount()); ++i)
     if (cFanIn[i] > fanInThreshold)
@@ -166,16 +178,16 @@ std::vector<std::string> detectNewGodHeaders(const graph::DependencyGraph &basel
 }
 
 RegressionReport buildRegressionReport(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current,
-                                       MetricThresholds thresholds)
+                                       MetricThresholds thresholds, const graph::RenameMap &renames)
 {
   RegressionReport r;
-  collectEdgesAndCycles(baseline, current, r);
-  r.newCrossAreaDependencies = detectNewCrossAreaDependencies(baseline, current);
+  collectEdgesAndCycles(baseline, current, r, renames);
+  r.newCrossAreaDependencies = detectNewCrossAreaDependencies(baseline, current, renames);
   const auto bm = graph::computeGraphMetrics(baseline);
   const auto cm = graph::computeGraphMetrics(current);
   if (cm.maxChainLength > bm.maxChainLength)
     r.chainLengthGrown = MetricDelta{bm.maxChainLength, cm.maxChainLength};
-  r.newGodHeaders = detectNewGodHeaders(baseline, current, thresholds.godHeaderFanIn);
+  r.newGodHeaders = detectNewGodHeaders(baseline, current, thresholds.godHeaderFanIn, renames);
   if (cm.nccd > bm.nccd)
     r.nccdDelta = cm.nccd - bm.nccd;
   return r;

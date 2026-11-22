@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace archcheck::git
@@ -54,6 +55,13 @@ enum class Whitespace
 // Returns empty vector if diff is empty or on git failure.
 [[nodiscard]] std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const std::string &baselineRef,
                                                   const std::string &currentRef, Whitespace ws = Whitespace::Count);
+
+// Old-path -> new-path map of files git detects as renamed between the two refs
+// (-M rename detection). Empty on git failure.
+using RenameMap = std::unordered_map<std::string, std::string>;
+
+[[nodiscard]] RenameMap collectRenameMap(const std::filesystem::path &repoRoot, const std::string &baselineRef,
+                                         const std::string &currentRef);
 
 // New-side paths of files git detects as renamed between the two refs (-M rename
 // detection). A mass include move re-paths pre-existing cycles, which the diff

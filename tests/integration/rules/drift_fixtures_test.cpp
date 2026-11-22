@@ -107,6 +107,13 @@ TEST_CASE("drift fixture: cycle_growth/fail_new_cycle — DRIFT.2 fires", "[drif
   REQUIRE(drift2 == 1);
 }
 
+TEST_CASE("drift fixture: cycle_growth/fail_equal_size_replacement — DRIFT.2 fires (GATE-1)", "[drift][fixtures]")
+{
+  const auto v = run_drift_check("drift_cycle_growth/fail_equal_size_replacement");
+  const auto drift2 = std::count_if(v.begin(), v.end(), [](const auto &x) { return x.ruleId == "DRIFT.2"; });
+  REQUIRE(drift2 == 1);
+}
+
 TEST_CASE("drift fixture: real_world/libresprite_pr581 — DRIFT.1 fires on toolbar -> preferences", "[drift][fixtures]")
 {
   const auto v = run_drift_check("drift_real_world/libresprite_pr581");

@@ -176,3 +176,62 @@ TEST_CASE("grownSccs ignores a cycle of unchanged size", "[graph][diff][scc]")
 
   REQUIRE(grownSccs(baseline, current).empty());
 }
+
+TEST_CASE("grownSccs catches equal-size cycle replacement {a,b} -> {a,c} (GATE-1)", "[graph][diff][scc]")
+{
+  DependencyGraph baseline;
+  const NodeId ba = baseline.addNode("a.h");
+  const NodeId bb = baseline.addNode("b.h");
+  baseline.addEdge(ba, bb);
+  baseline.addEdge(bb, ba);
+
+  DependencyGraph current;
+  const NodeId ca = current.addNode("a.h");
+  const NodeId cc = current.addNode("c.h");
+  current.addEdge(ca, cc);
+  current.addEdge(cc, ca);
+
+  const auto grown = grownSccs(baseline, current);
+  REQUIRE(grown.size() == 1);
+  REQUIRE(grown[0].baselineSize == 2);
+  REQUIRE(grown[0].currentSize == 2);
+}
+
+TEST_CASE("grownSccs ignores a shrunk cycle {a,b,c} -> {a,b}", "[graph][diff][scc]")
+{
+  DependencyGraph baseline;
+  const NodeId ba = baseline.addNode("a.h");
+  const NodeId bb = baseline.addNode("b.h");
+  const NodeId bc = baseline.addNode("c.h");
+  baseline.addEdge(ba, bb);
+  baseline.addEdge(bb, bc);
+  baseline.addEdge(bc, ba);
+
+  DependencyGraph current;
+  const NodeId ca = current.addNode("a.h");
+  const NodeId cb = current.addNode("b.h");
+  current.addEdge(ca, cb);
+  current.addEdge(cb, ca);
+
+  REQUIRE(grownSccs(baseline, current).empty());
+}
+
+TEST_CASE("addedEdges, removedEdges, and grownSccs canonicalize renamed baseline paths", "[graph][diff][rename]")
+{
+  DependencyGraph baseline;
+  const NodeId ba = baseline.addNode("old/a.h");
+  const NodeId bb = baseline.addNode("old/b.h");
+  baseline.addEdge(ba, bb);
+  baseline.addEdge(bb, ba);
+
+  DependencyGraph current;
+  const NodeId ca = current.addNode("new/a.h");
+  const NodeId cb = current.addNode("new/b.h");
+  current.addEdge(ca, cb);
+  current.addEdge(cb, ca);
+
+  const archcheck::graph::RenameMap renames{{"old/a.h", "new/a.h"}, {"old/b.h", "new/b.h"}};
+  REQUIRE(addedEdges(baseline, current, renames).empty());
+  REQUIRE(removedEdges(baseline, current, renames).empty());
+  REQUIRE(grownSccs(baseline, current, renames).empty());
+}

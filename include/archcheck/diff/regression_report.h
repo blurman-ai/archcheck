@@ -81,7 +81,7 @@ struct RegressionReport
 };
 
 RegressionReport buildRegressionReport(const graph::DependencyGraph &baseline, const graph::DependencyGraph &current,
-                                       MetricThresholds thresholds = {});
+                                       MetricThresholds thresholds = {}, const graph::RenameMap &renames = {});
 
 // Drop grown cycles that are pure artifacts of a file rename. A pre-existing
 // cycle re-pathed by `git mv` (a mass include move) reappears as a brand-new SCC

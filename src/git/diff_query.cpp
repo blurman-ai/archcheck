@@ -1,6 +1,7 @@
 #include "archcheck/git/diff_query.h"
 
 #include <cctype>
+#include <optional>
 #include <regex>
 #include <sstream>
 #include <string_view>
@@ -287,12 +288,42 @@ std::vector<NumStat> collectNumstat(const std::filesystem::path &repoRoot, const
   return parseNumstatOutput(run.out);
 }
 
-std::vector<std::string> collectRenamedPaths(const std::filesystem::path &repoRoot, const std::string &baselineRef,
-                                             const std::string &currentRef)
+namespace
 {
-  // --find-renames forces rename detection regardless of the user's diff.renames
-  // config; --diff-filter=R --name-only then prints one new-side path per rename.
-  std::vector<std::string> args{"diff", "--no-ext-diff", "--find-renames", "--diff-filter=R", "--name-only"};
+
+RenameMap parseRenameMapOutput(std::string_view output)
+{
+  RenameMap result;
+  std::size_t pos = 0;
+  auto nextToken = [&]() -> std::optional<std::string>
+  {
+    const auto nul = output.find('\0', pos);
+    if (nul == std::string_view::npos)
+      return std::nullopt;
+    std::string tok(output.substr(pos, nul - pos));
+    pos = nul + 1;
+    return tok;
+  };
+  while (const auto status = nextToken())
+  {
+    if (status->empty() || (*status)[0] != 'R')
+      continue;
+    const auto oldPath = nextToken();
+    const auto newPath = nextToken();
+    if (oldPath && newPath && !oldPath->empty() && !newPath->empty())
+      result.emplace(*oldPath, *newPath);
+  }
+  return result;
+}
+
+} // namespace
+
+RenameMap collectRenameMap(const std::filesystem::path &repoRoot, const std::string &baselineRef,
+                           const std::string &currentRef)
+{
+  // --find-renames forces rename detection regardless of diff.renames config;
+  // --name-status -z emits "R<score>\0<old>\0<new>\0" without path quoting.
+  std::vector<std::string> args{"diff", "--no-ext-diff", "--find-renames", "--diff-filter=R", "--name-status", "-z"};
   args.push_back(baselineRef);
   if (currentRef != kWorktreeRef)
     args.push_back(currentRef);
@@ -300,13 +331,17 @@ std::vector<std::string> collectRenamedPaths(const std::filesystem::path &repoRo
   const auto run = runGit(args, repoRoot);
   if (run.exitCode != 0)
     return {};
+  return parseRenameMapOutput(run.out);
+}
 
+std::vector<std::string> collectRenamedPaths(const std::filesystem::path &repoRoot, const std::string &baselineRef,
+                                             const std::string &currentRef)
+{
+  const auto renames = collectRenameMap(repoRoot, baselineRef, currentRef);
   std::vector<std::string> result;
-  std::istringstream iss{run.out};
-  std::string line;
-  while (std::getline(iss, line))
-    if (!line.empty())
-      result.push_back(line);
+  result.reserve(renames.size());
+  for (const auto &[oldPath, newPath] : renames)
+    result.push_back(newPath);
   return result;
 }
 

@@ -157,6 +157,48 @@ TEST_CASE("e2e --diff: new cycle gates — exit 1, gate fail", "[diff][e2e]")
   REQUIRE(r.output.find("gate: fail") != std::string::npos);
 }
 
+TEST_CASE("e2e --diff: pure file rename across directories produces 0 added edges (#211)", "[diff][e2e][rename]")
+{
+  TempDir repo;
+  initRepo(repo.path);
+  fs::create_directories(repo.path / "old");
+  writeFile(repo.path / "old" / "a.h", "#include \"b.h\"\n");
+  writeFile(repo.path / "old" / "b.h", "// b\n");
+  writeFile(repo.path / "app.cpp", "#include \"old/a.h\"\n");
+  commitAll(repo.path, "baseline");
+
+  fs::create_directories(repo.path / "moved");
+  REQUIRE(runIn(repo.path, "git mv old/a.h moved/a.h && git mv old/b.h moved/b.h") == 0);
+  writeFile(repo.path / "app.cpp", "#include \"moved/a.h\"\n");
+  commitAll(repo.path, "move headers across directories");
+
+  const auto r = runArchcheck(repo.path, "--diff HEAD~1..HEAD");
+  REQUIRE(r.exitCode == 0);
+  REQUIRE(r.output.find("added_edges:    0") != std::string::npos);
+  REQUIRE(r.output.find("removed_edges:  0") != std::string::npos);
+  REQUIRE(r.output.find("new_area_deps:  0") != std::string::npos);
+}
+
+TEST_CASE("e2e --diff: equal-size cycle replacement gates — exit 1 (GATE-1)", "[diff][e2e]")
+{
+  TempDir repo;
+  initRepo(repo.path);
+  writeFile(repo.path / "a.h", "#include \"b.h\"\n");
+  writeFile(repo.path / "b.h", "#include \"a.h\"\n");
+  writeFile(repo.path / "c.h", "// c\n");
+  commitAll(repo.path, "baseline 2-cycle a<->b");
+
+  writeFile(repo.path / "a.h", "#include \"c.h\"\n");
+  writeFile(repo.path / "b.h", "// b\n");
+  writeFile(repo.path / "c.h", "#include \"a.h\"\n");
+  commitAll(repo.path, "replace cycle with a<->c");
+
+  const auto r = runArchcheck(repo.path, "--diff HEAD~1..HEAD");
+  REQUIRE(r.exitCode == 1);
+  REQUIRE(r.output.find("grown_cycles (gating):") != std::string::npos);
+  REQUIRE(r.output.find("gate: fail") != std::string::npos);
+}
+
 TEST_CASE("e2e --diff: clean structural diff — zeros, exit 0", "[diff][e2e]")
 {
   TempDir repo;

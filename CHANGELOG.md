@@ -12,6 +12,13 @@ The format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- **Rename-canonicalized graph diff and `GATE-1` SCC identity** — `archcheck --diff` now maps
+  renamed baseline paths (`git diff --find-renames --name-status -z`) before computing
+  `addedEdges`, `removedEdges`, `grownSccs`, `newCrossAreaDependencies`, and `newGodHeaders`,
+  eliminating spurious edge and cross-area noise on pure file moves (`0` added edges on pure
+  renames). `graph::grownSccs` (and `DRIFT.2`) now checks full SCC membership containment rather
+  than cardinality alone, catching equal-size cycle replacements (`{a,b} -> {a,c}`). (#211)
+
 ## [0.1.8] - 2026-07-15
 
 ### Changed

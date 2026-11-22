@@ -422,8 +422,9 @@ DiffGraph buildDiffGraph(const std::filesystem::path &repoRoot, const archcheck:
     if (!okBase || !okCurr)
       return {{}, 0, 0, false};
   }
-  return {archcheck::diff::buildRegressionReport(baseline.graph, current.graph, metric), baseline.graph.nodeCount(),
-          current.graph.nodeCount(), true};
+  const auto renames = archcheck::git::collectRenameMap(repoRoot, parsed.baseline, parsed.current);
+  return {archcheck::diff::buildRegressionReport(baseline.graph, current.graph, metric, renames),
+          baseline.graph.nodeCount(), current.graph.nodeCount(), true};
 }
 
 // A mass include move re-paths pre-existing cycles into phantom "new" SCCs; drop
