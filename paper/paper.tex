@@ -1,0 +1,808 @@
+\documentclass[sigplan,11pt,nonacm=true]{acmart}
+\settopmatter{printfolios=false,printccs=false,printacmref=false}
+
+\usepackage{booktabs}
+\usepackage{threeparttable}
+
+% v2: camera-ready version with re-run results.
+\newcommand{\tool}{archcheck}
+\newcommand{\x}{$\times$}
+
+\begin{document}
+
+\title{Does AI-Assisted Development Accelerate Architectural Drift?\\
+A Large-Scale Study of C++ Repositories}
+
+\author{Sergey Blekher}
+\affiliation{%
+  \institution{Independent Researcher}
+  \country{Russia}
+}
+\email{sergey.blekher@gmail.com}
+
+\begin{abstract}
+Coding agents can generate software changes faster than human reviewers can
+inspect them, raising the concern that repository structure degrades faster
+under AI-assisted development. We test this hypothesis in C++ by measuring
+architectural drift at commit level across 1{,}188 open-source repositories and
+484{,}500 analyzed commits, using a deterministic source-level analyzer that
+replays history and records structural regressions: new or grown include
+cycles, god headers, cross-area dependencies, code clones,
+cognitive-complexity growth, and self-admitted technical debt. AI attribution
+relies only on repository metadata, never on commit prose.
+
+A naive pooled comparison suggests that AI-attributed commits introduce
+substantially more complexity. This result disappears after controlling for
+repository and commit size: in a within-repository, size-matched analysis over
+344 repositories, we detect no drift category in which AI-attributed commits
+are worse than human commits. Attribution relies on visible markers, so the
+human class contains unmarked AI use; under the contamination we model, a
+true 2\x{} per-commit penalty would be observed as about 1.4\x{}, and the
+sparse structural categories have low power. The observable
+difference is commit size: AI-attributed commits are about 1.3\x{} larger.
+
+In a preregistered adoption event study covering 854 adopting repositories and
+517 placebo controls, agent adoption is associated with 1.93\x{} more drift
+events per week than in placebo repositories observed in the same calendar
+weeks (95\% CI $[1.42, 2.62]$). Per commit the increase is 1.24\x{}
+($[0.97, 1.58]$) and per KLOC 1.14\x{} ($[0.96, 1.35]$); cognitive-complexity
+growth is the one endpoint that also rises per unit of change (1.17\x{} per
+commit, 1.14\x{} per KLOC). Merged pull requests rise 1.38\x{} relative to
+placebo, while human review comments per pull request fall to 0.73\x{}.
+
+Most of the post-adoption increase in drift comes from more changes arriving,
+with a smaller per-change rise in complexity; the number of human review
+comments does not grow with the number of pull requests.
+\end{abstract}
+
+\keywords{architectural drift, AI-assisted development, static analysis, C++,
+mining software repositories, code review}
+
+\maketitle
+
+\section{Introduction}
+
+The current debate about AI-assisted software development often assumes a
+direct quality effect: if coding agents are less reliable than humans,
+repositories that use them should accumulate more technical and architectural
+debt per unit of change. This is plausible. Repository-wide constraints are
+easy to omit from a local prompt, while coding agents are optimized to
+complete the immediate task; controlled experiments show agent performance
+degrading substantially as structural constraints accumulate
+(\emph{constraint decay}~\cite{dente2026constraintdecay}). In C++, where
+physical design is expressed partly through headers and include
+dependencies~\cite{lakos1996}, a locally reasonable edit can create a
+non-local regression such as an include cycle or a new dependency across
+subsystems.
+
+The opposite possibility is less dramatic but operationally important. Agents
+may produce code of roughly the same structural quality per unit of change
+while increasing throughput. If the amount of code and the number of changes
+rise faster than human review capacity, then the absolute rate of
+architectural drift can still increase even without an intrinsic quality
+penalty in agent-authored code.
+
+This paper distinguishes these two mechanisms. We study architectural drift at
+three levels: individual commits, repository adoption events, and review
+capacity. Our analysis covers 1{,}188 C++ open-source repositories and
+484{,}500 analyzed commits. Rather than infer architectural quality from
+repository snapshots alone, we replay history and measure the delta introduced
+by each commit.
+
+We ask three research questions:
+
+\begin{itemize}
+\item \textbf{RQ1.} Do AI-attributed commits introduce more architectural
+  drift than human commits of comparable size within the same repository?
+\item \textbf{RQ2.} Does the rate of architectural drift change after a
+  repository adopts coding agents?
+\item \textbf{RQ3.} Does recorded human review capacity scale with the
+  post-adoption increase in development volume?
+\end{itemize}
+
+Our main result is a separation between quality per unit and change volume. In
+size-matched within-repository comparisons, we do not observe an agent
+disadvantage in any measured drift category, and agent pull requests are not
+dirtier at their final submitted head (Section~\ref{sec:p5}). After adoption, however, drift events accumulate
+faster per week, mostly because more changes arrive, and the number of human review
+comments does not grow with the number of pull requests. The practical risk is therefore not simply that agents write
+structurally worse code. It is that they increase the rate of structural
+change faster than existing review processes absorb it.
+
+The paper makes three contributions. First, it provides a large-scale
+per-commit census of architectural drift in C++ repositories, including
+physical-design regressions (include cycles, god headers, cross-area
+dependencies) that repository-snapshot studies do not measure. Second, it
+separates the author effect from the throughput effect using within-repository
+size matching, an as-submitted pull-request analysis, and a preregistered
+adoption event study with placebo controls, with a direction check on another
+study's repository list. Third, it connects the
+observed volume increase to review capacity, showing that merged pull requests
+increase after adoption while human review comments per pull request decrease.
+
+\section{Measurement Instrument}
+\label{sec:instrument}
+
+We built \tool{}\footnote{\url{https://github.com/blurman-ai/archcheck}, open
+source. Every rule has passing and failing fixture projects in the repository's
+test suite.} for this study: a deterministic static analyzer that measures
+structural regressions between two repository revisions. It does not call an
+LLM. The analyzer reads C and C++ source trees directly from Git objects,
+constructs a physical dependency graph, computes local structural metrics, and
+subtracts the pre-change state from the post-change state.
+
+For include structure, every resolved include becomes a directed edge between
+source files. Strongly connected components are detected with Tarjan's
+algorithm~\cite{tarjan1972}; a newly created or enlarged non-trivial component
+is recorded as cycle drift. Headers crossing a fan-in threshold of 50 are
+recorded as god-header drift. Cross-area dependencies are derived from
+repository paths and recorded when a change introduces a dependency between
+previously separate areas. These checks operationalize the physical-design
+rules of Lakos~\cite{lakos1996} and the source-file (SF) section of the C++
+Core Guidelines~\cite{coreguidelines}.
+
+Local code signals include cognitive-complexity
+growth~\cite{campbell2018}, newly added TODO/FIXME/HACK markers
+(self-admitted technical debt), lack of test co-evolution, and token-based
+clone introduction. Clone detection normalizes identifiers and literals before
+candidate matching, so copied-and-renamed fragments are still detected. The
+analyzer excludes bulk imports and classifies vendored, generated, and test
+code before applying authored-code rules.
+
+The unit of analysis is a commit. For each eligible commit $c$ and drift
+category $k$, we define $D(c,k)=1$ when the commit introduces at least one new
+finding in category $k$. This design intentionally measures \emph{regression}
+rather than repository debt stock: a repository may contain old cycles or
+duplication without charging them to every subsequent commit.
+
+\paragraph{Instrument validity.} Output is deterministic: byte-identical
+across Git backends and across re-runs on the same input. Three measurement
+bugs found during development (an empty-blob desynchronization in the
+in-memory Git backend, shallow-clone boundary commits read as whole-tree
+additions, inconsistent authored-scope filtering) were fixed, and the affected
+analyses were rerun; on 128{,}393 commits in 226 repositories the corrected
+replay kept the RQ1 verdict in six of seven categories, and the seventh moved
+towards agents. Against NiCad on an independent C benchmark (monit, function
+granularity) the clone detector covered 8 of 12 NiCad clone classes, and all
+21 of its reported pairs were true clones on manual inspection. Per-commit
+clone introductions had 86--91\% precision in a corpus audit. Per-category
+manual audits are in the artifact.
+
+\section{Data and Attribution}
+\label{sec:data-attribution}
+
+Repositories entered the corpus if they were written primarily in C or C++,
+had more than 300 commits since 1~May~2025, showed some agent activity (an AI
+\texttt{Co-authored-by} trailer, at least 10\% bot-authored commits, or a
+median commit-message length of at least 100 characters), were not forks, and
+were not large projects with enforced review (CODEOWNERS, branch protection,
+many maintainers). About 2.7\% of the screened repositories passed. The corpus
+is therefore enriched for agent adopters and excludes the projects with the
+strictest review; it is not a random sample of C++ open source. Commits since
+June~2024 were analyzed.
+
+The primary corpus contains 1{,}188 C++ open-source repositories and 484{,}500
+successfully analyzed commits out of 520{,}177 attempted. Of the commits not
+analyzed, 33{,}582 belong to repositories that exceeded the time budget and
+790 timed out individually, so coverage is weighted towards faster
+repositories. Of these, 72{,}778
+commits (15.0\%) are AI-attributed, 408{,}716 are human-attributed, and
+3{,}006 are non-AI automation. AI attribution uses only observable metadata:
+bot authorship, AI-associated committers, or explicit \texttt{Co-authored-by}
+trailers. Commit message prose is never used as a classifier.
+
+This attribution strategy is deliberately conservative. It has high precision
+for visible agent use but incomplete recall; multi-method census work shows
+that single-signal detection can undercount specific agents by more than an
+order of magnitude~\cite{khosravani2026census}. Human-attributed commits
+therefore include an unknown amount of unmarked AI assistance, such as IDE
+completion or stripped trailers: ``human-attributed'' means ``no observable
+AI marker''. This contamination biases author comparisons
+toward the null and is quantified in Section~\ref{sec:threats}.
+
+Commit size is the major confounder. In the corpus, the median AI-attributed
+commit changes 50 lines versus 21 for human-attributed commits; within
+repositories, the median AI/human size ratio is 1.26\x{} ($p=0.005$). Because
+several drift signals grow mechanically with change size, pooled author
+comparisons are not interpretable without controlling for repository and
+commit size.
+
+\section{RQ1: Agent Commits versus Human Commits}
+\label{sec:rq1}
+
+\subsection{Design}
+
+We compare AI-attributed and human-attributed commits inside the same
+repository, matching commits by size band on changed lines and aggregating
+paired agent-minus-human differences at repository level. The analysis
+includes the 344 repositories with sufficient observations from both classes
+within the matched bands. We use a two-sided sign test over repository-level
+differences; this treats each repository as one observation and prevents a
+handful of very large repositories from dominating the result. With seven
+category-level tests, the Bonferroni-adjusted significance threshold is
+$\alpha = 0.05/7 \approx 0.0071$.
+
+\subsection{Size control changes the answer}
+
+Table~\ref{tab:ladder} shows why the control structure matters, using the
+complexity category. Pooled, 27.0\% of AI-attributed commits trigger the
+complexity-growth signal versus 15.4\% of human commits ($\approx$1.75\x).
+A raw within-repository comparison shrinks this to $+1.55$ percentage points
+($p=0.037$). After size matching, the median difference is $+0.06$ pp
+($p=0.44$): the apparent complexity penalty is explained by larger commits,
+not by a different per-change propensity to add complexity.
+
+\begin{table}[t]
+\caption{The complexity comparison at three levels of control. The pooled
+``headline'' vanishes once repository and commit size are held fixed.}
+\label{tab:ladder}
+\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Control level & Complexity result & $p$ \\
+\midrule
+Pooled (none) & 27.0\% vs.\ 15.4\% ($\approx$1.75\x) & --- \\
+Within-repo, raw & $\Delta = +1.55$ pp (135/102 repos) & 0.037 \\
+Within-repo, size-matched & $\Delta = +0.06$ pp (172/157 repos) & 0.44 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{All seven categories}
+
+Table~\ref{tab:seven} reports the same size-matched within-repository analysis
+for every drift category. There is no category in which AI-attributed commits
+are measurably worse after matching.
+
+\begin{table*}[t]
+\caption{Within-repository, size-matched comparison over 344 repositories.
+$\Delta$ is the median repository-level agent-minus-human difference in the
+share of commits with a finding (percentage points). ``A$>$H''/``A$<$H''
+count repositories where agents trigger the category more/less often;
+sign-test $p$ is two-sided over non-tied repositories. ``A$>$H bound'' is the
+one-sided 95\% upper bound (Clopper--Pearson) on the share of non-tied
+repositories where agents are worse; ``detectable'' is the smallest such share
+the test detects with 80\% power at $\alpha=0.05/7$.}
+\label{tab:seven}
+\small
+\begin{threeparttable}
+\begin{tabular}{@{}lrrrrrrl@{}}
+\toprule
+Category & $\Delta$ (pp) & A$>$H / A$<$H & Ties & $p$ & A$>$H bound & detectable & Verdict \\
+\midrule
+complexity      & $+0.06$ & 172 / 157 & 15  & 0.44               & 0.57 & 0.60 & null \\
+new clone       & $-0.23$ & 130 / 178 & 36  & 0.0073             & 0.47 & 0.60 & cleaner (nominal) \\
+SATD            & $-0.52$ & 85 / 191  & 68  & $1.6\cdot10^{-10}$ & 0.36 & 0.61 & agents cleaner\tnote{\dag} \\
+test co-evo     & $-1.63$ & 121 / 206 & 17  & $3\cdot10^{-6}$    & 0.42 & 0.60 & agents cleaner\tnote{\dag} \\
+cross-area dep  & $+0.00$ & 60 / 104  & 180 & 0.0007             & 0.43 & 0.64 & no deficit, sparse \\
+grown cycles    & $+0.00$ & 8 / 30    & 306 & 0.0005             & 0.35 & 0.78 & insufficient events \\
+god headers     & $+0.00$ & 28 / 53   & 263 & 0.0073             & 0.44 & 0.70 & insufficient events \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\footnotesize
+\item[\dag] Stylistic explanations are possible; see Section~\ref{sec:rq1}.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}
+
+Two clarifications are necessary to read the sparse structural rows correctly.
+First, a median $\Delta$ of $0.00$ next to a significant $p$-value is not a
+contradiction: the sign test is computed over the minority of repositories
+that are \emph{not} tied, and among those the direction favors agents; the
+median repository simply has no such event for either class. For cross-area
+dependencies, cycles, and god headers, 180--306 of 344 repositories are ties.
+We therefore read these rows as \emph{no agent deficit}, not as evidence that
+agents are population-wide cleaner. Second, four results (SATD, test
+co-evolution, cross-area dependencies, grown cycles) survive the
+Bonferroni-adjusted threshold, while the copy-paste and god-header differences
+($p = 0.0073$) are nominally significant but narrowly miss it
+($\alpha \approx 0.0071$); the table labels them accordingly. For
+perspective, the only nominally significant result \emph{against} agents
+anywhere in this analysis --- the raw within-repository complexity difference
+of Table~\ref{tab:ladder} ($p = 0.037$) --- misses the same threshold by a
+far wider margin.
+
+The two ``agents cleaner'' rows have plausible explanations unrelated to
+design quality. Agents rarely write TODO/FIXME/HACK markers, which lowers
+SATD by style alone, and agents are often instructed to update tests in the
+same change, which raises test co-evolution. We do not read either row as
+evidence that agent code is structurally better.
+
+Two further checks corroborate the null on the structural categories. A
+commit-level null model that attributes drift births within each repository
+proportionally to each class's commit share finds AI commits
+\emph{under}-represented among the commits that create them: 17 grown-cycle
+births against an expectation of 25.9 (0.66\x), and 194 cross-area events
+against an expectation of 427.9 (0.45\x). And the corrected-scanner replay of
+Section~\ref{sec:instrument} reproduces the verdict of
+Table~\ref{tab:seven} in six of seven categories, with the seventh moving in
+favor of agents.
+
+\subsection{As-submitted pull requests}
+\label{sec:p5}
+
+Every estimate above is measured on \emph{merged} history: only commits that
+survived review. If reviewers caught agent drift before merge, agents would
+look clean in merged history because a human gate stood in front of them. To
+close this gap we measured drift on the state agents \emph{submitted}
+(\texttt{pull/N/head}), comparing 291 agent-authored and 260 human-authored
+merged pull requests within the same 18 repositories (head refs recovered for
+99.8\% of PRs). The pooled rates look agent-dirtier (55.3\% vs.\ 45.4\% of PRs
+carry at least one drift finding), but this is a repository-composition
+artifact: agent PRs concentrate in a few high-drift repositories. The
+registered within-repository contrast, the median of per-repository
+agent-minus-human differences, is $-0.210$ with a repo-clustered bootstrap
+CI of $[-0.365, 0.000]$ and a leave-one-repo-out range of $[-0.235, -0.185]$:
+slightly on the ``agent cleaner'' side, with the CI touching zero. Two
+limits apply. The sample contains merged pull requests only, so drift in
+pull requests that were closed without merging is not observed. And \texttt{pull/N/head} is the final head of
+the branch, which includes revisions made in response to review. The analysis
+therefore shows that merged agent PRs are not dirtier at their final head;
+it does not exclude review filtering.
+
+\medskip
+\noindent\textbf{RQ1 answer.} We find no evidence that AI-attributed commits
+introduce more architectural drift than human commits of comparable size
+within the same repository, and none that merged agent pull requests are
+dirtier at their final head. The dominant observable difference is commit size, not drift
+propensity per comparable change.
+
+\section{RQ2: What Changes after Agent Adoption?}
+\label{sec:rq2}
+
+Author-level comparisons do not answer what happens to a repository after
+agent adoption: a team may produce structurally similar changes but produce
+more of them. We therefore ran a separate preregistered repository-level event
+study. The registration froze the endpoints, exposure definitions, and
+robustness battery before mining.
+
+\subsection{Design}
+
+The confirmatory panel contains 854 adopter repositories and 517 never-adopter
+placebo controls, selected by the registered rules from the corpus as of
+22~August~2026. The adoption event is the earliest of four observable
+markers: an agent configuration file (\texttt{CLAUDE.md}), a
+\texttt{copilot-swe-agent} pull request, a \texttt{codex/} branch, or a
+\texttt{Co-Authored-By: Claude} trailer. Eligible repositories have at least
+50 commits before adoption and at least 12 weeks of history on each side.
+Placebo repositories are never-adopters; each receives a pseudo-adoption date
+drawn deterministically from the adopter date distribution, subject to at
+least 12 weeks of history on both sides, and passes through the identical
+machinery. Placebo dates are calendar-matched, not activity-matched.
+
+For each endpoint we estimate post/pre rate ratios under three exposure
+definitions: per week (volume), per commit, and per KLOC added (per-unit).
+Confidence intervals use owner-clustered bootstrap resampling; we additionally
+evaluate leave-one-owner-out (LOO) stability, pre-trends on the pre-period,
+and donut windows of $\pm4$ weeks around adoption. The primary endpoint, P1,
+is the union of the per-commit drift events measured at weekly granularity:
+complexity growth, boolean-field accretion, flag-argument growth, clone
+introduction, SATD, and added include-graph edges. The rare gate-grade
+structural events (new cycles, god headers) occur in well under 0.1\% of
+commits and are too sparse for weekly rate estimation; they are analyzed at
+commit level in Section~\ref{sec:rq1}.
+
+\paragraph{Deviations from the registration.} The registration specified a
+Poisson pseudo-maximum-likelihood (PPML) estimator with repository and
+date-group$\times$event-week fixed effects (M2). Drift per commit has a
+calendar-time shape in both arms: it rises through 2025, peaks in
+January--March 2026, and falls afterwards. Placebo windows straddle that peak,
+so the placebo post/pre ratio is below one (P1: 0.72) and an event-time
+comparison of the two arms mixes adoption with calendar time. We therefore
+report as the main estimate a PPML with repository and calendar-week fixed
+effects (M3), which compares adopters with placebo repositories in the same
+calendar week; the registered M2 estimate is given for P1 in the text. The
+estimates submitted for review used pooled post/pre rate ratios on a smaller
+panel (361 adopters, 265 placebo) and an earlier analyzer version; the panel
+was rebuilt with the registered rules and replayed with archcheck~0.1.8.
+
+Within each repository-week at most ten commits, chosen by hash, were
+analyzed, and each is weighted by the number of commits in that week divided
+by the number analyzed (210{,}594 analyzed commits). Excluded by outcome-blind
+rules: 20{,}480 commits whose analysis exceeded the memory cap (9.7\%;
+adopters 14.5\% before and 13.6\% after the event, placebo 9.9\% and 12.0\%),
+1{,}656 with unreadable Git objects, 428 bulk imports, 75 pure file moves
+($\ge$20 renamed C/C++ files and at least half of the changed C/C++ files),
+and 360 for other technical reasons. A pure file move otherwise reports every
+include edge of the moved files as new. KLOC counts added C/C++ lines.
+
+The registered clone endpoint P4 is clone \emph{stock}; the panel measures
+clone \emph{introductions}, and stock is measured only in the replication of
+Section~\ref{sec:agarwal-repl}. TOST equivalence tests at $[0.80, 1.25]$ are
+inconclusive for every per-commit and per-KLOC ratio. Not run: the
+year-earlier and Dockerfile-adoption placebo controls and the pure-agent
+stratum S1.
+
+\begin{table*}[t]
+\caption{Adoption event study (854 adopters, 517 placebo). Main estimate:
+PPML incidence-rate ratio of the adopter post period, repository and
+calendar-week fixed effects, owner-clustered 95\% CI. Adopter and placebo
+columns: post/pre rate ratio per week of each arm. Pre-trend: slope of the
+adopter pre period (SE) and $p$ of the joint pre-period test of the
+registered event-study PPML.}
+\label{tab:event}
+\small
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+Endpoint & /week [95\% CI] & /commit [95\% CI] & /KLOC [95\% CI] & Adopter & Placebo & Pre-trend \\
+\midrule
+P1 union      & \textbf{1.93} [1.42, 2.62] & 1.24 [0.97, 1.58] & 1.14 [0.96, 1.35] & 1.67 & 0.72 & $+0.033$ (0.018), $p=0.87$ \\
+P2 complexity & \textbf{1.79} [1.53, 2.09] & \textbf{1.17} [1.00, 1.37] & \textbf{1.14} [1.02, 1.27] & 1.79 & 0.86 & $+0.0035$ (0.0011), $p=0.06$ \\
+P3 flag       & \textbf{1.41} [1.07, 1.85] & 0.93 [0.73, 1.19] & 0.92 [0.75, 1.14] & 1.32 & 0.73 & $+0.0015$ (0.0013), $p=0.004$ \\
+P4 new clone  & \textbf{1.75} [1.37, 2.22] & 1.09 [0.89, 1.33] & 1.12 [0.92, 1.37] & 1.54 & 0.62 & $+0.017$ (0.004), $p=0.64$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Results}
+
+Table~\ref{tab:event} summarizes the confirmatory results. After adoption the
+weekly rate of P1 drift events is 1.93\x{} that of placebo repositories in the
+same calendar weeks (95\% CI $[1.42, 2.62]$); the registered M2 estimator
+gives 1.84\x{} ($[1.08, 3.13]$). Commit volume rises in step: census commits
+in the window rise 1.39\x{} in adopters and fall to 0.94\x{} in placebo
+repositories. Per commit, P1 rises 1.24\x{} ($[0.97, 1.58]$) and per KLOC
+1.14\x{} ($[0.96, 1.35]$). P1 is heavy-tailed: added include edges and new
+clones are most of its events, and single commits dominate some repositories;
+winsorized at the 99th percentile of repository-week counts, the adopter/placebo
+ratio of per-week rate ratios is 1.59.
+
+Complexity (P2) is the least heavy-tailed endpoint and the one where the
+per-unit rate also rises: 1.79\x{} per week, 1.17\x{} per commit
+($[1.00, 1.37]$), 1.14\x{} per KLOC ($[1.02, 1.27]$). Its adopter pre-period
+has a positive slope ($+0.0035$, SE $0.0011$), and the joint pre-period test
+gives $p=0.06$, so part of the P2 increase may continue a trend that began
+before adoption. In the registered dose--response split by post-adoption
+AI-commit share, weekly complexity growth rises with share (1.35\x{} for zero,
+1.43\x{} for low, 2.71\x{} for high), while per-KLOC rates do not (1.21\x{},
+1.07\x{}, 1.22\x{}). Clone introductions (P4) and flag-argument growth (P3)
+rise per week (1.75\x{}, 1.41\x{}) but not per commit (1.09\x{}, 0.93\x{}). The
+pre-period of P3 fails the joint test ($p=0.004$).
+
+\subsection{Independent replication on another study's repositories}
+\label{sec:agarwal-repl}
+
+As an external anchor, we replayed our full drift pipeline on the 21 C and C++
+repositories from the dataset of Agarwal, He, and
+Vasilescu~\cite{agarwal2026}, using their published per-repository adoption
+dates: the same repositories, an independent instrument. Nineteen
+repositories yield a usable pre/post split. The volume direction replicates:
+median post/pre ratios are 1.56\x{} for commits per week and 2.03\x{} for
+added KLOC per week. Weekly complexity events rise (median 1.49\x);
+per-commit complexity does not (median 0.91\x), unlike the 1.17\x{} of the
+panel. The registered clone \emph{stock} endpoint,
+measured as whole-repository duplication snapshots at the window edges, is
+null: median stock change $\approx$0\% ($n=19$; nearly every established
+repository within $\pm$12\%). Rising clone \emph{introductions} with a flat
+clone \emph{stock} are consistent: introductions are partially offset by
+deletions and refactoring, and stock is dominated by pre-existing code. The
+per-repository table is given in Appendix~\ref{app:agarwal}.
+
+\medskip
+\noindent\textbf{RQ2 answer.} Agent adoption is associated with a higher rate
+of architectural drift per week, mostly through more commits. Per commit and
+per KLOC the union endpoint rises less, with intervals that include one;
+complexity rises per unit as well (1.17\x{} per commit), with a pre-period
+trend that weakens this reading. The per-week direction is consistent on an
+independent list of 19 repositories.
+
+\section{RQ3: Review Capacity}
+\label{sec:rq3}
+
+A throughput-driven increase matters only if quality-control mechanisms scale
+with the new volume. We measured human review before and after adoption with
+the same adopter/placebo framing (owner-clustered bootstrap, LOO, donut,
+pre-trends). Up to eight mainline commits per repository and period were
+sampled and classified through their pull requests (19{,}978 commits, 844
+adopter and 500 placebo owners). Merged pull requests per repository were
+counted for the 12 weeks on each side of the event (1{,}372 repositories), and
+for the 9{,}050 merged pull requests of the sample we collected every review,
+inline comment, and conversation comment, excluding bots and the pull-request
+author.
+
+\begin{table*}[t]
+\caption{Review capacity before/after adoption. Ratio: adopter post/pre over
+placebo post/pre, owner-clustered bootstrap 95\% CI. Volume and comment rows
+are exploratory (not registered).}
+\label{tab:review}
+\small
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Endpoint & Adopter pre $\to$ post & Placebo pre $\to$ post & Ratio [95\% CI] & $p$ \\
+\midrule
+R1: PRs w/o recorded human review (\%) & 38.7 $\to$ 42.5 & 43.1 $\to$ 44.6 & 1.06 [0.96, 1.18] & 0.29 \\
+R2: direct pushes (\%)                  & 46.3 $\to$ 43.4 & 63.3 $\to$ 62.5 & 0.95 & --- \\
+R3: PR size (median added lines)        & 43 $\to$ 60     & 41 $\to$ 39     & 1.47 [1.02, 2.14] & 0.04 \\
+Merged PRs, 12 weeks                    & 60{,}231 $\to$ 78{,}170 & 17{,}950 $\to$ 16{,}885 & 1.38 [1.21, 1.58] & $<$0.001 \\
+Human comments per PR                   & 2.79 $\to$ 2.62 & 2.36 $\to$ 3.05 & 0.73 [0.52, 0.99] & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+After adoption, adopters merge 1.30\x{} more pull requests while placebo
+repositories merge 0.94\x{}, a ratio of 1.38 ($[1.21, 1.58]$). Pull requests
+also become larger (median added lines 43 to 60; ratio 1.47). The number of
+human review comments per pull request falls to 0.73\x{} of the placebo
+trajectory ($[0.52, 0.99]$): the total number of human comments in adopting
+repositories stays at the level of placebo repositories (ratio 1.00,
+$[0.71, 1.44]$) while the number of pull requests rises. The share of pull
+requests merged with no recorded human review rises from 38.7\% to 42.5\%;
+against the placebo trajectory this is 1.06\x{} ($[0.96, 1.18]$), not
+significant. Fewer changes bypass pull requests after adoption (direct pushes
+46.3\% to 43.4\%), so the change happens inside the pull-request workflow.
+
+The registered R5 endpoint, the share of drift-carrying commits merged without
+human review, was not reproduced on the re-run panel (ratio 1.02,
+$[0.91, 1.14]$); the submitted value (1.10) came from drift commits sampled
+directly, and the re-run joins the review sample to the replay sample.
+
+The decrease is not explained by reviewers spending their effort selectively on
+agent code: within the same
+repositories, agent-authored PRs receive no significantly different review
+effort than human PRs on any measured axis (review count, review comments,
+change requests), consistent with prior findings that agentic PRs are not
+reviewed more~\cite{duma2026reviews}, and evidence against the hypothesis that
+C++ reviewers, specifically, filter agent code more strictly.
+
+\medskip
+\noindent\textbf{RQ3 answer.} Human review does not scale with the
+post-adoption increase in change volume: adopters merge 1.38\x{} more pull
+requests relative to placebo, and human review comments per pull request fall
+to 0.73\x{}. The share of pull requests with no recorded human review rises
+slightly, without a significant difference from placebo.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The three analyses resolve an apparent contradiction. Pooled, AI-attributed
+changes look worse on several metrics. Controlling for repository and change
+size, the author-level penalty disappears --- in merged history and as
+submitted. Measuring repositories over time, drift still accelerates after
+adoption. These observations are compatible because they use different
+denominators:
+
+\begin{itemize}
+\item quality per comparable change, by author: approximately flat (RQ1);
+\item change volume per unit time: higher;
+\item architectural-drift events per unit time: higher, with a smaller
+  per-change rise in complexity;
+\item human review comments per pull request: lower.
+\end{itemize}
+
+The main engineering risk of agent adoption, on this evidence, is a capacity
+mismatch between generation and verification. A review process designed for
+human-scale change volume becomes underprovisioned even when individual
+AI-assisted changes are no worse than human changes of comparable size.
+
+\paragraph{One contested per-unit signal.} A single ``agents worse'' result in
+our broader investigation survived its checks and deserves an honest status
+note: a per-structure analysis (git-blame attribution over structures touched
+by $\ge$4 commits) found boolean-field accretion (flag fields accumulating
+in existing structs) in 9.8\% of agent-attributed structs versus 6.0\% of
+others, roughly 2.3\x{} after manually removing false positives from both
+arms. The adoption-level proxy for the same phenomenon (P3) is null per commit
+(0.93\x{}) and fails the pre-period test, and the
+per-struct method has not been re-run against the adoption cohorts. The result
+is therefore method-dependent: unconfirmed rather than refuted, and we present
+it as an open question rather than a claim.
+
+\paragraph{Implications for tooling.} The volume channel changes the role of
+static architecture checks. A CI gate should not attempt to classify whether
+code was written by a human or an agent; it can remain author-agnostic:
+compare the proposed revision to the baseline and reject only precise
+structural regressions. Deterministic checks scale with change volume in a way
+human attention does not. We also examined whether contemporary AI review bots
+already provide this structural coverage. Of the 648 corpus commits that grew
+an include cycle or added a cross-area dependency, 336 went through a pull
+request, and 43 of those (38 pull requests in 17 repositories) were reviewed
+by an AI review bot. Two bot reviews named the structural problem; none
+blocked the merge. The sample is small and
+conditioned on known regressions, so it is not a general estimate of bot
+review quality, but it illustrates that repository-graph properties require
+graph-aware checks rather than diff-local reasoning.
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+\paragraph{AI attribution and the detectability ceiling.} Metadata-based
+attribution has high precision but incomplete recall. Unmarked AI use (IDE
+completion, stripped trailers) contaminates the human class and biases author
+comparisons toward the null. Let $r$ be the true agent/human rate ratio, $a$
+the share of agent-labelled commits that are human, and $h$ the share of
+human-labelled commits that are AI-assisted. The observed ratio is
+\[
+  \hat r = \frac{(1-a)\,r + a}{(1-h) + h\,r},
+\]
+so with $a=0.2$, $h=0.3$ a true $r=2.0$ is observed as $1.8/1.3 \approx 1.38$.
+Table~\ref{tab:seven} gives the power of each sign test: for complexity and
+clones the test detects agents being worse in 60\% of non-tied repositories,
+for grown cycles only in 78\%. RQ1 is therefore a failure to detect an agent
+disadvantage under observable attribution, not evidence of equivalence.
+
+\paragraph{Task mix.} Size matching does not control what a commit does. In a
+separate sample of 50 adopting repositories, 79\% of post-adoption commits
+without an AI marker were made by authors who mark other commits as
+agent-assisted, and 43 of the 50 repositories record agent use only as a
+trailer on a human-authored commit. In the two repositories we inspected by
+hand, the unmarked commits were configuration, build and documentation
+changes, and the marked commits carried the C++ feature work. Within a repository, the
+agent/human contrast therefore partly compares kinds of work. The direction of
+this bias is not known.
+
+\paragraph{Observational design.} Neither the within-repository comparison nor
+the event study randomly assigns AI use. Adoption may coincide with
+organizational changes that affect development volume. The placebo design,
+pre-trend checks, donut windows, and leave-one-owner-out analysis reduce but
+do not eliminate this concern: a shock that triggers both adoption and a
+volume increase (new funding, a new maintainer, a release push) would produce
+the same pattern. Deviations from the registration are listed in
+Section~\ref{sec:rq2}.
+
+\paragraph{Measurement validity.} \tool{} measures physical and local
+structural properties, not semantic architecture. Include cycles and
+cross-area dependencies are meaningful in C++~\cite{lakos1996,
+coreguidelines}, but they do not capture all forms of design degradation, and
+some signals are intentionally heuristic. In manual audits, complexity
+findings usually indicated genuinely complex functions but rarely removable
+debt, and the test co-evolution signal had limited precision; we accordingly
+avoid interpreting every finding as a defect, and no conclusion in this paper
+rests on a single category. The token-level cognitive-complexity scorer
+overestimates on some preprocessor-heavy constructs; it does so
+deterministically and identically for both author classes.
+
+\paragraph{Sparse structural events.} New cycles and god headers are rare at
+commit level; the corresponding sign tests contain many ties and have limited
+power. Those rows mean ``no detected disadvantage,'' not superiority.
+
+\paragraph{Repository selection.} The corpus requires substantial recent
+activity, which samples survivors, and some agent activity, which enriches it
+for adopters (Section~\ref{sec:data-attribution}). Projects with enforced
+review were excluded, so the review-coverage levels in RQ3 are higher than
+in open source generally; the before/after change is less affected.
+Born-agentic repositories are excluded by construction. The 344 repositories
+of RQ1 have substantial activity from both classes, which selects for heavy
+adopters. Results may not generalize to private industrial repositories or
+other review workflows.
+
+\paragraph{Scope.} The physical-design categories are specific to C and C++
+include structure; the volume-versus-quality decomposition is not. The
+categories cover physical structure and local code signals, not semantic
+architecture such as layering or API design. Agent capabilities change
+quickly, so the per-commit results describe agents of 2024--2026; the
+measurement pipeline can be rerun on later data.
+
+\paragraph{Review observability.} GitHub records review events, not whether a
+human privately read a diff. ``No recorded human review'' is an observable
+workflow measure, and prior work cautions that review-presence metrics
+overstate human oversight~\cite{duma2026reviews}. Comment counts measure
+written review, not reading; a reviewer may approve after reading without
+comment. The comment and pull-request volume analyses were added after the
+registration.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Impact of coding agents.} Agarwal, He, and
+Vasilescu~\cite{agarwal2026} study agent adoption on the AIDev dataset with a
+staggered difference-in-differences design and report large, front-loaded
+velocity gains alongside persistent quality-metric increases (static-analysis
+warnings and aggregate cognitive complexity, roughly $+18\%$ and $+39\%$).
+Their quality outcomes are aggregated at repository-month level and are
+therefore compatible with the volume mechanism we isolate: totals rise with
+delivered lines. He et al.~\cite{he2026cursor} find, for Cursor adoption, a
+large but transient velocity increase and a persistent rise in warnings and
+complexity, again without a per-change decomposition. Liu et
+al.~\cite{liu2026debt} mine over 300{,}000 verified AI-authored commits and
+track the lifecycle of the code-smell, bug, and security issues they
+introduce. Randomized and
+within-developer designs report substantial individual productivity gains from
+AI assistance~\cite{cui2024copilot}. Our contribution is complementary: we
+measure structural \emph{deltas} per commit, explicitly separate per-change
+quality from per-time volume, and extend the evidence to C++ physical design
+--- include-graph cycles, god headers, cross-area dependencies --- which none
+of the above measure.
+
+\paragraph{Motivating concern.} Dente et al.~\cite{dente2026constraintdecay}
+show experimentally that agent adherence collapses as structural constraints
+accumulate (constraint decay), motivating the hypothesis that agent code
+should drift more. Our field data suggest the per-unit effect, if present in
+the wild, is below the detectability ceiling of metadata attribution, while
+the operative risk materializes through volume.
+
+\paragraph{Review of AI-generated changes.} Duma et
+al.~\cite{duma2026reviews} find that most AI-generated PRs receive no review
+and that human involvement is often agent steering rather than evaluation;
+adoption studies likewise report agent commits being larger than human
+ones~\cite{robbes2026agentic}. Our RQ3 adds the before/after,
+placebo-controlled trajectory of review coverage within adopting C++
+repositories, measuring both pull-request volume and human review comments.
+
+\paragraph{Mining methodology.} Robbes et al.~\cite{robbes2026perils} catalog
+pitfalls of agent-activity heuristics; Khosravani and
+Mockus~\cite{khosravani2026census} validate multi-method agent detection and
+quantify single-signal undercounting. Both inform our conservative
+attribution and its stated limits. The consequences of clone introduction for
+maintenance are classic~\cite{juergens2009}; our per-commit clone-introduction
+measurements give that literature a drift-rate reading.
+
+\section{Conclusion}
+
+Across 1{,}188 C++ repositories and 484{,}500 analyzed commits, we find no
+evidence that AI-attributed commits are more architecturally damaging than
+human commits of comparable size within the same repository. The strongest
+observable author difference is that AI-attributed commits are larger. After
+agent adoption, repositories accumulate architectural-drift events 1.93\x{}
+faster per week than placebo repositories in the same calendar weeks, mostly
+through more commits; complexity also rises per commit (1.17\x{}). Adopters
+merge 1.38\x{} more pull requests relative to placebo, while human review
+comments per pull request fall to 0.73\x{}.
+
+Coding agents increase the rate of change, structural regressions arrive
+faster, and the amount of human review stays where it was. For teams adopting
+coding agents, deterministic, author-agnostic structural checks in CI scale
+verification with generation volume.
+
+\section*{Data Availability}
+\label{sec:data}
+
+The artifact is deposited on Zenodo under DOI 10.5281/zenodo.24440566
+(concept DOI 10.5281/zenodo.22057749) and
+contains the analysis code for every study (per-commit pipeline, event-study
+estimators, review-capacity estimators), the preregistration, the raw
+estimator outputs from which the tables are drawn, the tables with a
+per-number provenance manifest, and the analyzer. The re-run per-commit
+records of the event study (210{,}594 commits), the cohort definitions, the
+review panel, and the pull-request counts are part of the deposit. The
+per-commit dataset behind RQ1 was lost in a machine reinstall; its analysis
+code and raw outputs are in the deposit, and it can be regenerated from the
+public repositories.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
+
+\appendix
+
+\section{Per-Repository Replication Table}
+\label{app:agarwal}
+
+Table~\ref{tab:agarwal} lists the per-repository post/pre ratios for the
+replication of Section~\ref{sec:agarwal-repl}. The per-repository rows were
+printed by the replay at the 94\%-complete point of the run; all aggregate
+medians reconcile with the completed run except weekly complexity (1.48
+vs.\ 1.49). Two repositories with degenerate pre/post windows are excluded
+from ratio statistics; complexity ratios are undefined where one period has no
+complexity events.
+
+\begin{table*}[h]
+\caption{Replication on the C/C++ repositories of~\cite{agarwal2026}:
+post/pre ratios per week, and duplication-stock change.}
+\label{tab:agarwal}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Repository & Commits/wk & KLOC/wk & Cplx/wk & Dup stock \\
+\midrule
+forntoh/LcdMenu            & 9.77  & 12.28 & 28.8 & $-8\%$ \\
+joaquimorg/UV-KX           & 12.91 & 5.02  & 9.4  & $+71\%$ \\
+AMICI-dev/AMICI            & 2.13  & 7.96  & 6.33 & $-9\%$ \\
+microsoft/onnxruntime      & 1.18  & 0.99  & 2.17 & --- \\
+M-CreativeLab/jsar-runtime & 1.56  & 3.28  & 1.91 & $+159\%$ \\
+rsyslog/rsyslog            & 6.01  & 91.05 & 1.81 & $+4\%$ \\
+wolfSSL/wolfssl            & 1.35  & 2.64  & 1.55 & $+3\%$ \\
+Z3Prover/z3                & 0.90  & 0.51  & 1.41 & $-4\%$ \\
+shader-slang/slang         & 1.24  & 0.86  & 1.03 & $-1\%$ \\
+chrxh/alien                & 1.60  & 1.37  & 0.74 & $-11.6\%$ \\
+microsoft/ebpf-for-windows & 0.87  & 0.90  & 0.66 & $+5\%$ \\
+DeForestt/aflat            & 0.64  & 4.26  & 0.62 & $-5\%$ \\
+microsoft/react-native-windows & 0.89 & 0.64 & 0.43 & --- \\
+ohhmm/openmind             & 0.22  & 0.14  & 0.00 & $-6\%$ \\
+SavenkovIgor/TermGraph     & 4.06  & 20.95 & ---  & $-6\%$ \\
+PlantSimulationLab/Helios  & 1.72  & 1.44  & ---  & $-7\%$ \\
+effekseer/Effekseer        & 3.33  & 2.03  & ---  & $+0\%$ \\
+aboys-cb/NepTrainKit       & 0.80  & 0.27  & ---  & $+8\%$ \\
+aantropov/sailor           & 4.06  & 17.78 & ---  & $+3\%$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\end{document}

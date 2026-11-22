@@ -1,0 +1,8 @@
+category	median_delta_pp	repos_agent_worse	repos_agent_better	ties	sign_test_p	verdict
+complexity	+0.06	172	157	15	0.44	null
+newclone	-0.23	130	178	36	0.0073	agents cleaner
+satd	-0.52	85	191	68	1.6e-10	agents cleaner
+test_coevo	-1.63	121	206	17	3e-6	agents cleaner (low-precision category)
+cross_area	+0.00	60	104	180	0.0007	no agent deficit
+grown_cycles	+0.00	8	30	306	0.0005	no agent deficit
+god_headers	+0.00	28	53	263	0.0073	no agent deficit

@@ -1,0 +1,4 @@
+level	control	agent_rate_pct	human_rate_pct	ratio	delta_pp	repos_agent_worse	repos_agent_better	p_value	reading
+1	pooled (none)	27.0	15.4	1.76	NA	NA	NA	NA	seductive headline
+2	within-repo, raw per commit	NA	NA	NA	+1.55	135	102	0.037	agents ratchet slightly more per commit
+3	within-repo + size-matched	NA	NA	NA	+0.06	172	157	0.44	null - identical for equal change
